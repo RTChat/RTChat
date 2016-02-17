@@ -1,0 +1,50 @@
+body {
+	margin: 0;
+}
+
+my-app {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+#top-bar, #bottom-bar {
+	height: 30px;
+}
+#main-bar {
+	flex: 1 100%;
+
+	display: flex;
+	flex-flow: row;
+}
+
+#top-bar {
+	background-color: green;
+}
+#bottom-bar {
+	background-color: yellow;
+}
+
+#side-bar {
+	flex-grow: 0;
+	width: 210px;
+	background-color: blue;
+}
+#side-bar.hidden {
+	width: 0;
+}
+
+#game-panel {
+	flex: 2 0px;
+	background-color: gray;
+}
+
+#side-bar { order: 1; }
+#game-panel    { order: 2; }
+#side-bar.right { order: 3; }
+#bottom-bar  { order: 4; }
+
+/* Large screens */
+@media all and (min-width: 800px) {
+
+}
