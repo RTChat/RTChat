@@ -9,48 +9,41 @@ document.GameFrameRTC = {
 				<div>IMG</div>\
 				<div data-subview="user"></div>\
 			</div>\
-    		<div id="main-bar">\
-	    		<div id="left-side-bar">Side Bar</div>\
-	    		<div data-subview="game"></div>\
-	    		<div id="right-side-bar" class="right hidden">Right Side Bar</div>\
-	    	</div>\
-    		<div id="bottom-bar">Bottom Bar</div>',
-    	events: {
-    		'click .fa-bars': function() { $('#left-side-bar').toggleClass('hidden'); },
-    		// Global Events..
-    		'click .dd-toggle': function(ev) {
-    			// console.log('DD', $(ev.currentTarget).next().is(':visible'));
-    			$(ev.currentTarget).next('ul').toggle().focus()
-    			ev.stopPropagation()
-    		},
-    		// 'blur .dd-menu': function(ev) {
-    		// 	console.log('hide', ev, document.activeElement)
-    		// 	$(ev.target).hide()
-    		'click': function() {
-    			this.$('.dd-menu').hide()
-    		},
-    	},
+			<div id="main-bar">\
+				<div id="left-side-bar">Side Bar</div>\
+				<div data-subview="main"></div>\
+				<div id="right-side-bar" class="right hidden">Right Side Bar</div>\
+			</div>\
+			<div id="bottom-bar">Bottom Bar</div>',
+		events: {
+			'click .fa-bars': function() { $('#left-side-bar').toggleClass('hidden'); },
+		},
 		initialize: function() {
 			Backbone.Subviews.add( this );
 		},
 		subviewCreators: {
 			user: function() { return new document.GameFrameRTC.UserMenu },
-			game: function() { return new document.GameFrameRTC.GamePanel }
+			main: function() { return new document.GameFrameRTC.MainPanel },
 		},
 		render: function(){
-			console.log('rendering layout!')
 			this.$el.html(this.template);
 			return this;
-		},
+		}
 	}),
 
 	UserMenu: Backbone.View.extend({
-		className: 'float-right',
+		className: 'float-right dropdown navbar-right',
 		template: '\
-			<div class="dd-toggle">{ scope.userName } <span class="fa fa-chevron-down"></span></div>\
-			<ul class="dd-menu" tabindex="0" style="display: none;">\
-				<li id="edit-btn">Edit</li>\
-				<li>Switchhhhhhhhhhh</li>\
+			<div class="dropdown-toggle" data-toggle="dropdown">\
+				{ scope.userName } <span class="fa fa-chevron-down"></span>\
+			</div>\
+			<ul class="dropdown-menu">\
+				<li id="edit-btn">Edit Name</li>\
+				<li class="disabled">Coming Soon ----</li>\
+				<li class="disabled">Sync user w/ Dropbox</li>\
+				<li class="disabled">Settings</li>\
+				<li class="disabled">Friends</li>\
+				<li class="disabled">Switch User</li>\
 			</ul>',
 		editNameTemplate: '\
 			<div><input type="text" rv-value="scope.userName"></div>',
@@ -58,19 +51,21 @@ document.GameFrameRTC = {
 		initialize: function() {
 		// 	// this.UserService = new document.GameFrameRTC.UserService;
 			if(typeof(Storage) !== "undefined") {
-			    //TODO: use backbone.localStorage?
-			    this.scope.userName = window.localStorage.getItem('UserName')
-			    console.log("found user:", this.scope.userName)
-			    if (!this.scope.userName) {
-			    	this.scope.userName = "Guest_"+parseInt(Math.random()*10000).toString();
-			    	window.localStorage.setItem('UserName', this.scope.userName)
-			    }
+				//TODO: use backbone.localStorage?
+				this.scope.userName = window.localStorage.getItem('UserName')
+				console.log("found user:", this.scope.userName)
+				if (!this.scope.userName) {
+					this.scope.userName = "Guest_"+parseInt(Math.random()*10000).toString();
+					window.localStorage.setItem('UserName', this.scope.userName)
+				}
 			} else {
 				console.log("Sorry! No Web Storage support..")
 			}
 		},
 		events: {
 			'click #edit-btn': function() {
+				console.log("clicked!");
+				this.$el.removeClass('open') //Hack?
 				this.render(true);
 				this.$el.find('input').select();
 			},
@@ -78,9 +73,6 @@ document.GameFrameRTC = {
 				if (ev.keyCode == 13) this.updateName();
 			},
 			'blur input': 'updateName'
-			// function() {
-			// 	this.render();
-			// }
 		},
 		render: function(edit){
 			// this.scope.userName = window.localStorage.getItem('UserName')
@@ -88,38 +80,38 @@ document.GameFrameRTC = {
 				this.$el.html(this.editNameTemplate);
 			else
 				this.$el.html(this.template);
-			var what = rivets.bind(this.$el, {scope: this.scope})
-			console.log('what..', what)
+			var rvo = rivets.bind(this.$el, {scope: this.scope})
+			console.log('rivets..', rvo)
 			return this;
 		},
 		updateName: function() {
-	    	window.localStorage.setItem('UserName', this.scope.userName)
+			window.localStorage.setItem('UserName', this.scope.userName)
 			this.render();
 		},
 		scope: {} // Used for Rivets..
 	}),
 
-	GamePanel: Backbone.View.extend({
-		id: 'game-panel',
-		roomSelectTemplate: '<div data-subview="selectRoom"></div>',
-		gameRoomTemplate: '<div data-subview="gameRoom"></div>',
+	// Wraps the main App
+	MainPanel: Backbone.View.extend({
+		id: 'main-panel',
+		welcomeTemplate: '<div data-subview="welcome"></div>',
+		roomTemplate: '<div data-subview="room"></div>',
 		initialize: function() {
 			Backbone.Subviews.add( this );
+
 			var self = this;
-			$(window).on('hashchange', function() {
-				console.log('Loc:', window.location.hash);
-				self.render();
-			})
+			$(window).on('hashchange', function() { self.render(); });
 		},
 		subviewCreators: {
-			selectRoom: function() { return new document.GameFrameRTC.app.selectRoom },
-			gameRoom: function() { return new document.GameFrameRTC.app.gameRoom }
+			welcome: function() { return new document.GameFrameRTC.app.WelcomePanel },
+			room: function() { return new document.GameFrameRTC.app.RoomPanel }
 		},
 		render: function(){
 			if (document.location.hash.length == 0)
-				this.$el.html(this.roomSelectTemplate)
+				this.$el.html(this.welcomeTemplate)
 			else
-				this.$el.html(this.gameRoomTemplate)
+				this.$el.html(this.roomTemplate)
+
 			return this;
 		}
 	}),
@@ -131,21 +123,45 @@ document.GameFrameRTC = {
 
 }});
 
+// .app is where the game.app lives...
 $(function(){
 document.GameFrameRTC.app = {
-	selectRoom: Backbone.View.extend({
-		template: 'pick a room!',
+	WelcomePanel: Backbone.View.extend({
+		template: '<h2>Welcome To GameFrameRTC!</h2>\
+			A simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\
+			<br><br>\
+			<a class="btn btn-default" href="#global-chat">Go To global chat</a>\
+		',
 		render: function(){
 			this.$el.html(this.template);
 			return this;
 		}
 	}),
-	gameRoom: Backbone.View.extend({
-		template: 'ur in room ',
+	RoomPanel: Backbone.View.extend({
+		template: '\
+			<a class="btn btn-default" href="#"><- Leave</a>\
+			<br>\
+			You\'re in room { scope.roomName }\
+			<br><br>Users:\
+			<ul id="users-panel">\
+				<li rv-each-user="scope.users">\
+					{ user.name }\
+				</li>\
+			</ul>\
+		',
 		render: function(){
-			this.$el.html(this.template + window.location.hash);
+			this.scope.roomName = window.location.hash
+			this.scope.users = [
+				{name: 'You!'},
+				{name: 'dummy2'},
+				{name: 'dummy3'},
+			]
+
+			this.$el.html(this.template);
+			var rvo = rivets.bind(this.$el, {scope: this.scope})
 			return this;
-		}
+		},
+		scope: {},
 	}),
 }});
 

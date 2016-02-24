@@ -44,29 +44,17 @@ body {
 	width: 0;
 }
 
-#game-panel {
+#main-panel {
 	flex: 2 0px;
 	background-color: gray;
 }
 
-/*#side-bar { order: 1; }
-#game-panel    { order: 2; }
-#side-bar.right { order: 3; }
-#bottom-bar  { order: 4; }*/
-
-/* Large screens */
-/*@media all and (min-width: 800px) {
-
-}*/
-
 /* === Utilities === */
-.dd-menu {
-	background-color: lightgreen;
-	position: absolute;
-	top: 100%;
-	right: 0;
-	margin: 0;
-	list-style: none;
-	padding: 5px;
-	outline: none;
+
+.dropdown-menu > li {
+	padding: 0 10px;
+}
+
+.disabled {
+	color: grey;
 }
