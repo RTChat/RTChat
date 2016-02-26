@@ -9,9 +9,21 @@
   "devDependencies": {
     "backbone-subviews": "^1.0.0",
     "backbone.localstorage": "^1.1.16",
+    "bootstrap": "^3.3.6",
+    "css-loader": "^0.23.1",
+    "exports-loader": "^0.6.3",
+    "file-loader": "^0.8.5",
+    "font-awesome": "^4.5.0",
+    "imports-loader": "^0.6.5",
+    "jquery": "^2.2.1",
+    "less": "^2.6.0",
+    "less-loader": "^2.2.2",
     "node-getopt": "^0.2.3",
     "rivets": "^0.8.1",
     "rtcmulticonnection-v3": "^3.2.91",
+    "style-loader": "^0.13.0",
+    "underscore": "^1.8.3",
+    "url-loader": "^0.5.7",
     "webpack": "^1.12.14"
   }
 }
