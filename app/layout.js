@@ -8,9 +8,7 @@ document.GameFrameRTC = {
 
 		this.connection = new RTCMultiConnection();
 		// this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
-		// this.connection.socketURL = 'https://localhost:9001/';
 		this.connection.socketURL = '/';
-		this.connection.socketMessageEvent = 'video-conference-demo';
 		this.connection.token();
 		this.connection.session = {
 			// audio: true,
@@ -75,7 +73,7 @@ document.GameFrameRTC = {
 			</div>\
 			<ul class="dropdown-menu">\
 				<li id="edit-btn">Edit Name</li>\
-				<li class="disabled">Coming Soon ----</li>\
+				<li class="disabled">---- Coming Soon ----</li>\
 				<li class="disabled">Sync user w/ Dropbox</li>\
 				<li class="disabled">Settings</li>\
 				<li class="disabled">Friends</li>\

@@ -1,0 +1,17 @@
+{
+  "name": "GameFrameRTC",
+  "description": "Framework for building games using WebRTC",
+  "repository": "https://github.com/Thann/GameFrameRTC",
+  "version": "0.0.1",
+  "scripts": {},
+  "license": "AGPL-3.0",
+  "dependencies": {},
+  "devDependencies": {
+    "backbone-subviews": "^1.0.0",
+    "backbone.localstorage": "^1.1.16",
+    "node-getopt": "^0.2.3",
+    "rivets": "^0.8.1",
+    "rtcmulticonnection-v3": "^3.2.91",
+    "webpack": "^1.12.14"
+  }
+}
