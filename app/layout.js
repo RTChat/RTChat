@@ -1,6 +1,42 @@
 
 $(function(){
+
 document.GameFrameRTC = {
+	channelPrefix: 'thann.GameFrameRTC.chat',
+	joinRoom: function(roomName, options) {
+		//TODO: close connection?
+
+		this.connection = new RTCMultiConnection();
+		// this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+		// this.connection.socketURL = 'https://localhost:9001/';
+		this.connection.socketURL = '/';
+		this.connection.socketMessageEvent = 'video-conference-demo';
+		this.connection.token();
+		this.connection.session = {
+			// audio: true,
+			// video: true,
+			data : true
+		};
+		this.connection.sdpConstraints.mandatory = {
+			OfferToReceiveAudio: true,
+			OfferToReceiveVideo: true
+		};
+
+		this.connection.onstream = function(ev) {
+			console.log('eEE', ev, options.videoContainer)
+			options.videoContainer[0].appendChild(ev.mediaElement);
+
+			setTimeout(function() {
+				ev.mediaElement.play();
+			}, 5000);
+
+		}
+
+		this.connection.openOrJoin(this.channelPrefix + roomName)
+	},
+	leaveRoom: function() {
+
+	},
 	AppLayout: Backbone.View.extend({
 		el: $('body'),
 		template: '\
@@ -10,7 +46,7 @@ document.GameFrameRTC = {
 				<div data-subview="user"></div>\
 			</div>\
 			<div id="main-bar">\
-				<div id="left-side-bar">Side Bar</div>\
+				<div id="left-side-bar" class="hidden">Side Bar</div>\
 				<div data-subview="main"></div>\
 				<div id="right-side-bar" class="right hidden">Right Side Bar</div>\
 			</div>\
@@ -95,7 +131,7 @@ document.GameFrameRTC = {
 	MainPanel: Backbone.View.extend({
 		id: 'main-panel',
 		welcomeTemplate: '<div data-subview="welcome"></div>',
-		roomTemplate: '<div data-subview="room"></div>',
+		roomTemplate: '<div data-subview="room"></div><div id="video-container"></div>',
 		initialize: function() {
 			Backbone.Subviews.add( this );
 
@@ -107,10 +143,15 @@ document.GameFrameRTC = {
 			room: function() { return new document.GameFrameRTC.app.RoomPanel }
 		},
 		render: function(){
-			if (document.location.hash.length == 0)
-				this.$el.html(this.welcomeTemplate)
-			else
-				this.$el.html(this.roomTemplate)
+			if (document.location.hash.length == 0) {
+				this.$el.html(this.welcomeTemplate);
+				document.GameFrameRTC.leaveRoom();
+			} else {
+				this.$el.html(this.roomTemplate);
+				document.GameFrameRTC.joinRoom(window.location.hash,
+					{videoContainer: this.$('#video-container')}
+				)
+			}
 
 			return this;
 		}
