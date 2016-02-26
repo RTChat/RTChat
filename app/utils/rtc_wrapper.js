@@ -35,4 +35,5 @@ module.exports = {
 	leaveRoom: function() {
 
 	},
+	users: [],
 }

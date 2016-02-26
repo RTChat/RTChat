@@ -9,12 +9,12 @@ require('bootstrap/dist/js/bootstrap.js');
 // require('bootstrap/dist/css/bootstrap.css');
 // require('font-awesome/css/font-awesome.css');
 
-var AppLayout = require('./layout.js');
+var AppLayout = require('./views/layout.js');
 
 // This is what the other games should extend...
 document.GameFrameRTC = { app: {
-	WelcomePanel: require('./welcome_panel.js'),
-	RoomPanel: require('./room_panel.js')
+	WelcomePanel: require('./views/welcome_panel.js'),
+	RoomPanel: require('./views/room_panel.js')
 } }
 
 // module.exports = {

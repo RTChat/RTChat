@@ -1,5 +1,5 @@
 
-var RTC_wrapper = require('./rtc_wrapper.js')
+var RTC_wrapper = require('../utils/rtc_wrapper.js')
 
 // MainPanel
 module.exports = Backbone.View.extend({

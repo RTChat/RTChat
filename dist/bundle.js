@@ -17455,8 +17455,6 @@
 			Backbone.Subviews.add( this );
 		},
 		subviewCreators: {
-			// user: function() { return new document.GameFrameRTC.UserMenu },
-			// user: function() { return new document.GameFrameRTC.UserMenu },
 			user: function() { return new UserMenu },
 			main: function() { return new MainPanel },
 		},
@@ -19241,6 +19239,7 @@
 		leaveRoom: function() {
 
 		},
+		users: [],
 	}
 
 /***/ },

@@ -1,7 +1,5 @@
 var webpack = require('webpack');
 
-var GameFrameRTC = {}
-
 module.exports = {
 	// configuration
 	context: __dirname + "/app",
@@ -21,6 +19,7 @@ module.exports = {
 			$: "jquery",
 			jQuery: "jquery"
 		}),
+		// new webpack.optimize.UglifyJsPlugin({minimize: true})
 	],
 	module: {
 		loaders: [

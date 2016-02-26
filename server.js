@@ -12,6 +12,7 @@ var opt = require("node-getopt").create([
 	['', 'https', 'Enable Https'],
 	['', 'ip=ARG', 'Set IP'],
 	['', 'port=ARG', 'Set port'],
+	['', 'watch', 'Recompile assets on file modification'],
 	['h', 'help', '']
 ]).bindHelp().parseSystem()
 
@@ -112,3 +113,16 @@ require('./node_modules/rtcmulticonnection-v3/Signaling-Server.js')(app, functio
 		});
 	} catch (e) {}
 });
+
+// === Watch ===
+if (options.watch) {
+	var watcher = require('child_process').spawn('webpack', ['--watch']);
+
+	watcher.stdout.on('data', function(data) {
+		console.log(data.toString());
+	});
+
+	watcher.stderr.on('data', function(data) {
+		console.log(data.toString());
+	});
+}
