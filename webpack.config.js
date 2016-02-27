@@ -6,8 +6,8 @@ module.exports = {
 	entry: "./main.js",
 	output: {
 		path: __dirname + "/dist",
-		// libraryTarget: 'var',
-		// library: "GameFrameRTC",
+		libraryTarget: 'var',
+		library: "GameFrameRTC",
 		filename: "bundle.js"
 	},
 	// externals: {

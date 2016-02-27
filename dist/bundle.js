@@ -1,3 +1,4 @@
+var GameFrameRTC =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -45,10 +46,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {
-	// var GameFrameRTC = {}
-
 	// var $ = require('jquery');
-
 	// var Backbone = require('backbone');
 	__webpack_require__(2);
 	__webpack_require__(6);
@@ -57,20 +55,13 @@
 
 	var AppLayout = __webpack_require__(7);
 
-	// This is what the other games should extend...
-	document.GameFrameRTC = { app: {
-		WelcomePanel: __webpack_require__(15),
-		RoomPanel: __webpack_require__(16)
-	} }
-
-	// module.exports = {
-	// // 	AppLayout: require('./frame.js'),
-	// 	"app": {},
-	// 	init: function() {
-	// 		(new this.AppLayout).render();
-	// 	}
-	// }
-	//
+	module.exports = {
+		// UserService: require('./utils/user_service.js'),
+		app: {
+			WelcomePanel: __webpack_require__(16),
+			RoomPanel: __webpack_require__(17)
+		},
+	}
 
 	$(document).ready(function() {
 		(new AppLayout).render();
@@ -17431,7 +17422,7 @@
 
 	/* WEBPACK VAR INJECTION */(function($) {
 	var UserMenu = __webpack_require__(8);
-	var MainPanel = __webpack_require__(12);
+	var MainPanel = __webpack_require__(13);
 
 	// AppLayout
 	module.exports = Backbone.View.extend({
@@ -17470,7 +17461,9 @@
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var rivets = __webpack_require__(9)
+	var rivets = __webpack_require__(9);
+
+	var UserService = __webpack_require__(12);
 
 	// UserMenu
 	module.exports = Backbone.View.extend({
@@ -17492,6 +17485,9 @@
 			// UserService: document.GameFrameRTC.UserService
 			initialize: function() {
 			// 	// this.UserService = new document.GameFrameRTC.UserService;
+				console.log("US", UserService)
+				UserService.menu = true;
+
 				if(typeof(Storage) !== "undefined") {
 					//TODO: use backbone.localStorage?
 					this.scope.userName = window.localStorage.getItem('UserName')
@@ -19162,12 +19158,22 @@
 
 /***/ },
 /* 12 */
+/***/ function(module, exports) {
+
+	
+	// UserService
+	module.exports = {
+		thing: 'cool'
+	}
+
+/***/ },
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {
-	var RTC_wrapper = __webpack_require__(13)
+	var RTC_wrapper = __webpack_require__(14)
 
-	// MainPanel
+	// MainPanel (and router)
 	module.exports = Backbone.View.extend({
 		id: 'main-panel',
 		welcomeTemplate: '<div data-subview="welcome"></div>',
@@ -19179,8 +19185,8 @@
 			$(window).on('hashchange', function() { self.render(); });
 		},
 		subviewCreators: {
-			welcome: function() { return new document.GameFrameRTC.app.WelcomePanel },
-			room: function() { return new document.GameFrameRTC.app.RoomPanel }
+			welcome: function() { return new GameFrameRTC.app.WelcomePanel },
+			room: function() { return new GameFrameRTC.app.RoomPanel }
 		},
 		render: function(){
 			if (document.location.hash.length == 0) {
@@ -19190,20 +19196,22 @@
 				this.$el.html(this.roomTemplate);
 				RTC_wrapper.joinRoom(window.location.hash,
 					{videoContainer: this.$('#video-container')}
-				)
+				);
 			}
 
 			return this;
 		}
-	})
+	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	__webpack_require__(14)
+	__webpack_require__(15)
+
+	var UserService = __webpack_require__(12);
 
 	// RTC_wrapper
 	module.exports = {
@@ -19211,9 +19219,16 @@
 			//TODO: close connection?
 
 			this.connection = new RTCMultiConnection();
-			// this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
-			this.connection.socketURL = '/';
-			this.connection.token();
+
+			if (document.location.host.match(/github/)) {
+				//TODO:
+			} else if (document.location.host.match(/jsfiddle/)) {
+				this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+			} else {
+				this.connection.socketURL = '/';
+			}
+
+			// this.connection.token();
 			this.connection.session = {
 				// audio: true,
 				// video: true,
@@ -19234,6 +19249,14 @@
 
 			}
 
+			// this.connection.onNewSession = function(session) {
+			// 	console.log("new seshh", session)
+			// }
+
+			this.connection.onopen = function() {
+				console.log("onopen", arguments)
+			}
+
 			this.connection.openOrJoin(this.channelPrefix + roomName)
 		},
 		leaveRoom: function() {
@@ -19243,7 +19266,7 @@
 	}
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Last time updated: 2016-02-25 12:41:18 PM UTC
@@ -24864,7 +24887,7 @@
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	// WelcomePanel
@@ -24881,7 +24904,7 @@
 	})
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rivets = __webpack_require__(9);

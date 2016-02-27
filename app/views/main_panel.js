@@ -1,7 +1,7 @@
 
 var RTC_wrapper = require('../utils/rtc_wrapper.js')
 
-// MainPanel
+// MainPanel (and router)
 module.exports = Backbone.View.extend({
 	id: 'main-panel',
 	welcomeTemplate: '<div data-subview="welcome"></div>',
@@ -13,8 +13,8 @@ module.exports = Backbone.View.extend({
 		$(window).on('hashchange', function() { self.render(); });
 	},
 	subviewCreators: {
-		welcome: function() { return new document.GameFrameRTC.app.WelcomePanel },
-		room: function() { return new document.GameFrameRTC.app.RoomPanel }
+		welcome: function() { return new GameFrameRTC.app.WelcomePanel },
+		room: function() { return new GameFrameRTC.app.RoomPanel }
 	},
 	render: function(){
 		if (document.location.hash.length == 0) {
@@ -24,9 +24,9 @@ module.exports = Backbone.View.extend({
 			this.$el.html(this.roomTemplate);
 			RTC_wrapper.joinRoom(window.location.hash,
 				{videoContainer: this.$('#video-container')}
-			)
+			);
 		}
 
 		return this;
 	}
-})
+});
