@@ -3,13 +3,13 @@
 // Serves up index.html, dist/*, and socket.io
 
 var options = { // defaults
-	https: false,
+	http: false,
 	ip: "0.0.0.0",
 	port: 9001,
 }
 
 var opt = require("node-getopt").create([
-	['', 'https', 'Enable Https'],
+	['', 'http', 'Disable SSL'],
 	['', 'ip=ARG', 'Set IP'],
 	['', 'port=ARG', 'Set port'],
 	['', 'watch', 'Recompile assets on file modification'],
@@ -21,7 +21,7 @@ for (var attrname in opt.options) { options[attrname] = opt.options[attrname]; }
 
 var allowedDir = "/dist/"
 
-var server = require(options.https ? 'https' : 'http'),
+var server = require(options.http ? 'http' : 'https'),
 	url = require('url'),
 	path = require('path'),
 	fs = require('fs');
@@ -73,7 +73,7 @@ function serverHandler(request, response) {
 
 var app;
 
-if (options.https) {
+if (!options.http) {
 	var opts = {
 		key: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
 		cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
@@ -83,7 +83,7 @@ if (options.https) {
 
 app = app.listen(options.port, options.ip, function() {
 	var addr = app.address();
-	console.log("Server listening at", addr.address + ":" + addr.port);
+	console.log("Server listening at", (options.http ? "http://" : "https://" ) + addr.address + ":" + addr.port);
 });
 
 app.on('error', function(err) {
@@ -116,7 +116,7 @@ require('./node_modules/rtcmulticonnection-v3/Signaling-Server.js')(app, functio
 
 // === Watch ===
 if (options.watch) {
-	var watcher = require('child_process').spawn('webpack', ['--watch']);
+	var watcher = require('child_process').spawn('webpack', ['--watch', '--colors']);
 
 	watcher.stdout.on('data', function(data) {
 		console.log(data.toString());
