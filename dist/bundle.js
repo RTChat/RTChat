@@ -17875,23 +17875,8 @@ var GameFrameRTC =
 				</ul>',
 			editNameTemplate: '\
 				<div><input type="text" rv-value="scope.userName"></div>',
-			// UserService: document.GameFrameRTC.UserService
 			initialize: function() {
-			// 	// this.UserService = new document.GameFrameRTC.UserService;
-				console.log("US", UserService)
-				UserService.menu = true;
-
-				if(typeof(Storage) !== "undefined") {
-					//TODO: use backbone.localStorage?
-					this.scope.userName = window.localStorage.getItem('UserName')
-					console.log("found user:", this.scope.userName)
-					if (!this.scope.userName) {
-						this.scope.userName = "Guest_"+parseInt(Math.random()*10000).toString();
-						window.localStorage.setItem('UserName', this.scope.userName)
-					}
-				} else {
-					console.log("Sorry! No Web Storage support..")
-				}
+				this.scope.userName = UserService.name;
 			},
 			events: {
 				'click #edit-btn': function() {
@@ -17916,7 +17901,7 @@ var GameFrameRTC =
 				return this;
 			},
 			updateName: function() {
-				window.localStorage.setItem('UserName', this.scope.userName)
+				UserService.updateName(this.scope.userName)
 				this.render();
 			},
 			scope: {} // Used for Rivets..
@@ -19556,8 +19541,33 @@ var GameFrameRTC =
 	
 	// UserService
 	module.exports = {
-		thing: 'cool'
+		init: function() { // sets up the username, and stuff.
+			if(typeof(Storage) !== "undefined") {
+				//TODO: use backbone.localStorage?
+				this.name = window.localStorage.getItem('UserName')
+				// console.log("found user:", this.name)
+				if (!this.name) {
+					this.name = "Guest_"+parseInt(Math.random()*10000).toString();
+					window.localStorage.setItem('UserName', this.name)
+				}
+			} else {
+				console.log("Sorry! No Web Storage support..")
+			}
+
+		},
+		updateName: function(newName) {
+			this.name = newName;
+			window.localStorage.setItem('UserName', this.name)
+		},
+		getExtras: function() {
+			return {
+				fullId: undefined,
+				name: this.name,
+			}
+		}
 	}
+
+	module.exports.init();
 
 /***/ },
 /* 19 */
@@ -19632,22 +19642,23 @@ var GameFrameRTC =
 				OfferToReceiveVideo: true
 			};
 
-			this.connection.onstream = function(ev) {
-				console.log('eEE', ev, options.videoContainer)
-				options.videoContainer[0].appendChild(ev.mediaElement);
+			// this.connection.onstream = function(ev) {
+			// 	console.log('eEE', ev, options.videoContainer)
+			// 	options.videoContainer[0].appendChild(ev.mediaElement);
 
-				setTimeout(function() {
-					ev.mediaElement.play();
-				}, 5000);
+			// 	setTimeout(function() {
+			// 		ev.mediaElement.play();
+			// 	}, 5000);
 
-			}
+			// }
 
 			// this.connection.onNewSession = function(session) {
 			// 	console.log("new seshh", session)
 			// }
+			this.connection.extra = UserService.getExtras()
 
-			this.connection.onopen = function() {
-				console.log("onopen", arguments)
+			this.connection.onopen = function(sess) {
+				console.log("onopen", sess)
 			}
 
 			this.connection.openOrJoin(this.channelPrefix + roomName)

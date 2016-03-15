@@ -29,14 +29,23 @@ module.exports = {
 			OfferToReceiveVideo: true
 		};
 
-		this.connection.onstream = function(ev) {
-			console.log('eEE', ev, options.videoContainer)
-			options.videoContainer[0].appendChild(ev.mediaElement);
+		// this.connection.onstream = function(ev) {
+		// 	console.log('eEE', ev, options.videoContainer)
+		// 	options.videoContainer[0].appendChild(ev.mediaElement);
 
-			setTimeout(function() {
-				ev.mediaElement.play();
-			}, 5000);
+		// 	setTimeout(function() {
+		// 		ev.mediaElement.play();
+		// 	}, 5000);
 
+		// }
+
+		// this.connection.onNewSession = function(session) {
+		// 	console.log("new seshh", session)
+		// }
+		this.connection.extra = UserService.getExtras()
+
+		this.connection.onopen = function(sess) {
+			console.log("onopen", sess)
 		}
 
 		this.connection.openOrJoin(this.channelPrefix + roomName)
