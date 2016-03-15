@@ -1,4 +1,6 @@
-var rivets = require('rivets')
+var rivets = require('rivets');
+
+var UserService = require('../utils/user_service.js');
 
 // UserMenu
 module.exports = Backbone.View.extend({

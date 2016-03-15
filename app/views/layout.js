@@ -1,3 +1,4 @@
+require('../styles/layout.css');
 
 var UserMenu = require('./user_menu.js');
 var MainPanel = require('./main_panel.js');

@@ -1,0 +1,53 @@
+
+body {
+	margin: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+#top-bar, #bottom-bar {
+	position: relative;
+	height: 30px;
+	display: flex;
+	flex-flow: row;
+	z-index: 1; /* Allows UserMenu to go overtop of the main-bar */
+
+	> * {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+}
+
+.float-right {
+	margin-left: auto !important;
+}
+
+#main-bar {
+	flex: 1 100%;
+	display: flex;
+	flex-flow: row;
+}
+
+#left-side-bar,
+#right-side-bar {
+	flex-grow: 0;
+	width: 210px;
+	background-color: blue;
+}
+#right-side-bar.hidden,
+#left-side-bar.hidden {
+	width: 0;
+}
+
+#main-panel {
+	flex: 2 0px;
+	background-color: gray;
+}
+
+#top-bar {
+	background-color: green;
+}
+#bottom-bar {
+	background-color: yellow;
+}

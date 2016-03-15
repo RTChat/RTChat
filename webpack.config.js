@@ -1,7 +1,6 @@
 var webpack = require('webpack');
 
 module.exports = {
-	// configuration
 	context: __dirname + "/app",
 	entry: "./main.js",
 	output: {
@@ -10,20 +9,15 @@ module.exports = {
 		library: "GameFrameRTC",
 		filename: "bundle.js"
 	},
-	// externals: {
-	// 	'jquery': '$',
-	// 	'jquery': 'jQuery'
-	// }
 	plugins: [
 		new webpack.ProvidePlugin({
 			$: "jquery",
 			jQuery: "jquery"
 		}),
-		// new webpack.optimize.UglifyJsPlugin({minimize: true})
 	],
 	module: {
 		loaders: [
-			{test:  /\.css$/, loader: "style-loader!css-loader" },
+			{test:  /\.s?css$/, loaders: ["style", "css", "sass"] },
 			// {test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=application/font-woff'},
 			// {test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=application/octet-stream'},
 			// {test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: 'file'},
@@ -31,3 +25,9 @@ module.exports = {
 		]
 	}
 };
+
+// if (process.argv.indexOf('--minify') >= 0) {
+// 	module.exports.plugins.push(
+// 		new webpack.optimize.UglifyJsPlugin({minimize: true})
+// 	);
+// }

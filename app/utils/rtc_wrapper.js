@@ -1,15 +1,24 @@
 
 require('rtcmulticonnection-v3/dist/rmc3.js')
 
+var UserService = require('../utils/user_service.js');
+
 // RTC_wrapper
 module.exports = {
 	joinRoom: function(roomName, options) {
 		//TODO: close connection?
 
 		this.connection = new RTCMultiConnection();
-		// this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
-		this.connection.socketURL = '/';
-		this.connection.token();
+
+		if (document.location.host.match(/github/)) {
+			//TODO:
+		} else if (document.location.host.match(/jsfiddle/)) {
+			this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+		} else {
+			this.connection.socketURL = '/';
+		}
+
+		// this.connection.token();
 		this.connection.session = {
 			// audio: true,
 			// video: true,
