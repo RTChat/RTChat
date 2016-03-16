@@ -53,7 +53,7 @@ var GameFrameRTC =
 	// require('bootstrap/dist/css/bootstrap.css');
 	// require('font-awesome/css/font-awesome.css');
 	
-	__webpack_require__(6)
+	__webpack_require__(6);
 	
 	var AppLayout = __webpack_require__(10);
 	
@@ -62,13 +62,12 @@ var GameFrameRTC =
 		app: {
 			WelcomePanel: __webpack_require__(22),
 			RoomPanel: __webpack_require__(23)
-		},
-	}
+		}
+	};
 	
-	$(document).ready(function() {
-		(new AppLayout).render();
-	})
-	
+	$(document).ready(function () {
+		new AppLayout().render();
+	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
@@ -16252,34 +16251,40 @@ var GameFrameRTC =
 	// AppLayout
 	module.exports = Backbone.View.extend({
 		el: 'body',
-		template: '\
-			<div id="top-bar">\
-				<div class="fa fa-bars"></div>\
-				<div>IMG</div>\
-				<div data-subview="user"></div>\
-			</div>\
-			<div id="main-bar">\
-				<div id="left-side-bar" class="hidden">Side Bar</div>\
-				<div data-subview="main"></div>\
-				<div id="right-side-bar" class="right hidden">Right Side Bar</div>\
-			</div>\
-			<div id="bottom-bar">Bottom Bar</div>',
+		template: `
+			<div id="top-bar">
+				<div class="fa fa-bars"></div>
+				<div>IMG</div>
+				<div data-subview="user"></div>
+			</div>
+			<div id="main-bar">
+				<div id="left-side-bar" class="hidden">Side Bar</div>
+				<div data-subview="main"></div>
+				<div id="right-side-bar" class="right hidden">Right Side Bar</div>
+			</div>
+			<div id="bottom-bar">Bottom Bar</div>
+		`,
 		events: {
-			'click .fa-bars': function() { $('#left-side-bar').toggleClass('hidden'); },
+			'click .fa-bars': function () {
+				$('#left-side-bar').toggleClass('hidden');
+			}
 		},
-		initialize: function() {
-			Backbone.Subviews.add( this );
+		initialize: function () {
+			Backbone.Subviews.add(this);
 		},
 		subviewCreators: {
-			user: function() { return new UserMenu },
-			main: function() { return new MainPanel },
+			user: function () {
+				return new UserMenu();
+			},
+			main: function () {
+				return new MainPanel();
+			}
 		},
-		render: function(){
+		render: function () {
 			this.$el.html(this.template);
 			return this;
 		}
-	})
-	
+	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
@@ -16332,53 +16337,52 @@ var GameFrameRTC =
 	
 	// UserMenu
 	module.exports = Backbone.View.extend({
-			className: 'float-right dropdown navbar-right',
-			template: '\
-				<div class="dropdown-toggle" data-toggle="dropdown">\
-					{ scope.name } <span class="fa fa-chevron-down"></span>\
-				</div>\
-				<ul class="dropdown-menu">\
-					<li id="edit-btn">Edit Name</li>\
-					<li class="disabled">---- Coming Soon ----</li>\
-					<li class="disabled">Sync user w/ Dropbox</li>\
-					<li class="disabled">Settings</li>\
-					<li class="disabled">Friends</li>\
-					<li class="disabled">Switch User</li>\
-				</ul>',
-			editNameTemplate: '\
-				<div><input type="text" rv-value="scope.name"></div>',
-			events: {
-				'click #edit-btn': function() {
-					console.log("clicked!");
-					this.$el.removeClass('open') //Hack?
-					this.render(true);
-					this.$el.find('input').select();
-				},
-				'keyup input': function(ev) {
-					if (ev.keyCode == 13) this.updateName();
-				},
-				'blur input': 'updateName'
+		className: 'float-right dropdown navbar-right',
+		template: `
+				<div class="dropdown-toggle" data-toggle="dropdown">
+					{ scope.name } <span class="fa fa-chevron-down"></span>
+				</div>
+				<ul class="dropdown-menu">
+					<li id="edit-btn">Edit Name</li>
+					<li class="disabled">---- Coming Soon ----</li>
+					<li class="disabled">Sync user w/ Dropbox</li>
+					<li class="disabled">Settings</li>
+					<li class="disabled">Friends</li>
+					<li class="disabled">Switch User</li>
+				</ul>
+			`,
+		editNameTemplate: `
+				<div><input type="text" rv-value="scope.name"></div>
+			`,
+		events: {
+			'click #edit-btn': function () {
+				console.log("clicked!");
+				this.$el.removeClass('open'); //Hack?
+				this.render(true);
+				this.$el.find('input').select();
 			},
-			initialize: function() {
-				this.scope = UserService.currentUser.attributes;
+			'keyup input': function (ev) {
+				if (ev.keyCode == 13) this.updateName();
 			},
-			render: function(edit){
-				// this.scope.userName = window.localStorage.getItem('UserName')
-				if (edit)
-					this.$el.html(this.editNameTemplate);
-				else
-					this.$el.html(this.template);
-				var rvo = rivets.bind(this.$el, {scope: this.scope})
-				console.log('rivets..', rvo)
+			'blur input': 'updateName'
+		},
+		initialize: function () {
+			this.scope = UserService.currentUser.attributes;
+		},
+		render: function (edit) {
+			// this.scope.userName = window.localStorage.getItem('UserName')
+			if (edit) this.$el.html(this.editNameTemplate);else this.$el.html(this.template);
+			var rvo = rivets.bind(this.$el, { scope: this.scope });
+			console.log('rivets..', rvo);
 	
-				return this;
-			},
-			updateName: function() {
-				UserService.updateName(this.scope.userName)
-				this.render();
-			},
-			scope: {} // Used for Rivets..
-		})
+			return this;
+		},
+		updateName: function () {
+			UserService.updateName(this.scope.userName);
+			this.render();
+		},
+		scope: {} // Used for Rivets..
+	});
 
 /***/ },
 /* 14 */
@@ -18011,50 +18015,51 @@ var GameFrameRTC =
 /* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(18)
+	__webpack_require__(18);
 	
 	// UserService
 	module.exports = {
-		init: function() { // sets up the username, and stuff.
-			if(typeof(Storage) !== "undefined") {
+		init: function () {
+			// sets up the username, and stuff.
+			if (typeof Storage !== "undefined") {
 				var localUsers = new (Backbone.Collection.extend({
 					// idAttribute: 'name',
 					// modelId: function(attrs) {return attrs.name},
-					localStorage: new Backbone.LocalStorage("GameFrameRTC_Users"),
-				}))()
+					localStorage: new Backbone.LocalStorage("GameFrameRTC_Users")
+				}))();
 				this.localUsers = localUsers;
 	
 				localUsers.fetch();
 	
-				this.currentUser = localUsers.get(window.localStorage.getItem('GameFrameRTC_LatestUser')) ||
-					localUsers.first();
+				this.currentUser = localUsers.get(window.localStorage.getItem('GameFrameRTC_LatestUser')) || localUsers.first();
 	
 				// console.log("found user:", this.currentUser)
-				if (!this.currentUser) { this.create(); }
+				if (!this.currentUser) {
+					this.create();
+				}
 	
-				window.localStorage.setItem('GameFrameRTC_LatestUser', this.currentUser.id)
-	
+				window.localStorage.setItem('GameFrameRTC_LatestUser', this.currentUser.id);
 			} else {
 				console.log("Sorry! No Web Storage support..");
 			}
 		},
-		create: function(name) {
+		create: function (name) {
 			this.currentUser = this.localUsers.create({
-				name: name || "Guest_"+parseInt(Math.random()*10000).toString()
+				name: name || "Guest_" + parseInt(Math.random() * 10000).toString()
 			});
-			console.log(this.currentUser)
+			console.log(this.currentUser);
 		},
-		updateName: function(newName) {
+		updateName: function (newName) {
 			this.currentUser.name = newName;
 			this.currentUser.save();
 		},
-		getExtras: function() {
+		getExtras: function () {
 			return {
 				fullId: this.currentUser.id,
 				name: this.currentUser.get('name')
-			}
+			};
 		}
-	}
+	};
 	
 	module.exports.init();
 
@@ -18327,32 +18332,36 @@ var GameFrameRTC =
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {
-	var RTC_wrapper = __webpack_require__(20)
+	var RTC_wrapper = __webpack_require__(20);
 	
 	// MainPanel (and router)
 	module.exports = Backbone.View.extend({
 		id: 'main-panel',
 		welcomeTemplate: '<div data-subview="welcome"></div>',
 		roomTemplate: '<div data-subview="room"></div><div id="video-container"></div>',
-		initialize: function() {
-			Backbone.Subviews.add( this );
+		initialize: function () {
+			Backbone.Subviews.add(this);
 	
 			var self = this;
-			$(window).on('hashchange', function() { self.render(); });
+			$(window).on('hashchange', function () {
+				self.render();
+			});
 		},
 		subviewCreators: {
-			welcome: function() { return new GameFrameRTC.app.WelcomePanel },
-			room: function() { return new GameFrameRTC.app.RoomPanel }
+			welcome: function () {
+				return new GameFrameRTC.app.WelcomePanel();
+			},
+			room: function () {
+				return new GameFrameRTC.app.RoomPanel();
+			}
 		},
-		render: function(){
+		render: function () {
 			if (document.location.hash.length == 0) {
 				this.$el.html(this.welcomeTemplate);
 				RTC_wrapper.leaveRoom();
 			} else {
 				this.$el.html(this.roomTemplate);
-				RTC_wrapper.joinRoom(window.location.hash,
-					{videoContainer: this.$('#video-container')}
-				);
+				RTC_wrapper.joinRoom(window.location.hash, { videoContainer: this.$('#video-container') });
 			}
 	
 			return this;
@@ -18365,13 +18374,13 @@ var GameFrameRTC =
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(_) {
-	__webpack_require__(21)
+	__webpack_require__(21);
 	
 	var UserService = __webpack_require__(17);
 	
 	// RTC_wrapper
 	module.exports = {
-		joinRoom: function(roomName, options) {
+		joinRoom: function (roomName, options) {
 			//TODO: close connection?
 	
 			this.connection = new RTCMultiConnection();
@@ -18379,16 +18388,16 @@ var GameFrameRTC =
 			if (document.location.host.match(/github/)) {
 				//TODO:
 			} else if (document.location.host.match(/jsfiddle/)) {
-				this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
-			} else {
-				this.connection.socketURL = '/';
-			}
+					this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+				} else {
+					this.connection.socketURL = '/';
+				}
 	
 			// this.connection.token();
 			this.connection.session = {
 				// audio: true,
 				// video: true,
-				data : true
+				data: true
 			};
 			this.connection.sdpConstraints.mandatory = {
 				OfferToReceiveAudio: true,
@@ -18409,35 +18418,35 @@ var GameFrameRTC =
 			// 	console.log("new seshh", session)
 			// }
 			this.connection.extra = UserService.getExtras();
-			console.log("EE", this.connection.extra)
+			console.log("EE", this.connection.extra);
 			// this.connection.extra = UserService.currentUser.attributes
 	
 			var cc = this.connection;
 			var self = this;
-			this.connection.onopen = function(sess) {
-				console.log("onopen", sess)
+			this.connection.onopen = function (sess) {
+				console.log("onopen", sess);
 				// console.log("new_user", cc.peers[sess.userid])
 				// console.log("users", cc.peers, cc.peers.getLength())
 				// if (cc.peers[sess.userid].extra.name == undefined) {
 				// 	cc.peers[sess.userid].extra.name = "[you]"
 				// }
-				self.users.push(cc.peers[sess.userid])
-			}
+				self.users.push(cc.peers[sess.userid]);
+			};
 	
-			this.connection.onleave = function(sess) {
-				console.log("onclose", sess)
-				var ii = _.findIndex(self.users, {remoteUserId: sess.userid});
+			this.connection.onleave = function (sess) {
+				console.log("onclose", sess);
+				var ii = _.findIndex(self.users, { remoteUserId: sess.userid });
 				// console.log('II', ii);
 				self.users.splice(ii, 1);
-			}
+			};
 	
-			this.connection.openOrJoin(this.channelPrefix + roomName)
-		},
-		leaveRoom: function() {
+			// this.connection.onmessage =
 	
+			this.connection.openOrJoin(this.channelPrefix + roomName);
 		},
-		users: [],
-	}
+		leaveRoom: function () {},
+		users: []
+	};
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
@@ -24067,40 +24076,52 @@ var GameFrameRTC =
 
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
-		template: '<h2>Welcome To GameFrameRTC!</h2>\
-			A simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\
-			<br><br>\
-			<a class="btn btn-default" href="#global-chat">Go To global chat</a>\
-		',
-		render: function(){
+		template: `<h2>Welcome To GameFrameRTC!</h2>
+			A simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!
+			<br><br>
+			<a class="btn btn-default" href="#global-chat">Go To global chat</a>
+		`,
+		render: function () {
 			this.$el.html(this.template);
 			return this;
 		}
-	})
+	});
 
 /***/ },
 /* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var rivets = __webpack_require__(14);
+	__webpack_require__(24);
 	
-	var RTC_wrapper = __webpack_require__(20)
+	var rivets = __webpack_require__(14);
+	var RTC_wrapper = __webpack_require__(20);
+	
+	var ChatBox = __webpack_require__(26);
 	
 	// RoomPanel
 	module.exports = Backbone.View.extend({
-		template: '\
-			<a class="btn btn-default" href="#"><- Leave</a>\
-			<br>\
-			You\'re in room { scope.roomName }\
-			<br><br>Users:\
-			<ul id="users-panel">\
-				<li rv-each-user="scope.users" rv-show="user.extra.name">\
-					{ user.extra.name }\
-				</li>\
-			</ul>\
-		',
-		render: function(){
-			this.scope.roomName = window.location.hash
+		template: `
+			<a class="btn btn-default" href="#"><- Leave</a>
+			<br>
+			You're in room { scope.roomName }
+			<br><br>Users:
+			<ul id="users-panel">
+				<li rv-each-user="scope.users" rv-show="user.extra.name">
+					{ user.extra.name }
+				</li>
+			</ul>
+			<div data-subview="chat"></div>
+		`,
+		initialize: function () {
+			Backbone.Subviews.add(this);
+		},
+		subviewCreators: {
+			chat: function () {
+				return new ChatBox();
+			}
+		},
+		render: function () {
+			this.scope.roomName = window.location.hash;
 			// this.scope.users = [
 			// 	{name: 'You!'},
 			// 	{name: 'dummy2'},
@@ -24108,14 +24129,81 @@ var GameFrameRTC =
 			// ]
 	
 			// this.scope.users = RTC_wrapper.connection.peers
-			this.scope.users = RTC_wrapper.users
+			this.scope.users = RTC_wrapper.users;
 	
 			this.$el.html(this.template);
-			var rvo = rivets.bind(this.$el, {scope: this.scope})
+			var rvo = rivets.bind(this.$el, { scope: this.scope });
 			return this;
 		},
-		scope: {},
-	})
+		scope: {}
+	});
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// style-loader: Adds some css to the DOM by adding a <style> tag
+	
+	// load the styles
+	var content = __webpack_require__(25);
+	if(typeof content === 'string') content = [[module.id, content, '']];
+	// add the styles to the DOM
+	var update = __webpack_require__(9)(content, {});
+	if(content.locals) module.exports = content.locals;
+	// Hot Module Replacement
+	if(false) {
+		// When the styles change, update the <style> tags
+		if(!content.locals) {
+			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./room_panel.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./room_panel.css");
+				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+				update(newContent);
+			});
+		}
+		// When the module is disposed, remove the <style> tags
+		module.hot.dispose(function() { update(); });
+	}
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+	exports = module.exports = __webpack_require__(8)();
+	// imports
+	
+	
+	// module
+	exports.push([module.id, "#chat-box {\n  border: 2px solid red; }\n", ""]);
+	
+	// exports
+
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var rivets = __webpack_require__(14);
+	
+	var RTC_wrapper = __webpack_require__(20);
+	
+	module.exports = Backbone.View.extend({
+		id: 'chat-box',
+		template: `
+			<ul id="chats"></ul>
+			<input>
+		`,
+		render: function () {
+			this.scope.roomName = window.location.hash;
+	
+			// this.scope.users = RTC_wrapper.connection.peers
+			this.scope.users = RTC_wrapper.users;
+	
+			this.$el.html(this.template);
+			var rvo = rivets.bind(this.$el, { scope: this.scope });
+			return this;
+		},
+		scope: {}
+	});
 
 /***/ }
 /******/ ]);
