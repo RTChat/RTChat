@@ -116,7 +116,7 @@ require('./node_modules/rtcmulticonnection-v3/Signaling-Server.js')(app, functio
 
 // === Watch ===
 if (options.watch) {
-	var watcher = require('child_process').spawn('webpack', ['--watch', '--colors', '--minify']);
+	var watcher = require('child_process').spawn('webpack', ['--watch', '--colors']);
 
 	watcher.stdout.on('data', function(data) {
 		console.log(data.toString());

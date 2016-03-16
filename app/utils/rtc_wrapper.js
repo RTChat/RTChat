@@ -42,10 +42,27 @@ module.exports = {
 		// this.connection.onNewSession = function(session) {
 		// 	console.log("new seshh", session)
 		// }
-		this.connection.extra = UserService.getExtras()
+		this.connection.extra = UserService.getExtras();
+		console.log("EE", this.connection.extra)
+		// this.connection.extra = UserService.currentUser.attributes
 
+		var cc = this.connection;
+		var self = this;
 		this.connection.onopen = function(sess) {
 			console.log("onopen", sess)
+			// console.log("new_user", cc.peers[sess.userid])
+			// console.log("users", cc.peers, cc.peers.getLength())
+			// if (cc.peers[sess.userid].extra.name == undefined) {
+			// 	cc.peers[sess.userid].extra.name = "[you]"
+			// }
+			self.users.push(cc.peers[sess.userid])
+		}
+
+		this.connection.onleave = function(sess) {
+			console.log("onclose", sess)
+			var ii = _.findIndex(self.users, {remoteUserId: sess.userid});
+			// console.log('II', ii);
+			self.users.splice(ii, 1);
 		}
 
 		this.connection.openOrJoin(this.channelPrefix + roomName)

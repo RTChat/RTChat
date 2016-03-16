@@ -7,7 +7,7 @@ module.exports = Backbone.View.extend({
 		className: 'float-right dropdown navbar-right',
 		template: '\
 			<div class="dropdown-toggle" data-toggle="dropdown">\
-				{ scope.userName } <span class="fa fa-chevron-down"></span>\
+				{ scope.name } <span class="fa fa-chevron-down"></span>\
 			</div>\
 			<ul class="dropdown-menu">\
 				<li id="edit-btn">Edit Name</li>\
@@ -18,10 +18,7 @@ module.exports = Backbone.View.extend({
 				<li class="disabled">Switch User</li>\
 			</ul>',
 		editNameTemplate: '\
-			<div><input type="text" rv-value="scope.userName"></div>',
-		initialize: function() {
-			this.scope.userName = UserService.name;
-		},
+			<div><input type="text" rv-value="scope.name"></div>',
 		events: {
 			'click #edit-btn': function() {
 				console.log("clicked!");
@@ -34,6 +31,9 @@ module.exports = Backbone.View.extend({
 			},
 			'blur input': 'updateName'
 		},
+		initialize: function() {
+			this.scope = UserService.currentUser.attributes;
+		},
 		render: function(edit){
 			// this.scope.userName = window.localStorage.getItem('UserName')
 			if (edit)
@@ -42,6 +42,7 @@ module.exports = Backbone.View.extend({
 				this.$el.html(this.template);
 			var rvo = rivets.bind(this.$el, {scope: this.scope})
 			console.log('rivets..', rvo)
+
 			return this;
 		},
 		updateName: function() {

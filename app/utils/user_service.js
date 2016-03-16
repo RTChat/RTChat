@@ -1,28 +1,44 @@
+require('backbone.localstorage')
 
 // UserService
 module.exports = {
 	init: function() { // sets up the username, and stuff.
 		if(typeof(Storage) !== "undefined") {
-			//TODO: use backbone.localStorage?
-			this.name = window.localStorage.getItem('UserName')
-			// console.log("found user:", this.name)
-			if (!this.name) {
-				this.name = "Guest_"+parseInt(Math.random()*10000).toString();
-				window.localStorage.setItem('UserName', this.name)
-			}
-		} else {
-			console.log("Sorry! No Web Storage support..")
-		}
+			var localUsers = new (Backbone.Collection.extend({
+				// idAttribute: 'name',
+				// modelId: function(attrs) {return attrs.name},
+				localStorage: new Backbone.LocalStorage("GameFrameRTC_Users"),
+			}))()
+			this.localUsers = localUsers;
 
+			localUsers.fetch();
+
+			this.currentUser = localUsers.get(window.localStorage.getItem('GameFrameRTC_LatestUser')) ||
+				localUsers.first();
+
+			// console.log("found user:", this.currentUser)
+			if (!this.currentUser) { this.create(); }
+
+			window.localStorage.setItem('GameFrameRTC_LatestUser', this.currentUser.id)
+
+		} else {
+			console.log("Sorry! No Web Storage support..");
+		}
+	},
+	create: function(name) {
+		this.currentUser = this.localUsers.create({
+			name: name || "Guest_"+parseInt(Math.random()*10000).toString()
+		});
+		console.log(this.currentUser)
 	},
 	updateName: function(newName) {
-		this.name = newName;
-		window.localStorage.setItem('UserName', this.name)
+		this.currentUser.name = newName;
+		this.currentUser.save();
 	},
 	getExtras: function() {
 		return {
-			fullId: undefined,
-			name: this.name,
+			fullId: this.currentUser.id,
+			name: this.currentUser.get('name')
 		}
 	}
 }
