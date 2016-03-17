@@ -60,8 +60,8 @@ var GameFrameRTC =
 	module.exports = {
 		UserService: __webpack_require__(17),
 		app: {
-			WelcomePanel: __webpack_require__(22),
-			RoomPanel: __webpack_require__(23)
+			WelcomePanel: __webpack_require__(23),
+			RoomPanel: __webpack_require__(24)
 		}
 	};
 	
@@ -18332,7 +18332,8 @@ var GameFrameRTC =
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {
-	var RTC_wrapper = __webpack_require__(20);
+	__webpack_require__(20);
+	var RTC_wrapper = __webpack_require__(21);
 	
 	// MainPanel (and router)
 	module.exports = Backbone.View.extend({
@@ -18345,6 +18346,10 @@ var GameFrameRTC =
 			var self = this;
 			$(window).on('hashchange', function () {
 				self.render();
+			});
+	
+			$(window).on("resume", function () {
+				console.log("RESUMING!");self.render();
 			});
 		},
 		subviewCreators: {
@@ -18373,13 +18378,37 @@ var GameFrameRTC =
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* WEBPACK VAR INJECTION */(function($) {//Borrowed from http://stackoverflow.com/questions/13798516/javascript-event-for-mobile-browser-re-launch-or-device-wake
+	
+	var $window = $(window);
+	$window.__INACTIVITY_THRESHOLD = 60000;
+	$window.add(document.body);
+	
+	var declare = function () {
+		$window.__lastEvent = new Date();
+	};
+	
+	$window.blur(declare);
+	$window.focus(function () {
+		var diff = new Date() - $window.__lastEvent;
+		if (diff > $window.__INACTIVITY_THRESHOLD) {
+			$window.trigger("resume");
+		}
+	});
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/* WEBPACK VAR INJECTION */(function(_) {
-	__webpack_require__(21);
+	__webpack_require__(22);
 	
 	var UserService = __webpack_require__(17);
 	
 	// RTC_wrapper
 	module.exports = {
+		users: [],
 		joinRoom: function (roomName, options) {
 			//TODO: close connection?
 	
@@ -18440,17 +18469,27 @@ var GameFrameRTC =
 				self.users.splice(ii, 1);
 			};
 	
-			// this.connection.onmessage =
+			this.connection.onmessage = function (e) {
+				_.forEach(self.messageHandlers, function (fn) {
+					fn.call(undefined, e);
+				});
+				// if (self.messageHandlers.length == 0) {
+				// 	console.log("Recieved message")
+				// }
+			};
 	
 			this.connection.openOrJoin(this.channelPrefix + roomName);
 		},
 		leaveRoom: function () {},
-		users: []
+		onmessage: function (fn) {
+			if (typeof fn !== 'function') throw "you're a dumbass..";
+			this.messageHandlers.push(fn);
+		}, messageHandlers: []
 	};
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Last time updated: 2016-02-25 12:41:18 PM UTC
@@ -24071,7 +24110,7 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports) {
 
 	// WelcomePanel
@@ -24088,15 +24127,14 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(24);
 	
 	var rivets = __webpack_require__(14);
-	var RTC_wrapper = __webpack_require__(20);
 	
-	var ChatBox = __webpack_require__(26);
+	var RTC_wrapper = __webpack_require__(21);
+	var ChatBox = __webpack_require__(25);
 	
 	// RoomPanel
 	module.exports = Backbone.View.extend({
@@ -24139,13 +24177,79 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 24 */
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(26);
+	
+	var rivets = __webpack_require__(14);
+	
+	var RTC_wrapper = __webpack_require__(21);
+	var UserService = __webpack_require__(17);
+	
+	module.exports = Backbone.View.extend({
+		id: 'chat-box',
+		template: `
+			<ul id="chats">
+				<li rv-each-msg="scope.messages">
+					<span class="timestamp">{ msg.timestamp }</span>
+					<span class="username">{ msg.name }</span>
+					<span>{ msg.data }</span>
+				</li>
+			</ul>
+			<textarea></textarea>
+		`,
+		events: {
+			'keydown textarea': function (ev) {
+				// Prevent cursor from moving before sending.
+				if (ev.keyCode == 13 && !ev.shiftKey) {
+					ev.preventDefault();
+				}
+			},
+			'keyup textarea': function (ev) {
+				if (ev.keyCode == 13 && !ev.shiftKey) {
+					this.sendChat(ev.currentTarget.value);
+					ev.currentTarget.value = '';
+				}
+			}
+		},
+		initialize: function () {
+			var self = this;
+			RTC_wrapper.onmessage(function (e) {
+				console.log("OOOM", e);
+				self.scope.messages.push({
+					name: e.extra.name,
+					timestamp: new Date(),
+					data: e.data
+				});
+			});
+		},
+		render: function () {
+			this.$el.html(this.template);
+			var rvo = rivets.bind(this.$el, { scope: this.scope });
+			return this;
+		},
+		sendChat: function (msg) {
+			if (msg.length == 0) return;
+			console.log('sending:', msg);
+			RTC_wrapper.connection.send(msg);
+			this.scope.messages.push({
+				name: UserService.currentUser.get('name'),
+				timestamp: new Date(),
+				data: msg
+			});
+		},
+		scope: { messages: [] }
+	});
+
+/***/ },
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(25);
+	var content = __webpack_require__(27);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(9)(content, {});
@@ -24154,8 +24258,8 @@ var GameFrameRTC =
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./room_panel.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./room_panel.css");
+			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./chat_box.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./chat_box.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -24165,7 +24269,7 @@ var GameFrameRTC =
 	}
 
 /***/ },
-/* 25 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(8)();
@@ -24173,37 +24277,10 @@ var GameFrameRTC =
 	
 	
 	// module
-	exports.push([module.id, "#chat-box {\n  border: 2px solid red; }\n", ""]);
+	exports.push([module.id, "#chat-box {\n  border: 2px solid red; }\n  #chat-box ul {\n    padding: 0; }\n  #chat-box li {\n    list-style: none; }\n  #chat-box .username {\n    color: lightgrey; }\n    #chat-box .username:after {\n      content: ':'; }\n  #chat-box .timestamp {\n    display: none; }\n", ""]);
 	
 	// exports
 
-
-/***/ },
-/* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var rivets = __webpack_require__(14);
-	
-	var RTC_wrapper = __webpack_require__(20);
-	
-	module.exports = Backbone.View.extend({
-		id: 'chat-box',
-		template: `
-			<ul id="chats"></ul>
-			<input>
-		`,
-		render: function () {
-			this.scope.roomName = window.location.hash;
-	
-			// this.scope.users = RTC_wrapper.connection.peers
-			this.scope.users = RTC_wrapper.users;
-	
-			this.$el.html(this.template);
-			var rvo = rivets.bind(this.$el, { scope: this.scope });
-			return this;
-		},
-		scope: {}
-	});
 
 /***/ }
 /******/ ]);

@@ -1,0 +1,25 @@
+
+#chat-box {
+	border: 2px solid red;
+
+	ul {
+		padding: 0;
+	}
+
+	li {
+		list-style: none;
+	}
+
+	.username {
+		color: lightgrey;
+
+		&:after {
+			content: ':';
+		}
+	}
+
+	.timestamp {
+		display: none;
+	}
+}
+

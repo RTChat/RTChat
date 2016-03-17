@@ -5,6 +5,7 @@ var UserService = require('../utils/user_service.js');
 
 // RTC_wrapper
 module.exports = {
+	users: [],
 	joinRoom: function(roomName, options) {
 		//TODO: close connection?
 
@@ -65,10 +66,22 @@ module.exports = {
 			self.users.splice(ii, 1);
 		}
 
+		this.connection.onmessage = function(e) {
+			_.forEach(self.messageHandlers, function(fn) {
+				fn.call(undefined, e);
+			});
+			// if (self.messageHandlers.length == 0) {
+			// 	console.log("Recieved message")
+			// }
+		}
+
 		this.connection.openOrJoin(this.channelPrefix + roomName)
 	},
 	leaveRoom: function() {
 
 	},
-	users: [],
+	onmessage: function(fn) {
+		if (typeof fn !== 'function') throw "you're a dumbass.."
+		this.messageHandlers.push(fn);
+	}, messageHandlers: [],
 }
