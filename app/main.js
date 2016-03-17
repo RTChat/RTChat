@@ -20,4 +20,4 @@ module.exports = {
 
 $(document).ready(function() {
 	(new AppLayout).render();
-})
+});

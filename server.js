@@ -90,7 +90,7 @@ app.on('error', function(err) {
 	console.log('ServerError:', err.code)
 })
 
-require('./node_modules/rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
+require('rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
 	try {
 		var params = socket.handshake.query;
 

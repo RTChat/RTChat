@@ -12,8 +12,7 @@ module.exports = Backbone.View.extend({
 
 		var self = this;
 		$(window).on('hashchange', function() { self.render(); });
-
-		$(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
+		// $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 	},
 	subviewCreators: {
 		welcome: function() { return new GameFrameRTC.app.WelcomePanel },

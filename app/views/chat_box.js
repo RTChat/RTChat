@@ -30,29 +30,30 @@ module.exports = Backbone.View.extend({
 	},
 	initialize: function() {
 		var self = this;
-		RTC_wrapper.onmessage(function(e) {
+		RTC_wrapper.onmessage("BroadcastChat", function(e) {
 			console.log("OOOM", e);
 			self.scope.messages.push({
 				name: e.extra.name,
 				timestamp: new Date(),
 				data: e.data,
-				});
 			});
-		},
-		render: function() {
-			this.$el.html(this.template);
-			var rvo = rivets.bind(this.$el, {scope: this.scope})
-			return this;
-		},
-		sendChat: function(msg) {
-			if (msg.length == 0) return
-			console.log('sending:', msg);
-			RTC_wrapper.connection.send(msg);
-			this.scope.messages.push({
-				name: UserService.currentUser.get('name'),
-				timestamp: new Date(),
-				data: msg,
-			});
-		},
-		scope: { messages: [] },
-	})
+		});
+	},
+	render: function() {
+		this.scope.messages = [];
+		this.$el.html(this.template);
+		var rvo = rivets.bind(this.$el, {scope: this.scope})
+		return this;
+	},
+	sendChat: function(msg) {
+		if (msg.length == 0) return
+		// console.log('sending:', msg);
+		RTC_wrapper.send('BroadcastChat', msg);
+		this.scope.messages.push({
+			name: UserService.currentUser.get('name'),
+			timestamp: new Date(),
+			data: msg,
+		});
+	},
+	scope: {},
+});

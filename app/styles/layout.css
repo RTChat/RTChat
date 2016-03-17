@@ -50,4 +50,5 @@ body {
 }
 #bottom-bar {
 	background-color: yellow;
+	display: none;
 }

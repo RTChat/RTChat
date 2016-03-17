@@ -26,13 +26,6 @@ module.exports = Backbone.View.extend({
 	},
 	render: function(){
 		this.scope.roomName = window.location.hash
-		// this.scope.users = [
-		// 	{name: 'You!'},
-		// 	{name: 'dummy2'},
-		// 	{name: 'dummy3'},
-		// ]
-
-		// this.scope.users = RTC_wrapper.connection.peers
 		this.scope.users = RTC_wrapper.users
 
 		this.$el.html(this.template);

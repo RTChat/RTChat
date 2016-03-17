@@ -16322,7 +16322,7 @@ var GameFrameRTC =
 	
 	
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n\n#top-bar, #bottom-bar {\n  position: relative;\n  height: 30px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */ }\n  #top-bar > *, #bottom-bar > * {\n    margin-left: 10px;\n    margin-right: 10px; }\n\n.float-right {\n  margin-left: auto !important; }\n\n#main-bar {\n  flex: 1 100%;\n  display: flex;\n  flex-flow: row; }\n\n#left-side-bar,\n#right-side-bar {\n  flex-grow: 0;\n  width: 210px;\n  background-color: blue; }\n\n#right-side-bar.hidden,\n#left-side-bar.hidden {\n  width: 0; }\n\n#main-panel {\n  flex: 2 0px;\n  background-color: gray; }\n\n#top-bar {\n  background-color: green; }\n\n#bottom-bar {\n  background-color: yellow; }\n", ""]);
+	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n\n#top-bar, #bottom-bar {\n  position: relative;\n  height: 30px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */ }\n  #top-bar > *, #bottom-bar > * {\n    margin-left: 10px;\n    margin-right: 10px; }\n\n.float-right {\n  margin-left: auto !important; }\n\n#main-bar {\n  flex: 1 100%;\n  display: flex;\n  flex-flow: row; }\n\n#left-side-bar,\n#right-side-bar {\n  flex-grow: 0;\n  width: 210px;\n  background-color: blue; }\n\n#right-side-bar.hidden,\n#left-side-bar.hidden {\n  width: 0; }\n\n#main-panel {\n  flex: 2 0px;\n  background-color: gray; }\n\n#top-bar {\n  background-color: green; }\n\n#bottom-bar {\n  background-color: yellow;\n  display: none; }\n", ""]);
 	
 	// exports
 
@@ -18347,10 +18347,7 @@ var GameFrameRTC =
 			$(window).on('hashchange', function () {
 				self.render();
 			});
-	
-			$(window).on("resume", function () {
-				console.log("RESUMING!");self.render();
-			});
+			// $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 		},
 		subviewCreators: {
 			welcome: function () {
@@ -18411,6 +18408,8 @@ var GameFrameRTC =
 		users: [],
 		joinRoom: function (roomName, options) {
 			//TODO: close connection?
+			this.users = [];
+			this.leaveRoom();
 	
 			this.connection = new RTCMultiConnection();
 	
@@ -18451,7 +18450,6 @@ var GameFrameRTC =
 			// this.connection.extra = UserService.currentUser.attributes
 	
 			var cc = this.connection;
-			var self = this;
 			this.connection.onopen = function (sess) {
 				console.log("onopen", sess);
 				// console.log("new_user", cc.peers[sess.userid])
@@ -18465,26 +18463,53 @@ var GameFrameRTC =
 			this.connection.onleave = function (sess) {
 				console.log("onclose", sess);
 				var ii = _.findIndex(self.users, { remoteUserId: sess.userid });
-				// console.log('II', ii);
 				self.users.splice(ii, 1);
 			};
 	
 			this.connection.onmessage = function (e) {
-				_.forEach(self.messageHandlers, function (fn) {
-					fn.call(undefined, e);
+				var type = e.data.type;
+				helpers.checkMessageType(type);
+				_.forEach(self.messageHandlers[type], function (fn) {
+					fn.call(undefined, {
+						extra: e.extra,
+						data: e.data.data,
+						userid: e.userid
+					});
 				});
-				// if (self.messageHandlers.length == 0) {
-				// 	console.log("Recieved message")
-				// }
 			};
 	
 			this.connection.openOrJoin(this.channelPrefix + roomName);
 		},
-		leaveRoom: function () {},
-		onmessage: function (fn) {
-			if (typeof fn !== 'function') throw "you're a dumbass..";
-			this.messageHandlers.push(fn);
-		}, messageHandlers: []
+		leaveRoom: function () {
+			if (this.connection) {
+				this.connection.leave();
+			}
+		},
+		onmessage: function (type, fn) {
+			helpers.checkMessageType(type);
+			if (typeof fn !== 'function') throw "Must pass a function!";
+			this.messageHandlers[type].push(fn);
+		},
+		messageHandlers: {
+			"BroadcastChat": [],
+			"PrivateChat": [],
+			"GameStatus": []
+		},
+		// "ChatHistory": [],
+		send: function (type, data) {
+			this.connection.send({
+				type: type,
+				data: data
+			});
+		}
+	};
+	
+	/* === PRIVATE === */
+	
+	var helpers = {};
+	var self = module.exports;
+	helpers.checkMessageType = function (type) {
+		if (self.messageHandlers[type] === undefined) throw "Invalid Message Type: " + type + ". only [ " + _.keys(self.messageHandlers).toString() + " ] are supported..";
 	};
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
@@ -24160,13 +24185,6 @@ var GameFrameRTC =
 		},
 		render: function () {
 			this.scope.roomName = window.location.hash;
-			// this.scope.users = [
-			// 	{name: 'You!'},
-			// 	{name: 'dummy2'},
-			// 	{name: 'dummy3'},
-			// ]
-	
-			// this.scope.users = RTC_wrapper.connection.peers
 			this.scope.users = RTC_wrapper.users;
 	
 			this.$el.html(this.template);
@@ -24215,7 +24233,7 @@ var GameFrameRTC =
 		},
 		initialize: function () {
 			var self = this;
-			RTC_wrapper.onmessage(function (e) {
+			RTC_wrapper.onmessage("BroadcastChat", function (e) {
 				console.log("OOOM", e);
 				self.scope.messages.push({
 					name: e.extra.name,
@@ -24225,21 +24243,22 @@ var GameFrameRTC =
 			});
 		},
 		render: function () {
+			this.scope.messages = [];
 			this.$el.html(this.template);
 			var rvo = rivets.bind(this.$el, { scope: this.scope });
 			return this;
 		},
 		sendChat: function (msg) {
 			if (msg.length == 0) return;
-			console.log('sending:', msg);
-			RTC_wrapper.connection.send(msg);
+			// console.log('sending:', msg);
+			RTC_wrapper.send('BroadcastChat', msg);
 			this.scope.messages.push({
 				name: UserService.currentUser.get('name'),
 				timestamp: new Date(),
 				data: msg
 			});
 		},
-		scope: { messages: [] }
+		scope: {}
 	});
 
 /***/ },

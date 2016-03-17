@@ -8,6 +8,8 @@ module.exports = {
 	users: [],
 	joinRoom: function(roomName, options) {
 		//TODO: close connection?
+		this.users = [];
+		this.leaveRoom();
 
 		this.connection = new RTCMultiConnection();
 
@@ -48,7 +50,6 @@ module.exports = {
 		// this.connection.extra = UserService.currentUser.attributes
 
 		var cc = this.connection;
-		var self = this;
 		this.connection.onopen = function(sess) {
 			console.log("onopen", sess)
 			// console.log("new_user", cc.peers[sess.userid])
@@ -62,26 +63,52 @@ module.exports = {
 		this.connection.onleave = function(sess) {
 			console.log("onclose", sess)
 			var ii = _.findIndex(self.users, {remoteUserId: sess.userid});
-			// console.log('II', ii);
 			self.users.splice(ii, 1);
 		}
 
 		this.connection.onmessage = function(e) {
-			_.forEach(self.messageHandlers, function(fn) {
-				fn.call(undefined, e);
+			var type = e.data.type;
+			helpers.checkMessageType(type);
+			_.forEach(self.messageHandlers[type], function(fn) {
+				fn.call(undefined, {
+					extra: e.extra,
+					data: e.data.data,
+					userid: e.userid,
+				});
 			});
-			// if (self.messageHandlers.length == 0) {
-			// 	console.log("Recieved message")
-			// }
 		}
 
 		this.connection.openOrJoin(this.channelPrefix + roomName)
 	},
 	leaveRoom: function() {
-
+		if (this.connection) {
+			this.connection.leave();
+		}
 	},
-	onmessage: function(fn) {
-		if (typeof fn !== 'function') throw "you're a dumbass.."
-		this.messageHandlers.push(fn);
-	}, messageHandlers: [],
+	onmessage: function(type, fn) {
+		helpers.checkMessageType(type);
+		if (typeof fn !== 'function') throw "Must pass a function!";
+		this.messageHandlers[type].push(fn);
+	},
+	messageHandlers: {
+		"BroadcastChat": [],
+		"PrivateChat": [],
+		"GameStatus": [],
+		// "ChatHistory": [],
+	},
+	send: function(type, data) {
+		this.connection.send({
+			type: type,
+			data: data
+		})
+	},
+}
+
+/* === PRIVATE === */
+
+var helpers = {};
+var self = module.exports;
+helpers.checkMessageType = function(type) {
+	if (self.messageHandlers[type] === undefined)
+		throw "Invalid Message Type: " + type + ". only [ " + _.keys(self.messageHandlers).toString() + " ] are supported..";
 }
