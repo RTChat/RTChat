@@ -1,9 +1,9 @@
-require('../styles/chat_box.css');
+require('styles/chat_box.css');
 
 var rivets = require('rivets');
 
-var RTC_wrapper = require('../utils/rtc_wrapper.js');
-var UserService = require('../utils/user_service.js');
+var RTC_wrapper = require('utils/rtc_wrapper.js');
+var UserService = require('utils/user_service.js');
 
 module.exports = Backbone.View.extend({
 	id: 'chat-box',

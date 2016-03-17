@@ -6,15 +6,15 @@ require('bootstrap/dist/js/bootstrap.js');
 // require('bootstrap/dist/css/bootstrap.css');
 // require('font-awesome/css/font-awesome.css');
 
-require('./styles/main.css')
+require('styles/main.css');
 
-var AppLayout = require('./views/layout.js');
+var AppLayout = require('views/layout.js');
 
 module.exports = {
-	UserService: require('./utils/user_service.js'),
+	UserService: require('utils/user_service.js'),
 	app: {
-		WelcomePanel: require('./views/welcome_panel.js'),
-		RoomPanel: require('./views/room_panel.js')
+		WelcomePanel: require('views/welcome_panel.js'),
+		RoomPanel: require('views/room_panel.js')
 	},
 }
 

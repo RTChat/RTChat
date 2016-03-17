@@ -1,8 +1,8 @@
 
 var rivets = require('rivets');
 
-var RTC_wrapper = require('../utils/rtc_wrapper.js');
-var ChatBox = require('./chat_box.js');
+var RTC_wrapper = require('utils/rtc_wrapper.js');
+var ChatBox = require('views/chat_box.js');
 
 // RoomPanel
 module.exports = Backbone.View.extend({

@@ -18332,7 +18332,7 @@ var GameFrameRTC =
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {
-	__webpack_require__(20);
+	__webpack_require__(20); // Adds the Window:resume event.
 	var RTC_wrapper = __webpack_require__(21);
 	
 	// MainPanel (and router)

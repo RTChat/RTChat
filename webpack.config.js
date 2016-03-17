@@ -9,6 +9,11 @@ module.exports = {
 		library: "GameFrameRTC",
 		filename: "bundle.js"
 	},
+	resolve: { alias: {
+		views: __dirname + '/app/views',
+		utils: __dirname + '/app/utils',
+		styles: __dirname + '/app/styles',
+	} },
 	plugins: [
 		new webpack.ProvidePlugin({
 			$: "jquery",
@@ -23,10 +28,10 @@ module.exports = {
 			// {test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=application/octet-stream'},
 			// {test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: 'file'},
 			// {test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=image/svg+xml'}
-			{ test:  /app\/.+\.js$/, loader: "babel-loader" }, // Adds ES6 support.
+			{ test:  /\.js$/, loader: "babel-loader", exclude: /node_modules/ }, // Adds ES6 support.
 		]
 	},
-	devtool: 'source-map'
+	devtool: 'source-map',
 };
 
  if (process.argv.indexOf('--minify') >= 0) {

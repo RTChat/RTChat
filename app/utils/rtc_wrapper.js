@@ -1,7 +1,7 @@
 
 require('rtcmulticonnection-v3/dist/rmc3.js')
 
-var UserService = require('../utils/user_service.js');
+var UserService = require('utils/user_service.js');
 
 // RTC_wrapper
 module.exports = {

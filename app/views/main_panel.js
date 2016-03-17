@@ -1,6 +1,6 @@
 
-require('../utils/resume.js');
-var RTC_wrapper = require('../utils/rtc_wrapper.js')
+require('utils/resume.js'); // Adds the Window:resume event.
+var RTC_wrapper = require('utils/rtc_wrapper.js')
 
 // MainPanel (and router)
 module.exports = Backbone.View.extend({
