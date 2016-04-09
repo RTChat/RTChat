@@ -3,7 +3,7 @@ require('styles/layout.css');
 var UserMenu = require('views/user_menu.js');
 var MainPanel = require('views/main_panel.js');
 
-// AppLayout
+// LayoutView
 module.exports = Backbone.View.extend({
 	el: 'body',
 	template: `
@@ -26,8 +26,8 @@ module.exports = Backbone.View.extend({
 		Backbone.Subviews.add( this );
 	},
 	subviewCreators: {
-		user: function() { return new UserMenu },
-		main: function() { return new MainPanel },
+		user: function() { return new UserMenu(); },
+		main: function() { return new MainPanel(); },
 	},
 	render: function(){
 		this.$el.html(this.template);

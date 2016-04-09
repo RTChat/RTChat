@@ -1,25 +1,21 @@
 
 require('rtcmulticonnection-v3/dist/rmc3.js')
 
+var AppConfig = require('app/config.json');
 var UserService = require('utils/user_service.js');
 
-// RTC_wrapper
+// RTCWrapper
 module.exports = {
+	// === Room API ===  (and users)
 	users: [],
 	joinRoom: function(roomName, options) {
 		//TODO: close connection?
+		var self = this;
 		this.users = [];
 		this.leaveRoom();
 
 		this.connection = new RTCMultiConnection();
-
-		if (document.location.host.match(/github/)) {
-			//TODO:
-		} else if (document.location.host.match(/jsfiddle/)) {
-			this.connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
-		} else {
-			this.connection.socketURL = '/';
-		}
+		this.connection.socketURL = AppConfig['RTCHost'];
 
 		// this.connection.token();
 		this.connection.session = {
@@ -49,7 +45,6 @@ module.exports = {
 		console.log("EE", this.connection.extra)
 		// this.connection.extra = UserService.currentUser.attributes
 
-		var cc = this.connection;
 		this.connection.onopen = function(sess) {
 			console.log("onopen", sess)
 			// console.log("new_user", cc.peers[sess.userid])
@@ -57,7 +52,12 @@ module.exports = {
 			// if (cc.peers[sess.userid].extra.name == undefined) {
 			// 	cc.peers[sess.userid].extra.name = "[you]"
 			// }
-			self.users.push(cc.peers[sess.userid])
+			self.users.push(self.connection.peers[sess.userid]);
+
+			if (self.connection.isInitiator) {
+				self.updateState(AppState, false);
+				//TODO: send only to requester!
+			}
 		}
 
 		this.connection.onleave = function(sess) {
@@ -67,15 +67,17 @@ module.exports = {
 		}
 
 		this.connection.onmessage = function(e) {
-			var type = e.data.type;
-			helpers.checkMessageType(type);
-			_.forEach(self.messageHandlers[type], function(fn) {
-				fn.call(undefined, {
-					extra: e.extra,
-					data: e.data.data,
-					userid: e.userid,
-				});
-			});
+			switch(e.data.type) {
+				case 'UpdateAppState':
+					mergeAppState(e.data.data);
+					triggerStateChange();
+					break;
+				case 'BroadcastChat':
+					triggerBroadcastChat(e.data.data);
+					break;
+				default:
+					console.warn("Received bad message type:", e.data.type)
+			}
 		}
 
 		this.connection.openOrJoin(this.channelPrefix + roomName)
@@ -85,30 +87,64 @@ module.exports = {
 			this.connection.leave();
 		}
 	},
-	onmessage: function(type, fn) {
-		helpers.checkMessageType(type);
+
+	// === AppState API ===
+	onStateChange: function(fn) { // Register a handler: fn(oldState, newState)
 		if (typeof fn !== 'function') throw "Must pass a function!";
-		this.messageHandlers[type].push(fn);
+		stateChangeHandlers.push(fn);
 	},
-	messageHandlers: {
-		"BroadcastChat": [],
-		"PrivateChat": [],
-		"GameStatus": [],
-		// "ChatHistory": [],
+	updateState: function(value, triggerLocally) { // triggerLocally default to true.
+		this.connection.send({type: 'UpdateAppState', data: value});
+		mergeAppState(value);
+		if (triggerLocally !== false) triggerStateChange();
 	},
-	send: function(type, data) {
-		this.connection.send({
-			type: type,
-			data: data
-		})
+
+	// === BrodcastChat API ===
+	sendBroadcast: function(text) {
+		var msg = {
+			text: text,
+			name: UserService.currentUser.get('name'),
+			timestamp: new Date()
+		};
+		this.connection.send({type: 'BroadcastChat', data: msg});
+		triggerBroadcastChat(msg); // Trigger locally
 	},
+	onReceiveBroadcast: function(fn) { // Register "receive" handler
+		if (typeof fn !== 'function') throw "Must pass a function!";
+		receiveBroadcastHandlers.push(fn);
+	},
+	//TODO: ...
+	// getBroadcastHistory: function() {},
+
+	// === PrivateChat API ===
+	// sendPrivateMsg: function() {},
 }
 
-/* === PRIVATE === */
+/* ===== PRIVATE ===== */
 
-var helpers = {};
-var self = module.exports;
-helpers.checkMessageType = function(type) {
-	if (self.messageHandlers[type] === undefined)
-		throw "Invalid Message Type: " + type + ". only [ " + _.keys(self.messageHandlers).toString() + " ] are supported..";
-}
+var AppState = {};
+var oldState = {};
+var stateChangeHandlers = [];
+var receiveBroadcastHandlers = [];
+
+// Instead of atomically updating the state, only update the present keys
+var mergeAppState = function(newState) {
+	_.each(newState, function(v, k) {
+		//TODO: strip out functions from state.
+		AppState[k] = v;
+	});
+};
+
+var triggerStateChange = function() {
+	// Trigger state change handlers.
+	_.forEach(stateChangeHandlers, function(fn) {
+		fn.call(undefined, _.clone(oldState), _.clone(AppState)); // Clone so callee can't mess with subsequent callees.
+	});
+	oldState = _.clone(AppState); // Clone so changes to AppState don't effect oldState.
+};
+
+var triggerBroadcastChat = function(msg) {
+	_.forEach(receiveBroadcastHandlers, function(fn) {
+		fn.call(undefined, _.clone(msg)); // Clone so callee can't mess with subsequent callees.
+	});
+};

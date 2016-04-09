@@ -1,18 +1,18 @@
-require('styles/chat_box.css');
+require('styles/chat_panel.css');
 
 var rivets = require('rivets');
 
-var RTC_wrapper = require('utils/rtc_wrapper.js');
+var RTCWrapper = require('utils/rtc_wrapper.js');
 var UserService = require('utils/user_service.js');
 
 module.exports = Backbone.View.extend({
-	id: 'chat-box',
+	id: 'ChatPanel',
 	template: `
 		<ul id="chats">
 			<li rv-each-msg="scope.messages">
 				<span class="timestamp">{ msg.timestamp }</span>
 				<span class="username">{ msg.name }</span>
-				<span>{ msg.data }</span>
+				<span>{ msg.text }</span>
 			</li>
 		</ul>
 		<textarea></textarea>
@@ -30,13 +30,10 @@ module.exports = Backbone.View.extend({
 	},
 	initialize: function() {
 		var self = this;
-		RTC_wrapper.onmessage("BroadcastChat", function(e) {
-			console.log("OOOM", e);
-			self.scope.messages.push({
-				name: e.extra.name,
-				timestamp: new Date(),
-				data: e.data,
-			});
+		// RTCWrapper.onmessage("BroadcastChat", function(e) {
+		RTCWrapper.onReceiveBroadcast(function(msg) {
+			console.log("OOOM", msg);
+			self.scope.messages.push(msg);
 		});
 	},
 	render: function() {
@@ -45,15 +42,9 @@ module.exports = Backbone.View.extend({
 		var rvo = rivets.bind(this.$el, {scope: this.scope})
 		return this;
 	},
-	sendChat: function(msg) {
-		if (msg.length == 0) return
-		// console.log('sending:', msg);
-		RTC_wrapper.send('BroadcastChat', msg);
-		this.scope.messages.push({
-			name: UserService.currentUser.get('name'),
-			timestamp: new Date(),
-			data: msg,
-		});
+	sendChat: function(text) {
+		if (text.length == 0) return
+		RTCWrapper.sendBroadcast(text);
 	},
 	scope: {},
 });

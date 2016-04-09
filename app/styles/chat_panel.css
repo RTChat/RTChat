@@ -1,5 +1,5 @@
 
-#chat-box {
+#ChatPanel {
 	border: 2px solid red;
 
 	ul {
@@ -22,4 +22,3 @@
 		display: none;
 	}
 }
-
