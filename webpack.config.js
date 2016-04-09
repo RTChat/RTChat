@@ -42,7 +42,16 @@ module.exports = {
 };
 
 if (process.argv.indexOf('--minify') >= 0) {
+	var CompressionPlugin = require("compression-webpack-plugin");
+
 	module.exports.plugins.push(
 		new webpack.optimize.UglifyJsPlugin({minimize: true})
+	);
+	module.exports.plugins.push(
+		new CompressionPlugin({
+			asset: "[path].gz[query]",
+			algorithm: "gzip",
+			test: /\.js$|\.html$/
+		})
 	);
 }
