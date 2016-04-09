@@ -16265,9 +16265,7 @@ var RTChat =
 /* 10 */
 /***/ function(module, exports) {
 
-	module.exports = {
-		"SocketHost": "https://thanntastic.com:443"
-	};
+	module.exports = {"SocketHost":"https://thanntastic.com:443"}
 
 /***/ },
 /* 11 */

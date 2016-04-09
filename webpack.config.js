@@ -24,8 +24,8 @@ module.exports = {
 	],
 	module: {
 		loaders: [
+			{ test:  /\.json$/, loaders: ["hson"] },
 			{ test:  /\.s?css$/, loaders: ["style", "css", "sass"] },
-			{ test:  /\.json$/, loaders: ["json", "strip-json-comments"] },
 			{ // ES6 support.
 				test:  /\.js$/,
 				loader: "babel",
