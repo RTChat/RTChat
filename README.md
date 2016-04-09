@@ -1,4 +1,4 @@
-# GameFrameRTC
+# RTChat
 
 ### Setup ###
  1. `npm install`

@@ -1,7 +1,7 @@
 {
-  "name": "GameFrameRTC",
+  "name": "RTChat",
   "description": "Framework for building games using WebRTC",
-  "repository": "https://github.com/Thann/GameFrameRTC",
+  "repository": "https://github.com/RTChat/RTChat",
   "version": "0.0.1",
   "scripts": {},
   "license": "AGPL-3.0",

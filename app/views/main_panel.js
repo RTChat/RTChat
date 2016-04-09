@@ -15,8 +15,8 @@ module.exports = Backbone.View.extend({
 		// $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 	},
 	subviewCreators: {
-		welcome: function() { return new GameFrameRTC.app.WelcomePanel },
-		room: function() { return new GameFrameRTC.app.RoomPanel }
+		welcome: function() { return new RTChat.app.WelcomePanel },
+		room: function() { return new RTChat.app.RoomPanel }
 	},
 	render: function(){
 		if (document.location.hash.length == 0) {

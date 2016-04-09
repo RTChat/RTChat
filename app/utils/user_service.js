@@ -7,19 +7,19 @@ module.exports = {
 			var localUsers = new (Backbone.Collection.extend({
 				// idAttribute: 'name',
 				// modelId: function(attrs) {return attrs.name},
-				localStorage: new Backbone.LocalStorage("GameFrameRTC_Users"),
+				localStorage: new Backbone.LocalStorage("RTChat_Users"),
 			}))()
 			this.localUsers = localUsers;
 
 			localUsers.fetch();
 
-			this.currentUser = localUsers.get(window.localStorage.getItem('GameFrameRTC_LatestUser')) ||
+			this.currentUser = localUsers.get(window.localStorage.getItem('RTChat_LatestUser')) ||
 				localUsers.first();
 
 			// console.log("found user:", this.currentUser)
 			if (!this.currentUser) { this.create(); }
 
-			window.localStorage.setItem('GameFrameRTC_LatestUser', this.currentUser.id)
+			window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id)
 
 		} else {
 			console.log("Sorry! No Web Storage support..");

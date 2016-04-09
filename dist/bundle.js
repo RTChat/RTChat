@@ -1,4 +1,4 @@
-var GameFrameRTC =
+var RTChat =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -54,9 +54,9 @@ var GameFrameRTC =
 	// require('bootstrap/dist/css/bootstrap.css');
 	// require('font-awesome/css/font-awesome.css');
 	
-	__webpack_require__(7);
+	__webpack_require__(6);
 	
-	var AppConfig = __webpack_require__(24);
+	var AppConfig = __webpack_require__(10);
 	
 	// Make PUBLIC modules accessible.
 	module.exports = {
@@ -64,9 +64,9 @@ var GameFrameRTC =
 		RTCWrapper: __webpack_require__(22),
 		UserService: __webpack_require__(18),
 		app: { // DemoApp - Overwrite this!
-			WelcomePanel: __webpack_require__(25),
-			RoomPanel: __webpack_require__(26),
-			ChatPanel: __webpack_require__(27)
+			WelcomePanel: __webpack_require__(24),
+			RoomPanel: __webpack_require__(25),
+			ChatPanel: __webpack_require__(26)
 		},
 		init: function init() {
 			var self = this;
@@ -15912,17 +15912,16 @@ var GameFrameRTC =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 6 */,
-/* 7 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(8);
+	var content = __webpack_require__(7);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(10)(content, {});
+	var update = __webpack_require__(9)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -15939,10 +15938,10 @@ var GameFrameRTC =
 	}
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(9)();
+	exports = module.exports = __webpack_require__(8)();
 	// imports
 	
 	
@@ -15953,7 +15952,7 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/*
@@ -16009,7 +16008,7 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -16263,6 +16262,14 @@ var GameFrameRTC =
 
 
 /***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	module.exports = {
+		"SocketHost": "https://thanntastic.com:443"
+	};
+
+/***/ },
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -16310,7 +16317,7 @@ var GameFrameRTC =
 	var content = __webpack_require__(13);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(10)(content, {});
+	var update = __webpack_require__(9)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -16330,7 +16337,7 @@ var GameFrameRTC =
 /* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(9)();
+	exports = module.exports = __webpack_require__(8)();
 	// imports
 	
 	
@@ -18026,20 +18033,20 @@ var GameFrameRTC =
 				var localUsers = new (Backbone.Collection.extend({
 					// idAttribute: 'name',
 					// modelId: function(attrs) {return attrs.name},
-					localStorage: new Backbone.LocalStorage("GameFrameRTC_Users")
+					localStorage: new Backbone.LocalStorage("RTChat_Users")
 				}))();
 				this.localUsers = localUsers;
 	
 				localUsers.fetch();
 	
-				this.currentUser = localUsers.get(window.localStorage.getItem('GameFrameRTC_LatestUser')) || localUsers.first();
+				this.currentUser = localUsers.get(window.localStorage.getItem('RTChat_LatestUser')) || localUsers.first();
 	
 				// console.log("found user:", this.currentUser)
 				if (!this.currentUser) {
 					this.create();
 				}
 	
-				window.localStorage.setItem('GameFrameRTC_LatestUser', this.currentUser.id);
+				window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id);
 			} else {
 				console.log("Sorry! No Web Storage support..");
 			}
@@ -18353,10 +18360,10 @@ var GameFrameRTC =
 		},
 		subviewCreators: {
 			welcome: function welcome() {
-				return new GameFrameRTC.app.WelcomePanel();
+				return new RTChat.app.WelcomePanel();
 			},
 			room: function room() {
-				return new GameFrameRTC.app.RoomPanel();
+				return new RTChat.app.RoomPanel();
 			}
 		},
 		render: function render() {
@@ -18406,7 +18413,7 @@ var GameFrameRTC =
 	
 	__webpack_require__(23);
 	
-	var AppConfig = __webpack_require__(24);
+	var AppConfig = __webpack_require__(10);
 	var UserService = __webpack_require__(18);
 	
 	// RTCWrapper
@@ -24248,19 +24255,11 @@ var GameFrameRTC =
 /* 24 */
 /***/ function(module, exports) {
 
-	module.exports = {
-		"SocketHost": "https://thanntastic.com:443"
-	};
-
-/***/ },
-/* 25 */
-/***/ function(module, exports) {
-
 	"use strict";
 	
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
-		template: "<h2>Welcome To GameFrameRTC!</h2>\n\t\tA simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\n\t\t<br><br>\n\t\t<a class=\"btn btn-default\" href=\"#global-chat\">Go To global chat</a>\n\t",
+		template: "<h2>Welcome To RTChat!</h2>\n\t\tA simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\n\t\t<br><br>\n\t\t<a class=\"btn btn-default\" href=\"#global-chat\">Go To global chat</a>\n\t",
 		render: function render() {
 			this.$el.html(this.template);
 			return this;
@@ -24268,7 +24267,7 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24276,7 +24275,7 @@ var GameFrameRTC =
 	var rivets = __webpack_require__(15);
 	
 	var RTCWrapper = __webpack_require__(22);
-	var ChatBox = __webpack_require__(27);
+	var ChatBox = __webpack_require__(26);
 	
 	// RoomPanel
 	module.exports = Backbone.View.extend({
@@ -24312,12 +24311,12 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(28);
+	__webpack_require__(27);
 	
 	var rivets = __webpack_require__(15);
 	
@@ -24363,16 +24362,16 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(29);
+	var content = __webpack_require__(28);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(10)(content, {});
+	var update = __webpack_require__(9)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24389,10 +24388,10 @@ var GameFrameRTC =
 	}
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(9)();
+	exports = module.exports = __webpack_require__(8)();
 	// imports
 	
 	

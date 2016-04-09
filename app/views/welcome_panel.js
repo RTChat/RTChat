@@ -1,6 +1,6 @@
 // WelcomePanel
 module.exports = Backbone.View.extend({
-	template: `<h2>Welcome To GameFrameRTC!</h2>
+	template: `<h2>Welcome To RTChat!</h2>
 		A simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!
 		<br><br>
 		<a class="btn btn-default" href="#global-chat">Go To global chat</a>

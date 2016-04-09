@@ -6,7 +6,7 @@ module.exports = {
 	output: {
 		path: __dirname + "/dist",
 		libraryTarget: 'var',
-		library: "GameFrameRTC",
+		library: "RTChat",
 		filename: "bundle.js"
 	},
 	resolve: { alias: {
