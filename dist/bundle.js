@@ -54,22 +54,28 @@ var GameFrameRTC =
 	// require('bootstrap/dist/css/bootstrap.css');
 	// require('font-awesome/css/font-awesome.css');
 	
-	__webpack_require__(6);
+	__webpack_require__(7);
+	
+	var AppConfig = __webpack_require__(24);
 	
 	// Make PUBLIC modules accessible.
 	module.exports = {
-		LayoutView: __webpack_require__(10),
-		RTCWrapper: __webpack_require__(21),
-		UserService: __webpack_require__(17),
+		LayoutView: __webpack_require__(11),
+		RTCWrapper: __webpack_require__(22),
+		UserService: __webpack_require__(18),
 		app: { // DemoApp - Overwrite this!
-			WelcomePanel: __webpack_require__(24),
-			RoomPanel: __webpack_require__(25),
-			ChatPanel: __webpack_require__(26)
+			WelcomePanel: __webpack_require__(25),
+			RoomPanel: __webpack_require__(26),
+			ChatPanel: __webpack_require__(27)
 		},
 		init: function init() {
 			var self = this;
 			$(document).ready(function () {
-				new self.LayoutView().render();
+				// Init Socket.io
+				$.getScript((AppConfig['SocketHost'] || '') + '/socket.io/socket.io.js').then(function (e) {
+					// Make initial render.
+					new self.LayoutView().render();
+				});
 			});
 		}
 	};
@@ -15906,16 +15912,17 @@ var GameFrameRTC =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 6 */
+/* 6 */,
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(7);
+	var content = __webpack_require__(8);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(9)(content, {});
+	var update = __webpack_require__(10)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -15932,10 +15939,10 @@ var GameFrameRTC =
 	}
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(8)();
+	exports = module.exports = __webpack_require__(9)();
 	// imports
 	
 	
@@ -15946,7 +15953,7 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	/*
@@ -16002,7 +16009,7 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -16256,15 +16263,15 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {'use strict';
 	
-	__webpack_require__(11);
+	__webpack_require__(12);
 	
-	var UserMenu = __webpack_require__(13);
-	var MainPanel = __webpack_require__(19);
+	var UserMenu = __webpack_require__(14);
+	var MainPanel = __webpack_require__(20);
 	
 	// LayoutView
 	module.exports = Backbone.View.extend({
@@ -16294,16 +16301,16 @@ var GameFrameRTC =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(12);
+	var content = __webpack_require__(13);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(9)(content, {});
+	var update = __webpack_require__(10)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -16320,10 +16327,10 @@ var GameFrameRTC =
 	}
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(8)();
+	exports = module.exports = __webpack_require__(9)();
 	// imports
 	
 	
@@ -16334,14 +16341,14 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var rivets = __webpack_require__(14);
+	var rivets = __webpack_require__(15);
 	
-	var UserService = __webpack_require__(17);
+	var UserService = __webpack_require__(18);
 	
 	// UserMenu
 	module.exports = Backbone.View.extend({
@@ -16377,7 +16384,7 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(jQuery, module) {// Rivets.js
@@ -17755,9 +17762,9 @@ var GameFrameRTC =
 	  };
 	
 	  if (typeof (typeof module !== "undefined" && module !== null ? module.exports : void 0) === 'object') {
-	    module.exports = Rivets.factory(__webpack_require__(16));
+	    module.exports = Rivets.factory(__webpack_require__(17));
 	  } else if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(16)], __WEBPACK_AMD_DEFINE_RESULT__ = function(sightglass) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(17)], __WEBPACK_AMD_DEFINE_RESULT__ = function(sightglass) {
 	      return this.rivets = Rivets.factory(sightglass);
 	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else {
@@ -17766,10 +17773,10 @@ var GameFrameRTC =
 	
 	}).call(this);
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(15)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(16)(module)))
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -17785,7 +17792,7 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function() {
@@ -18004,12 +18011,12 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
-	__webpack_require__(18);
+	__webpack_require__(19);
 	
 	// UserService
 	module.exports = {
@@ -18058,7 +18065,7 @@ var GameFrameRTC =
 	module.exports.init();
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -18322,13 +18329,13 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {'use strict';
 	
-	__webpack_require__(20); // Adds the Window:resume event.
-	var RTCWrapper = __webpack_require__(21);
+	__webpack_require__(21); // Adds the Window:resume event.
+	var RTCWrapper = __webpack_require__(22);
 	
 	// MainPanel (and router)
 	module.exports = Backbone.View.extend({
@@ -18367,7 +18374,7 @@ var GameFrameRTC =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {"use strict";
@@ -18392,15 +18399,15 @@ var GameFrameRTC =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(_) {'use strict';
 	
-	__webpack_require__(22);
+	__webpack_require__(23);
 	
-	var AppConfig = __webpack_require__(23);
-	var UserService = __webpack_require__(17);
+	var AppConfig = __webpack_require__(24);
+	var UserService = __webpack_require__(18);
 	
 	// RTCWrapper
 	module.exports = {
@@ -18413,7 +18420,7 @@ var GameFrameRTC =
 			this.leaveRoom();
 	
 			this.connection = new RTCMultiConnection();
-			this.connection.socketURL = AppConfig['RTCHost'];
+			this.connection.socketURL = AppConfig['SocketHost'];
 	
 			// this.connection.token();
 			this.connection.session = {
@@ -18552,7 +18559,7 @@ var GameFrameRTC =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Last time updated: 2016-03-14 12:07:07 PM UTC
@@ -24238,15 +24245,15 @@ var GameFrameRTC =
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports) {
 
 	module.exports = {
-		"RTCHost": "/"
+		"SocketHost": "https://thanntastic.com:443"
 	};
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -24261,15 +24268,15 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var rivets = __webpack_require__(14);
+	var rivets = __webpack_require__(15);
 	
-	var RTCWrapper = __webpack_require__(21);
-	var ChatBox = __webpack_require__(26);
+	var RTCWrapper = __webpack_require__(22);
+	var ChatBox = __webpack_require__(27);
 	
 	// RoomPanel
 	module.exports = Backbone.View.extend({
@@ -24305,17 +24312,17 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(27);
+	__webpack_require__(28);
 	
-	var rivets = __webpack_require__(14);
+	var rivets = __webpack_require__(15);
 	
-	var RTCWrapper = __webpack_require__(21);
-	var UserService = __webpack_require__(17);
+	var RTCWrapper = __webpack_require__(22);
+	var UserService = __webpack_require__(18);
 	
 	module.exports = Backbone.View.extend({
 		id: 'ChatPanel',
@@ -24356,16 +24363,16 @@ var GameFrameRTC =
 	});
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(28);
+	var content = __webpack_require__(29);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(9)(content, {});
+	var update = __webpack_require__(10)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24382,10 +24389,10 @@ var GameFrameRTC =
 	}
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(8)();
+	exports = module.exports = __webpack_require__(9)();
 	// imports
 	
 	

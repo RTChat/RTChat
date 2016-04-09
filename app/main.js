@@ -8,6 +8,8 @@ require('bootstrap/dist/js/bootstrap.js');
 
 require('styles/main.css');
 
+var AppConfig = require('app/config');
+
 // Make PUBLIC modules accessible.
 module.exports = {
 	LayoutView: require('views/layout.js'),
@@ -21,7 +23,11 @@ module.exports = {
 	init: function() {
 		var self = this;
 		$(document).ready(function() {
-			(new self.LayoutView()).render();
+			// Init Socket.io
+			$.getScript((AppConfig['SocketHost']||'')+'/socket.io/socket.io.js').then(function(e) {
+				// Make initial render.
+				(new self.LayoutView()).render();
+			})
 		});
 	}
-}
+};

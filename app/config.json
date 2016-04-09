@@ -1,4 +1,4 @@
 // Put config vars here...
 {
-  "RTCHost": "/"
+  "SocketHost": "https://thanntastic.com:443" // Comment out to use localhost.
 }

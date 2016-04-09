@@ -15,7 +15,7 @@ module.exports = {
 		this.leaveRoom();
 
 		this.connection = new RTCMultiConnection();
-		this.connection.socketURL = AppConfig['RTCHost'];
+		this.connection.socketURL = AppConfig['SocketHost'];
 
 		// this.connection.token();
 		this.connection.session = {
