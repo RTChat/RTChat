@@ -30,6 +30,6 @@
 	}
 
 	textarea {
-
+		resize: none;
 	}
 }

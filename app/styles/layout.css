@@ -6,7 +6,7 @@ body {
 	flex-direction: column;
 }
 
-#header, #footer {
+.header, .footer {
 	position: relative;
 	font-size: 22px;
 	display: flex;
@@ -26,6 +26,7 @@ body {
 
 	> .pull-right {
 		margin-left: auto !important;
+		margin-right: 15px;
 	}
 
 	> div {
@@ -41,22 +42,22 @@ body {
 	}
 }
 
-#header {
+.header {
 	background-color: green;
 }
-#footer {
+.footer {
 	display: none; /* Delete this if you want a footer! */
 	background-color: yellow;
 }
 
 
-#main-bar {
+.main-bar {
 	flex: 1 1 100%;
 	display: flex;
 	flex-flow: row;
 
-	#left-side-bar,
-	#right-side-bar {
+	.left-side-bar,
+	.right-side-bar {
 		/*position: absolute;*/
 		overflow: hidden;
 		flex: 0 0 210px;
@@ -69,7 +70,7 @@ body {
 		}
 	}
 
-	#main-panel {
+	.main-panel {
 		flex: 1 1 100%;
 		background-color: gray;
 		display: flex;

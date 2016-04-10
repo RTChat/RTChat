@@ -1,8 +1,11 @@
 
 require('rtcmulticonnection-v3/dist/rmc3.js')
 
-var AppConfig = require('app/config.json');
 var UserService = require('utils/user_service.js');
+
+//TODO:
+// require('utils/resume.js'); // Adds the Window:resume event.
+// $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 
 // RTCWrapper
 module.exports = {
@@ -15,7 +18,7 @@ module.exports = {
 		this.leaveRoom();
 
 		this.connection = new RTCMultiConnection();
-		this.connection.socketURL = AppConfig['SocketHost'];
+		this.connection.socketURL = RTChat.AppConfig['SocketHost'];
 
 		// this.connection.token();
 		this.connection.session = {
@@ -80,7 +83,7 @@ module.exports = {
 			}
 		}
 
-		this.connection.openOrJoin(this.channelPrefix + roomName)
+		this.connection.openOrJoin(RTChat.AppConfig['AppName'] +'_'+ roomName)
 	},
 	leaveRoom: function() {
 		if (this.connection) {
@@ -93,7 +96,7 @@ module.exports = {
 		if (typeof fn !== 'function') throw "Must pass a function!";
 		stateChangeHandlers.push(fn);
 	},
-	updateState: function(value, triggerLocally) { // triggerLocally default to true.
+	updateState: function(value, triggerLocally) { // triggerLocally defaults to true.
 		this.connection.send({type: 'UpdateAppState', data: value});
 		mergeAppState(value);
 		if (triggerLocally !== false) triggerStateChange();
@@ -135,8 +138,8 @@ var mergeAppState = function(newState) {
 	});
 };
 
+// Trigger state change handlers.
 var triggerStateChange = function() {
-	// Trigger state change handlers.
 	_.forEach(stateChangeHandlers, function(fn) {
 		fn.call(undefined, _.clone(oldState), _.clone(AppState)); // Clone so callee can't mess with subsequent callees.
 	});

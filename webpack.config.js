@@ -11,15 +11,15 @@ module.exports = {
 	},
 	resolve: { alias: {
 		app: __dirname + '/app',
-		views: 'app/views',
 		utils: 'app/utils',
 		styles: 'app/styles',
 	} },
 	plugins: [
 		new webpack.ProvidePlugin({
+			// These become available to all files.
 			$: "jquery",
-			jQuery: "jquery",
-			_: "underscore"
+			_: "underscore",
+			Rivets: "rivets",
 		}),
 	],
 	module: {

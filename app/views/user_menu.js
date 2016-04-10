@@ -1,6 +1,4 @@
 
-var rivets = require('rivets');
-
 var UserService = require('utils/user_service.js');
 
 // UserMenu
@@ -12,7 +10,7 @@ module.exports = Backbone.View.extend({
 			<span class="fa fa-chevron-down"></span>
 		</div>
 		<ul class="dropdown-menu">
-			<li id="edit-btn">Edit Name</li>
+			<li class="edit-btn">Edit Name</li>
 			<li class="disabled">---- Coming Soon ----</li>
 			<li class="disabled">Sync user w/ Dropbox</li>
 			<li class="disabled">Settings</li>
@@ -24,7 +22,7 @@ module.exports = Backbone.View.extend({
 		<div><input type="text" rv-value="scope.name"></div>
 	`,
 	events: {
-		'click #edit-btn': function() {
+		'click .edit-btn': function() {
 			this.$el.removeClass('open'); //Hack?
 			this.render(true);
 			this.$el.find('input').select();
@@ -38,13 +36,10 @@ module.exports = Backbone.View.extend({
 		this.scope = UserService.currentUser.attributes;
 	},
 	render: function(edit){
-		if (edit)
-			this.$el.html(this.editNameTemplate);
-		else
-			this.$el.html(this.template);
-		var rvo = rivets.bind(this.$el, {scope: this.scope})
-		// console.log('rivets..', rvo)
+		if (edit) this.$el.html(this.editNameTemplate);
+		else this.$el.html(this.template);
 
+		Rivets.bind(this.$el, {scope: this.scope})
 		return this;
 	},
 	updateName: function() {

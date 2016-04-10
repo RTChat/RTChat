@@ -1,14 +1,12 @@
 require('styles/chat_panel.css');
 
-var rivets = require('rivets');
-
 var RTCWrapper = require('utils/rtc_wrapper.js');
 var UserService = require('utils/user_service.js');
 
 module.exports = Backbone.View.extend({
 	id: 'ChatPanel',
 	template: `
-		<ul id="chats">
+		<ul>
 			<li rv-each-msg="scope.messages">
 				<span class="timestamp">{ msg.timestamp }</span>
 				<span class="username">{ msg.name }</span>
@@ -43,7 +41,7 @@ module.exports = Backbone.View.extend({
 	render: function() {
 		this.scope.messages = [];
 		this.$el.html(this.template);
-		var rvo = rivets.bind(this.$el, {scope: this.scope})
+		Rivets.bind(this.$el, {scope: this.scope})
 		return this;
 	},
 	sendChat: function(text) {

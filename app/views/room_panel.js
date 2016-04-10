@@ -1,10 +1,7 @@
 
 require('styles/room_panel.css');
 
-var rivets = require('rivets');
-
 var RTCWrapper = require('utils/rtc_wrapper.js');
-var ChatBox = require('views/chat_panel.js');
 
 // RoomPanel
 module.exports = Backbone.View.extend({
@@ -17,7 +14,7 @@ module.exports = Backbone.View.extend({
 				<span> { scope.roomSubject } </span>
 			</div>
 			<br><br>Users:
-			<ul id="users-panel">
+			<ul class="users-panel">
 				<li rv-each-user="scope.users" rv-show="user.extra.name">
 					{ user.extra.name }
 				</li>
@@ -41,15 +38,19 @@ module.exports = Backbone.View.extend({
 		});
 	},
 	subviewCreators: {
-		chat: function() { return new ChatBox(); },
+		chat: function() { return new RTChat.Views.ChatPanel(); },
 	},
 	render: function(){
+		RTCWrapper.joinRoom(window.location.hash,
+			{videoContainer: this.$('#video-container')}
+		);
+
 		this.scope.roomName = window.location.hash;
 		this.scope.users = RTCWrapper.users;
 		this.scope.roomSubject = 'Welcome to '+window.location.hash+'!';
 
 		this.$el.html(this.template);
-		var rvo = rivets.bind(this.$el, {scope: this.scope})
+		Rivets.bind(this.$el, {scope: this.scope})
 		return this;
 	},
 	scope: {},
