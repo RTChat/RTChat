@@ -8,7 +8,8 @@ module.exports = Backbone.View.extend({
 	className: 'pull-right dropdown navbar-right',
 	template: `
 		<div class="dropdown-toggle" data-toggle="dropdown">
-			{ scope.name } <span class="fa fa-chevron-down"></span>
+			<span>{ scope.name }</span>
+			<span class="fa fa-chevron-down"></span>
 		</div>
 		<ul class="dropdown-menu">
 			<li id="edit-btn">Edit Name</li>

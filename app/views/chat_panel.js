@@ -34,6 +34,10 @@ module.exports = Backbone.View.extend({
 		RTCWrapper.onReceiveBroadcast(function(msg) {
 			console.log("OOOM", msg);
 			self.scope.messages.push(msg);
+
+			// Scroll down
+			var chats = self.$("ul")[0];
+			chats.scrollTop = chats.scrollHeight;
 		});
 	},
 	render: function() {

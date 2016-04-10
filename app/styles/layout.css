@@ -6,50 +6,77 @@ body {
 	flex-direction: column;
 }
 
-#top-bar, #bottom-bar {
+#header, #footer {
 	position: relative;
-	height: 30px;
+	font-size: 22px;
 	display: flex;
 	flex-flow: row;
 	z-index: 1; /* Allows UserMenu to go overtop of the main-bar */
 
 	> * {
+		margin-top: 5px;
 		margin-left: 10px;
 		margin-right: 10px;
+	}
+
+	> .fa {
+		margin: 3px 0px;
+		padding: 8px 10px;
 	}
 
 	> .pull-right {
 		margin-left: auto !important;
 	}
+
+	> div {
+		margin-top: 0;
+
+		span {
+			margin-top: 8px;
+		}
+	}
+
+	a {
+		color: #333;
+	}
 }
 
-#top-bar {
+#header {
 	background-color: green;
 }
-#bottom-bar {
+#footer {
+	display: none; /* Delete this if you want a footer! */
 	background-color: yellow;
-	display: none;
 }
 
 
 #main-bar {
-	flex: 1 100%;
+	flex: 1 1 100%;
 	display: flex;
 	flex-flow: row;
 
 	#left-side-bar,
 	#right-side-bar {
-		flex-grow: 0;
-		width: 210px;
+		/*position: absolute;*/
+		overflow: hidden;
+		flex: 0 0 210px;
 		background-color: blue;
 
 		&.hidden {
+			display: flex!important;
 			width: 0;
+			flex-basis: 0px;
 		}
 	}
 
-	> * { /* #MainPanel */
-		flex-grow: 2;
+	#main-panel {
+		flex: 1 1 100%;
 		background-color: gray;
+		display: flex;
+		flex-direction: row;
+
+		> * {
+			flex: 1;
+		}
 	}
 }

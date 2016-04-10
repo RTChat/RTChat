@@ -1,5 +1,9 @@
+
+require('styles/welcome_panel.css')
+
 // WelcomePanel
 module.exports = Backbone.View.extend({
+	id: 'WelcomePanel',
 	template: `<h2>Welcome To RTChat!</h2>
 		A simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!
 		<br><br>

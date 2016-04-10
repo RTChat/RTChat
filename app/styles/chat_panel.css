@@ -1,24 +1,35 @@
 
 #ChatPanel {
+	flex-basis: 100%;
 	border: 2px solid red;
 
-	ul {
-		padding: 0;
-	}
+	display: flex;
+	flex-direction: column;
 
-	li {
-		list-style: none;
-	}
+	> ul {
+		flex: 2;
+		padding: 5px;
+		overflow-x: hidden;
 
-	.username {
-		color: lightgrey;
+		> li {
+			list-style: none;
+			word-break: break-all;
 
-		&:after {
-			content: ':';
+			.username {
+				color: lightgrey;
+
+				&:after {
+					content: ':';
+				}
+			}
+
+			.timestamp {
+				display: none;
+			}
 		}
 	}
 
-	.timestamp {
-		display: none;
+	textarea {
+
 	}
 }

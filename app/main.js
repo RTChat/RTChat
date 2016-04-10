@@ -6,16 +6,14 @@ require('bootstrap/dist/js/bootstrap.js');
 // require('bootstrap/dist/css/bootstrap.css');
 // require('font-awesome/css/font-awesome.css');
 
-require('styles/main.css');
-
 var AppConfig = require('app/config');
 
 // Make PUBLIC modules accessible.
 module.exports = {
-	LayoutView: require('views/layout.js'),
 	RTCWrapper: require('utils/rtc_wrapper.js'),
 	UserService: require('utils/user_service.js'),
-	app: { // DemoApp - Overwrite this!
+	app: { // DemoApp - Overwrite this with your app or game!
+		LayoutView: require('views/layout.js'),
 		WelcomePanel: require('views/welcome_panel.js'),
 		RoomPanel: require('views/room_panel.js'),
 		ChatPanel: require('views/chat_panel.js')
@@ -26,7 +24,7 @@ module.exports = {
 			// Init Socket.io
 			$.getScript((AppConfig['SocketHost']||'')+'/socket.io/socket.io.js').then(function(e) {
 				// Make initial render.
-				(new self.LayoutView()).render();
+				(new self.app.LayoutView()).render();
 			})
 		});
 	}
