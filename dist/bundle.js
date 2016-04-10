@@ -22085,7 +22085,6 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function($) {'use strict';
 	
-	__webpack_require__(12);
 	__webpack_require__(16);
 	
 	__webpack_require__(18); // Adds the Window:resume event.
@@ -22157,46 +22156,8 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// style-loader: Adds some css to the DOM by adding a <style> tag
-	
-	// load the styles
-	var content = __webpack_require__(13);
-	if(typeof content === 'string') content = [[module.id, content, '']];
-	// add the styles to the DOM
-	var update = __webpack_require__(15)(content, {});
-	if(content.locals) module.exports = content.locals;
-	// Hot Module Replacement
-	if(false) {
-		// When the styles change, update the <style> tags
-		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./main.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./main.css");
-				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-				update(newContent);
-			});
-		}
-		// When the module is disposed, remove the <style> tags
-		module.hot.dispose(function() { update(); });
-	}
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	exports = module.exports = __webpack_require__(14)();
-	// imports
-	
-	
-	// module
-	exports.push([module.id, "/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", ""]);
-	
-	// exports
-
-
-/***/ },
+/* 12 */,
+/* 13 */,
 /* 14 */
 /***/ function(module, exports) {
 
@@ -22541,7 +22502,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n\n#header, #footer {\n  position: relative;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */ }\n  #header > *, #footer > * {\n    margin-top: 5px;\n    margin-left: 10px;\n    margin-right: 10px; }\n  #header > .fa, #footer > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  #header > .pull-right, #footer > .pull-right {\n    margin-left: auto !important; }\n  #header > div, #footer > div {\n    margin-top: 0; }\n    #header > div span, #footer > div span {\n      margin-top: 8px; }\n  #header a, #footer a {\n    color: #333; }\n\n#header {\n  background-color: green; }\n\n#footer {\n  display: none;\n  /* Delete this if you want a footer! */\n  background-color: yellow; }\n\n#main-bar {\n  flex: 1 1 100%;\n  display: flex;\n  flex-flow: row; }\n  #main-bar #left-side-bar,\n  #main-bar #right-side-bar {\n    /*position: absolute;*/\n    overflow: hidden;\n    flex: 0 0 210px;\n    background-color: blue; }\n    #main-bar #left-side-bar.hidden,\n    #main-bar #right-side-bar.hidden {\n      display: flex !important;\n      width: 0;\n      flex-basis: 0px; }\n  #main-bar #main-panel {\n    flex: 1 1 100%;\n    background-color: gray;\n    display: flex;\n    flex-direction: row; }\n    #main-bar #main-panel > * {\n      flex: 1; }\n", ""]);
+	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n\n#header, #footer {\n  position: relative;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */ }\n  #header > *, #footer > * {\n    margin-top: 5px;\n    margin-left: 10px;\n    margin-right: 10px; }\n  #header > .fa, #footer > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  #header > .pull-right, #footer > .pull-right {\n    margin-left: auto !important; }\n  #header > div, #footer > div {\n    margin-top: 0; }\n    #header > div span, #footer > div span {\n      margin-top: 8px; }\n  #header a, #footer a {\n    color: #333; }\n\n#header {\n  background-color: green; }\n\n#footer {\n  display: none;\n  /* Delete this if you want a footer! */\n  background-color: yellow; }\n\n#main-bar {\n  flex: 1 1 100%;\n  display: flex;\n  flex-flow: row; }\n  #main-bar #left-side-bar,\n  #main-bar #right-side-bar {\n    /*position: absolute;*/\n    overflow: hidden;\n    flex: 0 0 210px;\n    background-color: blue; }\n    #main-bar #left-side-bar.hidden,\n    #main-bar #right-side-bar.hidden {\n      display: flex !important;\n      width: 0;\n      flex-basis: 0px; }\n  #main-bar #main-panel {\n    flex: 1 1 100%;\n    background-color: gray;\n    display: flex;\n    flex-direction: row; }\n    #main-bar #main-panel > * {\n      flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", ""]);
 	
 	// exports
 
@@ -24396,7 +24357,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n", ""]);
+	exports.push([module.id, "/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n", ""]);
 	
 	// exports
 

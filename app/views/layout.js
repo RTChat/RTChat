@@ -1,5 +1,4 @@
 
-require('styles/main.css');
 require('styles/layout.css');
 
 require('utils/resume.js'); // Adds the Window:resume event.

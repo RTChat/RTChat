@@ -1,11 +1,13 @@
 
+@import 'variables';
+
 #RoomPanel {
 	display: flex;
 	justify-content: center;
 	align-items: stretch;
 	overflow-x: auto;
 
-	@media (max-width: 600px) {
+	@media (max-width: $phone-width) {
 		justify-content: initial;
 	}
 
@@ -13,7 +15,7 @@
 		flex-basis: 500px;
 		padding: 10px;
 
-		@media (max-width: 600px) {
+		@media (max-width: $phone-width) {
 			min-width: 100%;
 			flex: 0 0;
 		}
