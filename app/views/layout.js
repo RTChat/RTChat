@@ -1,9 +1,8 @@
+// Layout - The parent view of the whole app, and also the router.
 
 require('styles/layout.css');
-
 var RTCWrapper = require('utils/rtc_wrapper.js');
 
-// Layout
 module.exports = Backbone.View.extend({
 	el: 'body',
 	template: `
@@ -43,7 +42,7 @@ module.exports = Backbone.View.extend({
 		user_menu: function() { return new RTChat.Views.UserMenu(); }
 	},
 	render: function(){
-		this.scope.appName = RTChat.AppConfig["AppName"];
+		this.scope.appName = RTChat.AppConfig.AppName;
 		this.scope.roomName = document.location.hash;
 		document.title = this.scope.appName+' '+this.scope.roomName;
 
@@ -51,7 +50,7 @@ module.exports = Backbone.View.extend({
 		Rivets.bind(this.$el, {scope: this.scope});
 
 		// "Router"
-		if (document.location.hash.length == 0) {
+		if (document.location.hash.length === 0) {
 			this.$('.main-panel').html(this.welcomeTemplate);
 			RTCWrapper.leaveRoom();
 		} else {
@@ -60,5 +59,5 @@ module.exports = Backbone.View.extend({
 
 		return this;
 	},
-	scope: {}
-})
+	scope: {} // Used by Rivets..
+});

@@ -1,5 +1,5 @@
 
-require('styles/welcome_panel.css')
+require('styles/welcome_panel.css');
 
 // WelcomePanel
 module.exports = Backbone.View.extend({

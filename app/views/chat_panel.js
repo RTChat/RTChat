@@ -1,5 +1,6 @@
-require('styles/chat_panel.css');
+// ChatPanel
 
+require('styles/chat_panel.css');
 var RTCWrapper = require('utils/rtc_wrapper.js');
 var UserService = require('utils/user_service.js');
 
@@ -22,7 +23,7 @@ module.exports = Backbone.View.extend({
 		'keyup textarea': function(ev) {
 			if (ev.keyCode == 13 && !ev.shiftKey) {
 				this.sendChat(ev.currentTarget.value);
-				ev.currentTarget.value = ''
+				ev.currentTarget.value = '';
 			}
 		}
 	},
@@ -41,11 +42,11 @@ module.exports = Backbone.View.extend({
 	render: function() {
 		this.scope.messages = [];
 		this.$el.html(this.template);
-		Rivets.bind(this.$el, {scope: this.scope})
+		Rivets.bind(this.$el, {scope: this.scope});
 		return this;
 	},
 	sendChat: function(text) {
-		if (text.length == 0) return
+		if (text.length === 0) return;
 		RTCWrapper.sendBroadcast(text);
 	},
 	scope: {},

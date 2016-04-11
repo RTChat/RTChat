@@ -1,14 +1,14 @@
+// RTChat - loads the libraries and exports the global variable "RTChat".
 
-require('backbone-subviews'); // makes "Backbone" globally available.
+require('backbone-subviews'); // also makes "Backbone" globally available.
 require('imports?jQuery=jquery!bootstrap/dist/js/bootstrap.js');
 
 // Helper to turn file names into module names.
-// ./sample_view.js becomes "SampleView".
+// "./sample_view.js" becomes "SampleView".
 var modularize = function(str) {
-	str = str.replace(/(^\.\/|\.js$)/g, ''); // Strip file prefix and suffix.
-	return str.replace(/(^\w|(_[a-z]))/g, function(letter, index) {
-    return letter.slice(-1).toUpperCase();
-  });
+	return str.replace(/(^(\.\/)?\w|_[a-z])/g, function(s) {
+    return s.slice(-1).toUpperCase();
+  }).replace(/\.js$/, '');
 };
 
 // Load all views in an extensible way.
@@ -29,16 +29,16 @@ module.exports = {
 	RTCWrapper: require('utils/rtc_wrapper.js'),
 	UserService: require('utils/user_service.js'),
 
-	// Run this after you've loaded your extensions.
+	// Run this after extensions have been loaded.
 	init: function() {
 		var self = this;
 		$(document).ready(function() {
 			// Init Socket.io
-			$.getScript((self.AppConfig['SocketHost']||'')+'/socket.io/socket.io.js').
+			$.getScript((self.AppConfig.SocketHost||'')+'/socket.io/socket.io.js').
 				then(function(e) {
 					// Make initial render.
 					(new self.Views.Layout()).render();
-			})
+			});
 		});
 	}
 

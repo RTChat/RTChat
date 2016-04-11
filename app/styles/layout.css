@@ -4,80 +4,80 @@ body {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-}
 
-.header, .footer {
-	position: relative;
-	font-size: 22px;
-	display: flex;
-	flex-flow: row;
-	z-index: 1; /* Allows UserMenu to go overtop of the main-bar */
-
-	> * {
-		margin-top: 5px;
-		margin-left: 10px;
-		margin-right: 10px;
-	}
-
-	> .fa {
-		margin: 3px 0px;
-		padding: 8px 10px;
-	}
-
-	> .pull-right {
-		margin-left: auto !important;
-		margin-right: 15px;
-	}
-
-	> div {
-		margin-top: 0;
-
-		span {
-			margin-top: 8px;
-		}
-	}
-
-	a {
-		color: #333;
-	}
-}
-
-.header {
-	background-color: green;
-}
-.footer {
-	display: none; /* Delete this if you want a footer! */
-	background-color: yellow;
-}
-
-
-.main-bar {
-	flex: 1 1 100%;
-	display: flex;
-	flex-flow: row;
-
-	.left-side-bar,
-	.right-side-bar {
-		/*position: absolute;*/
-		overflow: hidden;
-		flex: 0 0 210px;
-		background-color: blue;
-
-		&.hidden {
-			display: flex!important;
-			width: 0;
-			flex-basis: 0px;
-		}
-	}
-
-	.main-panel {
-		flex: 1 1 100%;
-		background-color: gray;
+	.header, .footer {
+		position: relative;
+		font-size: 22px;
 		display: flex;
-		flex-direction: row;
+		flex-flow: row;
+		z-index: 1; /* Allows UserMenu to go overtop of the main-bar */
 
 		> * {
-			flex: 1;
+			margin-top: 5px;
+			margin-left: 10px;
+			margin-right: 10px;
+		}
+
+		> .fa {
+			margin: 3px 0px;
+			padding: 8px 10px;
+		}
+
+		> .pull-right {
+			margin-left: auto !important;
+			margin-right: 15px;
+		}
+
+		> div {
+			margin-top: 0;
+
+			span {
+				margin-top: 8px;
+			}
+		}
+
+		a {
+			color: #333;
+		}
+	}
+
+	.header {
+		background-color: green;
+	}
+	.footer {
+		display: none; /* Delete this if you want a footer! */
+		background-color: yellow;
+	}
+
+
+	.main-bar {
+		flex: 1 1 100%;
+		display: flex;
+		flex-flow: row;
+
+		.left-side-bar,
+		.right-side-bar {
+			/*position: absolute;*/
+			overflow: hidden;
+			flex: 0 0 210px;
+			background-color: blue;
+
+			&.hidden {
+				display: flex!important;
+				width: 0;
+				flex-basis: 0px;
+			}
+		}
+
+		.main-panel {
+			flex: 1 1 100%;
+			background-color: gray;
+			display: flex;
+			flex-direction: row;
+
+			> * {
+				flex: 1;
+			}
 		}
 	}
 }

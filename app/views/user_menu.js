@@ -1,8 +1,9 @@
+// UserMenu
 
 var UserService = require('utils/user_service.js');
 
-// UserMenu
 module.exports = Backbone.View.extend({
+	id: 'UserMenu',
 	className: 'pull-right dropdown navbar-right',
 	template: `
 		<div class="dropdown-toggle" data-toggle="dropdown">
@@ -39,12 +40,12 @@ module.exports = Backbone.View.extend({
 		if (edit) this.$el.html(this.editNameTemplate);
 		else this.$el.html(this.template);
 
-		Rivets.bind(this.$el, {scope: this.scope})
+		Rivets.bind(this.$el, {scope: this.scope});
 		return this;
 	},
 	updateName: function() {
-		UserService.updateName(this.scope.userName)
+		UserService.updateName(this.scope.userName);
 		this.render();
 	},
-	scope: {} // Used for Rivets..
+	scope: {}
 });

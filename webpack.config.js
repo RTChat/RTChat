@@ -24,19 +24,21 @@ module.exports = {
 	],
 	module: {
 		loaders: [
-			{ test:  /\.json$/, loaders: ["hson"] },
-			{ test:  /\.s?css$/, loaders: ["style", "css", "sass"] },
+			{ test:  /\.json$/, loader: "hson" },
+			{ test:  /\.s?css$/, loaders: ["style", "css?sourceMap", "sass"] },
 			{ // ES6 support.
 				test:  /\.js$/,
 				loader: "babel",
 				exclude: /node_modules/,
 				query: { presets: ['es2015'] }
 			},
-			// {test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=application/font-woff'},
-			// {test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=application/octet-stream'},
-			// {test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: 'file'},
-			// {test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=image/svg+xml'}
+		],
+		preLoaders: [
+			{ test: /\.js$/, loader: 'jshint',  exclude: /node_modules/ },
 		]
+	},
+	jshint: {
+		esversion: 6,
 	},
 	devtool: 'source-map',
 };
@@ -44,14 +46,15 @@ module.exports = {
 if (process.argv.indexOf('--minify') >= 0) {
 	var CompressionPlugin = require("compression-webpack-plugin");
 
-	module.exports.plugins.push(
-		new webpack.optimize.UglifyJsPlugin({minimize: true})
-	);
-	module.exports.plugins.push(
+	module.exports.plugins.concat([
+		new webpack.optimize.UglifyJsPlugin({
+			minimize: true,
+			compress: {warnings: false}
+		}),
 		new CompressionPlugin({
-			asset: "[path].gz[query]",
+			test: /\.js$/,
 			algorithm: "gzip",
-			test: /\.js$|\.html$/
+			asset: "[path].gz[query]"
 		})
-	);
+	]);
 }

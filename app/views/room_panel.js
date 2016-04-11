@@ -1,9 +1,8 @@
+// RoomPanel
 
 require('styles/room_panel.css');
-
 var RTCWrapper = require('utils/rtc_wrapper.js');
 
-// RoomPanel
 module.exports = Backbone.View.extend({
 	id: 'RoomPanel',
 	template: `
@@ -33,7 +32,7 @@ module.exports = Backbone.View.extend({
 		Backbone.Subviews.add( this );
 		var self = this;
 		RTCWrapper.onStateChange(function(old, newState) {
-			console.log("StateUpdate", old, newState)
+			console.log("StateUpdate", old, newState);
 			self.scope.roomSubject = newState.roomSubject;
 		});
 	},
@@ -50,8 +49,8 @@ module.exports = Backbone.View.extend({
 		this.scope.roomSubject = 'Welcome to '+window.location.hash+'!';
 
 		this.$el.html(this.template);
-		Rivets.bind(this.$el, {scope: this.scope})
+		Rivets.bind(this.$el, {scope: this.scope});
 		return this;
 	},
-	scope: {},
-})
+	scope: {}
+});

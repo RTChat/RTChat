@@ -1,4 +1,4 @@
-
+// Sidebar
 
 module.exports = Backbone.View.extend({
 	template: `

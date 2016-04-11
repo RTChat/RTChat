@@ -1,6 +1,7 @@
-require('backbone.localstorage')
-
 // UserService
+
+require('backbone.localstorage');
+
 module.exports = {
 	init: function() { // sets up the username, and stuff.
 		if(typeof(Storage) !== "undefined") {
@@ -8,7 +9,7 @@ module.exports = {
 				// idAttribute: 'name',
 				// modelId: function(attrs) {return attrs.name},
 				localStorage: new Backbone.LocalStorage("RTChat_Users"),
-			}))()
+			}))();
 			this.localUsers = localUsers;
 
 			localUsers.fetch();
@@ -19,7 +20,7 @@ module.exports = {
 			// console.log("found user:", this.currentUser)
 			if (!this.currentUser) { this.create(); }
 
-			window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id)
+			window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id);
 
 		} else {
 			console.log("Sorry! No Web Storage support..");
@@ -29,7 +30,7 @@ module.exports = {
 		this.currentUser = this.localUsers.create({
 			name: name || "Guest_"+parseInt(Math.random()*10000).toString()
 		});
-		console.log(this.currentUser)
+		console.log(this.currentUser);
 	},
 	updateName: function(newName) {
 		this.currentUser.name = newName;
@@ -39,8 +40,8 @@ module.exports = {
 		return {
 			fullId: this.currentUser.id,
 			name: this.currentUser.get('name')
-		}
+		};
 	}
-}
+};
 
 module.exports.init();

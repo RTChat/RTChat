@@ -47,16 +47,17 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function($) {'use strict';
 	
-	__webpack_require__(2); // makes "Backbone" globally available.
+	// RTChat - loads the libraries and exports the global variable "RTChat".
+	
+	__webpack_require__(2); // also makes "Backbone" globally available.
 	__webpack_require__(5);
 	
 	// Helper to turn file names into module names.
-	// ./sample_view.js becomes "SampleView".
+	// "./sample_view.js" becomes "SampleView".
 	var modularize = function modularize(str) {
-		str = str.replace(/(^\.\/|\.js$)/g, ''); // Strip file prefix and suffix.
-		return str.replace(/(^\w|(_[a-z]))/g, function (letter, index) {
-			return letter.slice(-1).toUpperCase();
-		});
+		return str.replace(/(^(\.\/)?\w|_[a-z])/g, function (s) {
+			return s.slice(-1).toUpperCase();
+		}).replace(/\.js$/, '');
 	};
 	
 	// Load all views in an extensible way.
@@ -77,12 +78,12 @@ var RTChat =
 		RTCWrapper: __webpack_require__(15),
 		UserService: __webpack_require__(17),
 	
-		// Run this after you've loaded your extensions.
+		// Run this after extensions have been loaded.
 		init: function init() {
 			var self = this;
 			$(document).ready(function () {
 				// Init Socket.io
-				$.getScript((self.AppConfig['SocketHost'] || '') + '/socket.io/socket.io.js').then(function (e) {
+				$.getScript((self.AppConfig.SocketHost || '') + '/socket.io/socket.io.js').then(function (e) {
 					// Make initial render.
 					new self.Views.Layout().render();
 				});
@@ -15957,8 +15958,9 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
-	__webpack_require__(11);
+	// ChatPanel
 	
+	__webpack_require__(11);
 	var RTCWrapper = __webpack_require__(15);
 	var UserService = __webpack_require__(17);
 	
@@ -15998,7 +16000,7 @@ var RTChat =
 			return this;
 		},
 		sendChat: function sendChat(text) {
-			if (text.length == 0) return;
+			if (text.length === 0) return;
 			RTCWrapper.sendBroadcast(text);
 		},
 		scope: {}
@@ -17648,8 +17650,8 @@ var RTChat =
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./chat_panel.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./chat_panel.css");
+			module.hot.accept("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./chat_panel.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./chat_panel.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -17667,7 +17669,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "#ChatPanel {\n  flex-basis: 100%;\n  border: 2px solid red;\n  display: flex;\n  flex-direction: column; }\n  #ChatPanel > ul {\n    flex: 2;\n    padding: 5px;\n    overflow-x: hidden; }\n    #ChatPanel > ul > li {\n      list-style: none;\n      word-break: break-all; }\n      #ChatPanel > ul > li .username {\n        color: lightgrey; }\n        #ChatPanel > ul > li .username:after {\n          content: ':'; }\n      #ChatPanel > ul > li .timestamp {\n        display: none; }\n  #ChatPanel textarea {\n    resize: none; }\n", ""]);
+	exports.push([module.id, "#ChatPanel {\n  flex-basis: 100%;\n  border: 2px solid red;\n  display: flex;\n  flex-direction: column; }\n  #ChatPanel > ul {\n    flex: 2;\n    padding: 5px;\n    overflow-x: hidden; }\n    #ChatPanel > ul > li {\n      list-style: none;\n      word-break: break-all; }\n      #ChatPanel > ul > li .username {\n        color: lightgrey; }\n        #ChatPanel > ul > li .username:after {\n          content: ':'; }\n      #ChatPanel > ul > li .timestamp {\n        display: none; }\n  #ChatPanel textarea {\n    resize: none; }\n", "", {"version":3,"sources":["/./app/styles/chat_panel.css"],"names":[],"mappings":"AAAA;EACE,iBAAiB;EACjB,sBAAsB;EACtB,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,QAAQ;IACR,aAAa;IACb,mBAAmB,EAAE;IACrB;MACE,iBAAiB;MACjB,sBAAsB,EAAE;MACxB;QACE,iBAAiB,EAAE;QACnB;UACE,aAAa,EAAE;MACnB;QACE,cAAc,EAAE;EACtB;IACE,aAAa,EAAE","file":"chat_panel.css","sourcesContent":["#ChatPanel {\n  flex-basis: 100%;\n  border: 2px solid red;\n  display: flex;\n  flex-direction: column; }\n  #ChatPanel > ul {\n    flex: 2;\n    padding: 5px;\n    overflow-x: hidden; }\n    #ChatPanel > ul > li {\n      list-style: none;\n      word-break: break-all; }\n      #ChatPanel > ul > li .username {\n        color: lightgrey; }\n        #ChatPanel > ul > li .username:after {\n          content: ':'; }\n      #ChatPanel > ul > li .timestamp {\n        display: none; }\n  #ChatPanel textarea {\n    resize: none; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
@@ -17988,6 +17990,8 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function(_) {'use strict';
 	
+	// RTCWrapper
+	
 	__webpack_require__(16);
 	
 	var UserService = __webpack_require__(17);
@@ -17996,7 +18000,6 @@ var RTChat =
 	// require('utils/resume.js'); // Adds the Window:resume event.
 	// $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 	
-	// RTCWrapper
 	module.exports = {
 		// === Room API ===  (and users)
 		users: [],
@@ -18007,7 +18010,7 @@ var RTChat =
 			this.leaveRoom();
 	
 			this.connection = new RTCMultiConnection();
-			this.connection.socketURL = RTChat.AppConfig['SocketHost'];
+			this.connection.socketURL = RTChat.AppConfig.SocketHost;
 	
 			// this.connection.token();
 			this.connection.session = {
@@ -18072,7 +18075,7 @@ var RTChat =
 				}
 			};
 	
-			this.connection.openOrJoin(RTChat.AppConfig['AppName'] + '_' + roomName);
+			this.connection.openOrJoin(RTChat.AppConfig.AppName + '_' + roomName);
 		},
 		leaveRoom: function leaveRoom() {
 			if (this.connection) {
@@ -18110,13 +18113,13 @@ var RTChat =
 		}
 	};
 	
+	/* ===== PRIVATE ===== */
+	
 	//TODO: ...
 	// getBroadcastHistory: function() {},
 	
 	// === PrivateChat API ===
 	// sendPrivateMsg: function() {},
-	/* ===== PRIVATE ===== */
-	
 	var AppState = {};
 	var oldState = {};
 	var stateChangeHandlers = [];
@@ -23837,9 +23840,10 @@ var RTChat =
 
 	"use strict";
 	
+	// UserService
+	
 	__webpack_require__(18);
 	
-	// UserService
 	module.exports = {
 		init: function init() {
 			// sets up the username, and stuff.
@@ -24155,11 +24159,11 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function($, Rivets) {'use strict';
 	
-	__webpack_require__(20);
+	// Layout - The parent view of the whole app, and also the router.
 	
+	__webpack_require__(20);
 	var RTCWrapper = __webpack_require__(15);
 	
-	// Layout
 	module.exports = Backbone.View.extend({
 		el: 'body',
 		template: '\n\t\t<div class="header">\n\t\t\t<div class="fa fa-bars"></div>\n\t\t\t<span>\n\t\t\t\t<span rv-unless="scope.roomName">{ scope.appName }</span>\n\t\t\t\t<span rv-if="scope.roomName"><a href="#">{ scope.appName }</a> / { scope.roomName }</span>\n\t\t\t</span>\n\t\t\t<div data-subview="user_menu"></div>\n\t\t</div>\n\t\t<div class="main-bar">\n\t\t\t<div class="left-side-bar hidden">\n\t\t\t\t<div data-subview="sidebar"></div>\n\t\t\t</div>\n\t\t\t<div class="main-panel"></div>\n\t\t\t<div class="right-side-bar hidden">Right Side Bar</div>\n\t\t</div>\n\t\t<div class="footer"></div>\n\t',
@@ -24192,7 +24196,7 @@ var RTChat =
 			}
 		},
 		render: function render() {
-			this.scope.appName = RTChat.AppConfig["AppName"];
+			this.scope.appName = RTChat.AppConfig.AppName;
 			this.scope.roomName = document.location.hash;
 			document.title = this.scope.appName + ' ' + this.scope.roomName;
 	
@@ -24200,7 +24204,7 @@ var RTChat =
 			Rivets.bind(this.$el, { scope: this.scope });
 	
 			// "Router"
-			if (document.location.hash.length == 0) {
+			if (document.location.hash.length === 0) {
 				this.$('.main-panel').html(this.welcomeTemplate);
 				RTCWrapper.leaveRoom();
 			} else {
@@ -24209,7 +24213,7 @@ var RTChat =
 	
 			return this;
 		},
-		scope: {}
+		scope: {} // Used by Rivets..
 	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(8)))
 
@@ -24229,8 +24233,8 @@ var RTChat =
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./layout.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./layout.css");
+			module.hot.accept("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./layout.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./layout.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -24248,7 +24252,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n\n.header, .footer {\n  position: relative;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */ }\n  .header > *, .footer > * {\n    margin-top: 5px;\n    margin-left: 10px;\n    margin-right: 10px; }\n  .header > .fa, .footer > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  .header > .pull-right, .footer > .pull-right {\n    margin-left: auto !important;\n    margin-right: 15px; }\n  .header > div, .footer > div {\n    margin-top: 0; }\n    .header > div span, .footer > div span {\n      margin-top: 8px; }\n  .header a, .footer a {\n    color: #333; }\n\n.header {\n  background-color: green; }\n\n.footer {\n  display: none;\n  /* Delete this if you want a footer! */\n  background-color: yellow; }\n\n.main-bar {\n  flex: 1 1 100%;\n  display: flex;\n  flex-flow: row; }\n  .main-bar .left-side-bar,\n  .main-bar .right-side-bar {\n    /*position: absolute;*/\n    overflow: hidden;\n    flex: 0 0 210px;\n    background-color: blue; }\n    .main-bar .left-side-bar.hidden,\n    .main-bar .right-side-bar.hidden {\n      display: flex !important;\n      width: 0;\n      flex-basis: 0px; }\n  .main-bar .main-panel {\n    flex: 1 1 100%;\n    background-color: gray;\n    display: flex;\n    flex-direction: row; }\n    .main-bar .main-panel > * {\n      flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", ""]);
+	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body .header, body .footer {\n    position: relative;\n    font-size: 22px;\n    display: flex;\n    flex-flow: row;\n    z-index: 1;\n    /* Allows UserMenu to go overtop of the main-bar */ }\n    body .header > *, body .footer > * {\n      margin-top: 5px;\n      margin-left: 10px;\n      margin-right: 10px; }\n    body .header > .fa, body .footer > .fa {\n      margin: 3px 0px;\n      padding: 8px 10px; }\n    body .header > .pull-right, body .footer > .pull-right {\n      margin-left: auto !important;\n      margin-right: 15px; }\n    body .header > div, body .footer > div {\n      margin-top: 0; }\n      body .header > div span, body .footer > div span {\n        margin-top: 8px; }\n    body .header a, body .footer a {\n      color: #333; }\n  body .header {\n    background-color: green; }\n  body .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n  body .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body .main-bar .left-side-bar,\n    body .main-bar .right-side-bar {\n      /*position: absolute;*/\n      overflow: hidden;\n      flex: 0 0 210px;\n      background-color: blue; }\n      body .main-bar .left-side-bar.hidden,\n      body .main-bar .right-side-bar.hidden {\n        display: flex !important;\n        width: 0;\n        flex-basis: 0px; }\n    body .main-bar .main-panel {\n      flex: 1 1 100%;\n      background-color: gray;\n      display: flex;\n      flex-direction: row; }\n      body .main-bar .main-panel > * {\n        flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,mBAAmB;IACnB,gBAAgB;IAChB,cAAc;IACd,eAAe;IACf,WAAW;IACX,mDAAmD,EAAE;IACrD;MACE,gBAAgB;MAChB,kBAAkB;MAClB,mBAAmB,EAAE;IACvB;MACE,gBAAgB;MAChB,kBAAkB,EAAE;IACtB;MACE,6BAA6B;MAC7B,mBAAmB,EAAE;IACvB;MACE,cAAc,EAAE;MAChB;QACE,gBAAgB,EAAE;IACtB;MACE,YAAY,EAAE;EAClB;IACE,wBAAwB,EAAE;EAC5B;IACE,cAAc;IACd,uCAAuC;IACvC,yBAAyB,EAAE;EAC7B;IACE,eAAe;IACf,cAAc;IACd,eAAe,EAAE;IACjB;;MAEE,uBAAuB;MACvB,iBAAiB;MACjB,gBAAgB;MAChB,uBAAuB,EAAE;MACzB;;QAEE,yBAAyB;QACzB,SAAS;QACT,gBAAgB,EAAE;IACtB;MACE,eAAe;MACf,uBAAuB;MACvB,cAAc;MACd,oBAAoB,EAAE;MACtB;QACE,QAAQ,EAAE;;AAElB,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body .header, body .footer {\n    position: relative;\n    font-size: 22px;\n    display: flex;\n    flex-flow: row;\n    z-index: 1;\n    /* Allows UserMenu to go overtop of the main-bar */ }\n    body .header > *, body .footer > * {\n      margin-top: 5px;\n      margin-left: 10px;\n      margin-right: 10px; }\n    body .header > .fa, body .footer > .fa {\n      margin: 3px 0px;\n      padding: 8px 10px; }\n    body .header > .pull-right, body .footer > .pull-right {\n      margin-left: auto !important;\n      margin-right: 15px; }\n    body .header > div, body .footer > div {\n      margin-top: 0; }\n      body .header > div span, body .footer > div span {\n        margin-top: 8px; }\n    body .header a, body .footer a {\n      color: #333; }\n  body .header {\n    background-color: green; }\n  body .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n  body .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body .main-bar .left-side-bar,\n    body .main-bar .right-side-bar {\n      /*position: absolute;*/\n      overflow: hidden;\n      flex: 0 0 210px;\n      background-color: blue; }\n      body .main-bar .left-side-bar.hidden,\n      body .main-bar .right-side-bar.hidden {\n        display: flex !important;\n        width: 0;\n        flex-basis: 0px; }\n    body .main-bar .main-panel {\n      flex: 1 1 100%;\n      background-color: gray;\n      display: flex;\n      flex-direction: row; }\n      body .main-bar .main-panel > * {\n        flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
@@ -24259,11 +24263,11 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
-	__webpack_require__(23);
+	// RoomPanel
 	
+	__webpack_require__(23);
 	var RTCWrapper = __webpack_require__(15);
 	
-	// RoomPanel
 	module.exports = Backbone.View.extend({
 		id: 'RoomPanel',
 		template: '\n\t\t<div class="sub-panel">\n\t\t\t<br>\n\t\t\t<div class="room-subject">\n\t\t\t\t<button class="btn btn-default">EDIT</button>\n\t\t\t\t<span> { scope.roomSubject } </span>\n\t\t\t</div>\n\t\t\t<br><br>Users:\n\t\t\t<ul class="users-panel">\n\t\t\t\t<li rv-each-user="scope.users" rv-show="user.extra.name">\n\t\t\t\t\t{ user.extra.name }\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="sub-panel">\n\t\t\t<div data-subview="chat"></div>\n\t\t</div>\n\t',
@@ -24316,8 +24320,8 @@ var RTChat =
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./room_panel.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./room_panel.css");
+			module.hot.accept("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./room_panel.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./room_panel.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -24335,7 +24339,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n", ""]);
+	exports.push([module.id, "/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n", "", {"version":3,"sources":["/./app/styles/room_panel.css"],"names":[],"mappings":"AAAA,2BAA2B;AAC3B;EACE,cAAc;EACd,wBAAwB;EACxB,qBAAqB;EACrB,iBAAiB,EAAE;EACnB;IACE;MACE,yBAAyB,EAAE,EAAE;EACjC;IACE,kBAAkB;IAClB,cAAc;IACd,cAAc;IACd,uBAAuB;IACvB,qBAAqB,EAAE;IACvB;MACE;QACE,gBAAgB;QAChB,UAAU,EAAE,EAAE;EACpB;IACE,cAAc;IACd,mBAAmB;IACnB,oBAAoB,EAAE;IACtB;MACE,mCAAmC,EAAE;MACrC;QACE,eAAe,EAAE;IACrB;MACE,cAAc;MACd,mBAAmB;MACnB,UAAU;MACV,SAAS;MACT,aAAa,EAAE","file":"room_panel.css","sourcesContent":["/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
@@ -24345,6 +24349,8 @@ var RTChat =
 /***/ function(module, exports) {
 
 	"use strict";
+	
+	// Sidebar
 	
 	module.exports = Backbone.View.extend({
 		template: "\n\t\tSideBar\n\t",
@@ -24361,10 +24367,12 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
+	// UserMenu
+	
 	var UserService = __webpack_require__(17);
 	
-	// UserMenu
 	module.exports = Backbone.View.extend({
+		id: 'UserMenu',
 		className: 'pull-right dropdown navbar-right',
 		template: '\n\t\t<div class="dropdown-toggle" data-toggle="dropdown">\n\t\t\t<span>{ scope.name }</span>\n\t\t\t<span class="fa fa-chevron-down"></span>\n\t\t</div>\n\t\t<ul class="dropdown-menu">\n\t\t\t<li class="edit-btn">Edit Name</li>\n\t\t\t<li class="disabled">---- Coming Soon ----</li>\n\t\t\t<li class="disabled">Sync user w/ Dropbox</li>\n\t\t\t<li class="disabled">Settings</li>\n\t\t\t<li class="disabled">Friends</li>\n\t\t\t<li class="disabled">Switch User</li>\n\t\t</ul>\n\t',
 		editNameTemplate: '\n\t\t<div><input type="text" rv-value="scope.name"></div>\n\t',
@@ -24392,7 +24400,7 @@ var RTChat =
 			UserService.updateName(this.scope.userName);
 			this.render();
 		},
-		scope: {} // Used for Rivets..
+		scope: {}
 	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
@@ -24430,8 +24438,8 @@ var RTChat =
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./welcome_panel.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/index.js!./welcome_panel.css");
+			module.hot.accept("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./welcome_panel.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./welcome_panel.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -24449,7 +24457,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n", ""]);
+	exports.push([module.id, "#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n", "", {"version":3,"sources":["/./app/styles/welcome_panel.css"],"names":[],"mappings":"AAAA;EACE,gBAAgB;EAChB,+BAA+B,EAAE;EACjC;IACE,gBAAgB,EAAE;EACpB;IACE,YAAY,EAAE","file":"welcome_panel.css","sourcesContent":["#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 

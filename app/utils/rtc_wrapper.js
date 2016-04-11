@@ -1,5 +1,6 @@
+// RTCWrapper
 
-require('rtcmulticonnection-v3/dist/rmc3.js')
+require('rtcmulticonnection-v3/dist/rmc3.js');
 
 var UserService = require('utils/user_service.js');
 
@@ -7,7 +8,6 @@ var UserService = require('utils/user_service.js');
 // require('utils/resume.js'); // Adds the Window:resume event.
 // $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 
-// RTCWrapper
 module.exports = {
 	// === Room API ===  (and users)
 	users: [],
@@ -18,7 +18,7 @@ module.exports = {
 		this.leaveRoom();
 
 		this.connection = new RTCMultiConnection();
-		this.connection.socketURL = RTChat.AppConfig['SocketHost'];
+		this.connection.socketURL = RTChat.AppConfig.SocketHost;
 
 		// this.connection.token();
 		this.connection.session = {
@@ -45,11 +45,11 @@ module.exports = {
 		// 	console.log("new seshh", session)
 		// }
 		this.connection.extra = UserService.getExtras();
-		console.log("EE", this.connection.extra)
+		console.log("EE", this.connection.extra);
 		// this.connection.extra = UserService.currentUser.attributes
 
 		this.connection.onopen = function(sess) {
-			console.log("onopen", sess)
+			console.log("onopen", sess);
 			// console.log("new_user", cc.peers[sess.userid])
 			// console.log("users", cc.peers, cc.peers.getLength())
 			// if (cc.peers[sess.userid].extra.name == undefined) {
@@ -61,13 +61,13 @@ module.exports = {
 				self.updateState(AppState, false);
 				//TODO: send only to requester!
 			}
-		}
+		};
 
 		this.connection.onleave = function(sess) {
-			console.log("onclose", sess)
+			console.log("onclose", sess);
 			var ii = _.findIndex(self.users, {remoteUserId: sess.userid});
 			self.users.splice(ii, 1);
-		}
+		};
 
 		this.connection.onmessage = function(e) {
 			switch(e.data.type) {
@@ -79,11 +79,11 @@ module.exports = {
 					triggerBroadcastChat(e.data.data);
 					break;
 				default:
-					console.warn("Received bad message type:", e.data.type)
+					console.warn("Received bad message type:", e.data.type);
 			}
-		}
+		};
 
-		this.connection.openOrJoin(RTChat.AppConfig['AppName'] +'_'+ roomName)
+		this.connection.openOrJoin(RTChat.AppConfig.AppName +'_'+ roomName);
 	},
 	leaveRoom: function() {
 		if (this.connection) {
@@ -121,7 +121,7 @@ module.exports = {
 
 	// === PrivateChat API ===
 	// sendPrivateMsg: function() {},
-}
+};
 
 /* ===== PRIVATE ===== */
 
