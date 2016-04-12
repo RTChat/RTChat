@@ -1,11 +1,10 @@
-// Mostly copied from github.com/muaz-khan/RTCMultiConnection/server.js
-
-// Serves up index.html, dist/*, and socket.io
+// Serves up index.html, dist/*, socket.io and plugins!
 
 var options = { // defaults
 	http: false,
 	ip: "0.0.0.0",
 	port: 9001,
+	plugin: [],
 }
 
 var opt = require("node-getopt").create([
@@ -13,83 +12,68 @@ var opt = require("node-getopt").create([
 	['', 'ip=ARG', 'Set IP'],
 	['', 'port=ARG', 'Set port'],
 	['', 'watch', 'Recompile assets on file modification'],
+	['', 'plugin=ARG+', 'Add "connect-style" plugin'],
 	['h', 'help', '']
-]).bindHelp().parseSystem()
+]).bindHelp().parseSystem();
+
+if (opt.argv.length > 0) {
+	console.error("ERROR: Unexpected argument(s): " + opt.argv.join(', '));
+	process.exit(1);
+}
 
 // Merge opts into options
 for (var attrname in opt.options) { options[attrname] = opt.options[attrname]; }
 
-var allowedDir = "/dist/"
+var fs = require('fs'),
+	// url = require('url'),
+	path = require('path');
 
-var server = require(options.http ? 'http' : 'https'),
-	url = require('url'),
-	path = require('path'),
-	fs = require('fs');
-
-function serverHandler(request, response) {
-	var uri = url.parse(request.url).pathname,
-		filename = path.join(process.cwd(), uri);
-
-	// console.log("uri", uri);
-	if (uri == '/') filename = "index.html"
-	//TODO:
-	// else if (uri.substring(0, allowedDir.length) !== allowedDir) { // not in dist/
-	//     response.writeHead(403, {
-	//         'Content-Type': 'text/plain'
-	//     });
-	//     response.write('403 Forbidden: ' + path.join('/', uri) + '\n');
-	//     response.end();
-	//     return;
-	// }
-
-	var stats;
-
-	try {
-		stats = fs.lstatSync(filename);
-	} catch (e) {
-		response.writeHead(404, {
-			'Content-Type': 'text/plain'
-		});
-		response.write('404 Not Found: ' + path.join('/', uri) + '\n');
-		response.end();
-		return;
-	}
-
-	fs.readFile(filename, 'binary', function(err, file) {
-		if (err) {
-			response.writeHead(500, {
-				'Content-Type': 'text/plain'
-			});
-			response.write('500 File Error: ' + path.join('/', uri) + '\n');
-			response.end();
-			return;
-		}
-
-		response.writeHead(200);
-		response.write(file, 'binary');
-		response.end();
-	});
-}
-
-var app;
+var server_opts = {};
+var connect = require('connect')();
+var server = require(options.http ? 'http' : 'https');
 
 if (!options.http) {
-	var opts = {
-		key: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
-		cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
-	};
-	app = server.createServer(opts, serverHandler);
-} else app = server.createServer(serverHandler);
+  try {
+    server_opts = {
+      key: fs.readFileSync(path.resolve('keys/privatekey.pem')),
+      cert: fs.readFileSync(path.resolve('keys/certificate.pem'))
+    };
+  }
+  catch (err) {
+    console.warn("WARNING: failed to find valid SSL keys, falling back to fake-keys..");
+    server_opts = {
+      key: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
+      cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
+    };
+  }
+		// HTTP Strict Transport Security. (keep using SSL for at least a year)
+		// if (!options.http)
+		// 	response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-app = app.listen(options.port, options.ip, function() {
-	var addr = app.address();
-	console.log("Server listening at", (options.http ? "http://" : "https://" ) + addr.address + ":" + addr.port);
+  // Setup HTTP-redirect server.
+  require('http').createServer(function(req, res) {
+    res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+    res.end();
+  }).on('error', function(err) {
+    console.warn("WARNING: unable to start http-redirect server. GOT:", err.toString());
+  }).listen(80);
+
+}
+
+var app = server.createServer(server_opts, connect).
+	listen(options.port, options.ip, function() {
+		var addr = app.address();
+		console.log("Server listening at", (options.http ? "http://" : "https://" ) + addr.address + ":" + addr.port);
 });
 
 app.on('error', function(err) {
-	console.log('ServerError:', err.code)
-})
+	console.error('ServerError:', err.code);
+});
 
+
+
+
+// Add signaling server - Copied from github.com/muaz-khan/RTCMultiConnection/server.js
 require('rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
 	try {
 		var params = socket.handshake.query;
@@ -114,7 +98,28 @@ require('rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
 	} catch (e) {}
 });
 
-// === Watch ===
+// HTTP Strict Transport Security. (keep using SSL for at least a year)
+if (!options.http) {
+	connect.use(function(req, res, next) {
+		res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+		next();
+	});
+}
+
+// Load file_server
+options.plugin.push('file_server');
+
+// Load plugins
+for (var i in options.plugin) {
+	try { // load module from local lib.
+		connect.use(require(path.join(__dirname, 'lib', options.plugin[i])));
+	} catch(err)	{
+		if (err.code !== 'MODULE_NOT_FOUND') throw err;
+	  connect.use(require(path.resolve(options.plugin[i])));
+	}
+}
+
+// --Watch
 if (options.watch) {
 	var watcher = require('child_process').spawn('webpack', ['--watch', '--colors']);
 
