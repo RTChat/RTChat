@@ -12,11 +12,10 @@ var modularize = function(str) {
 };
 
 // Load all views in an extensible way.
-var views = {};
 var req = require.context('app/views', true, /\.js$/);
-req.keys().map(function(name) {
-	views[modularize(name)] = req(name);
-});
+var views = _.reduce(req.keys(), function(v, k) {
+	return (v[modularize(k)] = req(k)) && v;
+}, {});
 
 // Make PUBLIC modules accessible.
 module.exports = {
