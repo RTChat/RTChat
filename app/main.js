@@ -3,6 +3,8 @@
 require('backbone-subviews'); // also makes "Backbone" globally available.
 require('imports?jQuery=jquery!bootstrap/dist/js/bootstrap.js');
 
+require('utils/rivets_extensions.js');
+
 // Helper to turn file names into module names.
 // "./sample_view.js" becomes "SampleView".
 var modularize = function(str) {

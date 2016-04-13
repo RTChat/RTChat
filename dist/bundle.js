@@ -52,6 +52,8 @@ var RTChat =
 	__webpack_require__(3); // also makes "Backbone" globally available.
 	__webpack_require__(5);
 	
+	__webpack_require__(6);
+	
 	// Helper to turn file names into module names.
 	// "./sample_view.js" becomes "SampleView".
 	var modularize = function modularize(str) {
@@ -61,7 +63,7 @@ var RTChat =
 	};
 	
 	// Load all views in an extensible way.
-	var req = __webpack_require__(6);
+	var req = __webpack_require__(10);
 	var views = _.reduce(req.keys(), function (v, k) {
 		return (v[modularize(k)] = req(k)) && v;
 	}, {});
@@ -71,11 +73,11 @@ var RTChat =
 	
 		// DemoApp - Extend these with your own app or game!
 		Views: views,
-		AppConfig: __webpack_require__(33),
+		AppConfig: __webpack_require__(34),
 	
 		// Core Services - don't extend.
-		RTCWrapper: __webpack_require__(15),
-		UserService: __webpack_require__(17),
+		RTCWrapper: __webpack_require__(16),
+		UserService: __webpack_require__(18),
 	
 		// Run this after extensions have been loaded.
 		init: function init() {
@@ -15929,86 +15931,59 @@ var RTChat =
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var map = {
-		"./chat_panel.js": 7,
-		"./header.js": 19,
-		"./layout.js": 22,
-		"./room_panel.js": 25,
-		"./sidebar.js": 28,
-		"./user_menu.js": 29,
-		"./welcome_panel.js": 30
+	/* WEBPACK VAR INJECTION */(function(Rivets, _) {'use strict';
+	
+	// === Formatters ===
+	Rivets.formatters.length = function (value) {
+	  return value && value.length;
 	};
-	function webpackContext(req) {
-		return __webpack_require__(webpackContextResolve(req));
+	
+	Rivets.formatters.gt = function (value, arg) {
+	  return value > arg;
 	};
-	function webpackContextResolve(req) {
-		return map[req] || (function() { throw new Error("Cannot find module '" + req + "'.") }());
+	
+	Rivets.formatters.gte = function (value, arg) {
+	  return value >= arg;
 	};
-	webpackContext.keys = function webpackContextKeys() {
-		return Object.keys(map);
+	
+	Rivets.formatters.lt = function (value, arg) {
+	  return value < arg;
 	};
-	webpackContext.resolve = webpackContextResolve;
-	module.exports = webpackContext;
-	webpackContext.id = 6;
-
+	
+	Rivets.formatters.lte = function (value, arg) {
+	  return value >= arg;
+	};
+	
+	Rivets.formatters.eq = function (value, arg) {
+	  return value == arg;
+	};
+	
+	Rivets.formatters.and = function (value, arg) {
+	  return value && arg;
+	};
+	
+	Rivets.formatters.or = function (value, arg) {
+	  return value || arg;
+	};
+	
+	// Concatenate
+	Rivets.formatters['+'] = function (value, arg) {
+	  return value + arg;
+	};
+	
+	// Allows rv-each-* to work on objects..
+	// Borrowed from: https://github.com/mikeric/rivets/issues/105
+	Rivets.formatters.to_a = function (value) {
+	  var new_value = [];
+	  _.forEach(value, function (v, k) {
+	    new_value.push({ key: k, value: v });
+	  });
+	  return new_value;
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(1)))
 
 /***/ },
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
-	
-	// ChatPanel
-	
-	__webpack_require__(11);
-	var RTCWrapper = __webpack_require__(15);
-	var UserService = __webpack_require__(17);
-	
-	module.exports = Backbone.View.extend({
-		id: 'ChatPanel',
-		template: '\n\t\t<ul>\n\t\t\t<li rv-each-msg="scope.messages">\n\t\t\t\t<span class="timestamp">{ msg.timestamp }</span>\n\t\t\t\t<span class="username">{ msg.name }</span>\n\t\t\t\t<span>{ msg.text }</span>\n\t\t\t</li>\n\t\t</ul>\n\t\t<textarea></textarea>\n\t',
-		events: {
-			'keydown textarea': function keydownTextarea(ev) {
-				// Prevent cursor from moving before sending.
-				if (ev.keyCode == 13 && !ev.shiftKey) {
-					ev.preventDefault();
-				}
-			},
-			'keyup textarea': function keyupTextarea(ev) {
-				if (ev.keyCode == 13 && !ev.shiftKey) {
-					this.sendChat(ev.currentTarget.value);
-					ev.currentTarget.value = '';
-				}
-			}
-		},
-		initialize: function initialize() {
-			var self = this;
-			// RTCWrapper.onmessage("BroadcastChat", function(e) {
-			RTCWrapper.onReceiveBroadcast(function (msg) {
-				console.log("OOOM", msg);
-				self.scope.messages.push(msg);
-	
-				// Scroll down
-				var chats = self.$("ul")[0];
-				chats.scrollTop = chats.scrollHeight;
-			});
-		},
-		render: function render() {
-			this.scope.messages = [];
-			this.$el.html(this.template);
-			Rivets.bind(this.$el, { scope: this.scope });
-			return this;
-		},
-		sendChat: function sendChat(text) {
-			if (text.length === 0) return;
-			RTCWrapper.sendBroadcast(text);
-		},
-		scope: {}
-	});
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
-
-/***/ },
-/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module) {// Rivets.js
@@ -17386,9 +17361,9 @@ var RTChat =
 	  };
 	
 	  if (typeof (typeof module !== "undefined" && module !== null ? module.exports : void 0) === 'object') {
-	    module.exports = Rivets.factory(__webpack_require__(10));
+	    module.exports = Rivets.factory(__webpack_require__(9));
 	  } else if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(sightglass) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(sightglass) {
 	      return this.rivets = Rivets.factory(sightglass);
 	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else {
@@ -17397,10 +17372,10 @@ var RTChat =
 	
 	}).call(this);
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)(module)))
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -17416,7 +17391,7 @@ var RTChat =
 
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function() {
@@ -17635,16 +17610,98 @@ var RTChat =
 
 
 /***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var map = {
+		"./chat_panel.js": 11,
+		"./header.js": 20,
+		"./layout.js": 23,
+		"./room_panel.js": 26,
+		"./sidebar.js": 29,
+		"./user_menu.js": 30,
+		"./welcome_panel.js": 31
+	};
+	function webpackContext(req) {
+		return __webpack_require__(webpackContextResolve(req));
+	};
+	function webpackContextResolve(req) {
+		return map[req] || (function() { throw new Error("Cannot find module '" + req + "'.") }());
+	};
+	webpackContext.keys = function webpackContextKeys() {
+		return Object.keys(map);
+	};
+	webpackContext.resolve = webpackContextResolve;
+	module.exports = webpackContext;
+	webpackContext.id = 10;
+
+
+/***/ },
 /* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
+	
+	// ChatPanel
+	
+	__webpack_require__(12);
+	var RTCWrapper = __webpack_require__(16);
+	var UserService = __webpack_require__(18);
+	
+	module.exports = Backbone.View.extend({
+		id: 'ChatPanel',
+		template: '\n\t\t<ul>\n\t\t\t<li rv-each-msg="scope.messages">\n\t\t\t\t<span class="timestamp">{ msg.timestamp }</span>\n\t\t\t\t<span class="username">{ msg.name }</span>\n\t\t\t\t<span>{ msg.text }</span>\n\t\t\t</li>\n\t\t</ul>\n\t\t<textarea></textarea>\n\t',
+		events: {
+			'keydown textarea': function keydownTextarea(ev) {
+				// Prevent cursor from moving before sending.
+				if (ev.keyCode == 13 && !ev.shiftKey) {
+					ev.preventDefault();
+				}
+			},
+			'keyup textarea': function keyupTextarea(ev) {
+				if (ev.keyCode == 13 && !ev.shiftKey) {
+					this.sendChat(ev.currentTarget.value);
+					ev.currentTarget.value = '';
+				}
+			}
+		},
+		initialize: function initialize() {
+			var self = this;
+			// RTCWrapper.onmessage("BroadcastChat", function(e) {
+			RTCWrapper.onReceiveBroadcast(function (msg) {
+				console.log("OOOM", msg);
+				self.scope.messages.push(msg);
+	
+				// Scroll down
+				var chats = self.$("ul")[0];
+				chats.scrollTop = chats.scrollHeight;
+			});
+		},
+		render: function render() {
+			this.scope.messages = [];
+			this.$el.html(this.template);
+			Rivets.bind(this.$el, { scope: this.scope });
+			return this;
+		},
+		sendChat: function sendChat(text) {
+			if (text.length === 0) return;
+			RTCWrapper.sendBroadcast(text);
+		},
+		scope: {}
+	});
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+
+/***/ },
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(12);
+	var content = __webpack_require__(13);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(14)(content, {});
+	var update = __webpack_require__(15)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -17661,10 +17718,10 @@ var RTChat =
 	}
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(13)();
+	exports = module.exports = __webpack_require__(14)();
 	// imports
 	
 	
@@ -17675,7 +17732,7 @@ var RTChat =
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/*
@@ -17731,7 +17788,7 @@ var RTChat =
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -17985,16 +18042,16 @@ var RTChat =
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(_) {'use strict';
 	
 	// RTCWrapper
 	
-	__webpack_require__(16);
+	__webpack_require__(17);
 	
-	var UserService = __webpack_require__(17);
+	var UserService = __webpack_require__(18);
 	
 	//TODO:
 	// require('utils/resume.js'); // Adds the Window:resume event.
@@ -18149,7 +18206,7 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Last time updated: 2016-03-14 12:07:07 PM UTC
@@ -23835,14 +23892,14 @@ var RTChat =
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
 	// UserService
 	
-	__webpack_require__(18);
+	__webpack_require__(19);
 	
 	module.exports = {
 		init: function init() {
@@ -23890,7 +23947,7 @@ var RTChat =
 	module.exports.init();
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -24154,12 +24211,12 @@ var RTChat =
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
-	__webpack_require__(20);
+	__webpack_require__(21);
 	
 	module.exports = Backbone.View.extend({
 	  id: 'Header',
@@ -24183,19 +24240,19 @@ var RTChat =
 	  },
 	  scope: {}
 	});
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(21);
+	var content = __webpack_require__(22);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(14)(content, {});
+	var update = __webpack_require__(15)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24212,10 +24269,10 @@ var RTChat =
 	}
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(13)();
+	exports = module.exports = __webpack_require__(14)();
 	// imports
 	
 	
@@ -24226,15 +24283,15 @@ var RTChat =
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {'use strict';
 	
 	// Layout - The parent view of the whole app, and also the router.
 	
-	__webpack_require__(23);
-	var RTCWrapper = __webpack_require__(15);
+	__webpack_require__(24);
+	var RTCWrapper = __webpack_require__(16);
 	
 	module.exports = Backbone.View.extend({
 		el: 'body',
@@ -24286,16 +24343,16 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(24);
+	var content = __webpack_require__(25);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(14)(content, {});
+	var update = __webpack_require__(15)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24312,10 +24369,10 @@ var RTChat =
 	}
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(13)();
+	exports = module.exports = __webpack_require__(14)();
 	// imports
 	
 	
@@ -24326,15 +24383,15 @@ var RTChat =
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
 	// RoomPanel
 	
-	__webpack_require__(26);
-	var RTCWrapper = __webpack_require__(15);
+	__webpack_require__(27);
+	var RTCWrapper = __webpack_require__(16);
 	
 	module.exports = Backbone.View.extend({
 		id: 'RoomPanel',
@@ -24370,19 +24427,19 @@ var RTChat =
 		},
 		scope: {}
 	});
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(27);
+	var content = __webpack_require__(28);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(14)(content, {});
+	var update = __webpack_require__(15)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24399,10 +24456,10 @@ var RTChat =
 	}
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(13)();
+	exports = module.exports = __webpack_require__(14)();
 	// imports
 	
 	
@@ -24413,7 +24470,7 @@ var RTChat =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -24430,14 +24487,14 @@ var RTChat =
 	});
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
 	// UserMenu
 	
-	var UserService = __webpack_require__(17);
+	var UserService = __webpack_require__(18);
 	
 	module.exports = Backbone.View.extend({
 		id: 'UserMenu',
@@ -24470,15 +24527,15 @@ var RTChat =
 		},
 		scope: {}
 	});
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(31);
+	__webpack_require__(32);
 	
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
@@ -24491,16 +24548,16 @@ var RTChat =
 	});
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(32);
+	var content = __webpack_require__(33);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(14)(content, {});
+	var update = __webpack_require__(15)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24517,10 +24574,10 @@ var RTChat =
 	}
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(13)();
+	exports = module.exports = __webpack_require__(14)();
 	// imports
 	
 	
@@ -24531,7 +24588,7 @@ var RTChat =
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports) {
 
 	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443"}
