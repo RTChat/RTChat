@@ -5,19 +5,9 @@ require('imports?jQuery=jquery!bootstrap/dist/js/bootstrap.js');
 
 require('utils/rivets_extensions.js');
 
-// Helper to turn file names into module names.
-// "./sample_view.js" becomes "SampleView".
-var modularize = function(str) {
-	return str.replace(/(^(\.\/)?\w|_[a-z])/g, function(s) {
-    return s.slice(-1).toUpperCase();
-  }).replace(/\.js$/, '');
-};
-
 // Load all views in an extensible way.
-var req = require.context('app/views', true, /\.js$/);
-var views = _.reduce(req.keys(), function(v, k) {
-	return (v[modularize(k)] = req(k)) && v;
-}, {});
+// "views/sample_view.js" becomes "views.SampleView".
+var views = load_module(require.context('app/views', true, /\.js$/));
 
 // Make PUBLIC modules accessible.
 module.exports = {
@@ -41,6 +31,22 @@ module.exports = {
 					(new self.Views.Layout()).render();
 			});
 		});
+	},
+
+	// Helpers
+	load_module: load_module,
+};
+
+function load_module(context) {
+	// Helper to turn "snake_case" filenames into module names.
+	// "./sample_view.js" becomes "SampleView".
+	function modularize(str) {
+		return str.replace(/(^(\.\/)?\w|_[a-z])/g, function(s) {
+	    return s.slice(-1).toUpperCase();
+	  }).replace(/\.js$/, '');
 	}
 
-};
+	return _.reduce(context.keys(), function(module, filename) {
+		return (module[modularize(filename)] = context(filename)) && module;
+	}, {});
+}
