@@ -10,7 +10,8 @@ module.exports = Backbone.View.extend({
 			<br>
 			<div class="room-subject">
 				<button class="btn btn-default">EDIT</button>
-				<span> { scope.roomSubject } </span>
+				<span rv-if="scope.roomSubject"> { scope.roomSubject } </span>
+				<span rv-unless="scope.roomSubject"> Welcome to { scope.roomName } </span>
 			</div>
 			<br><br>Users:
 			<ul class="users-panel">
@@ -40,13 +41,14 @@ module.exports = Backbone.View.extend({
 		chat: function() { return new RTChat.Views.ChatPanel(); },
 	},
 	render: function(){
+		console.log("RenderJoin", window.location.hash)
+		// if (!window.location.hash) return self
 		RTCWrapper.joinRoom(window.location.hash,
 			{videoContainer: this.$('#video-container')}
 		);
 
 		this.scope.roomName = window.location.hash;
 		this.scope.users = RTCWrapper.users;
-		this.scope.roomSubject = 'Welcome to '+window.location.hash+'!';
 
 		this.$el.html(this.template);
 		Rivets.bind(this.$el, {scope: this.scope});

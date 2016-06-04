@@ -16,8 +16,10 @@ module.exports = {
 		var self = this;
 		this.users = [];
 		this.leaveRoom();
+		console.log("Joining", roomName, !this.connection)
+		if (!roomName) return;
 
-		this.connection = new RTCMultiConnection();
+		if (!this.connection) this.connection = new RTCMultiConnection();
 		this.connection.socketURL = RTChat.AppConfig.SocketHost;
 
 		// this.connection.token();
@@ -87,7 +89,14 @@ module.exports = {
 	},
 	leaveRoom: function() {
 		if (this.connection) {
-			this.connection.leave();
+			console.log("LLLEAVING", this.connection, this.connection && this.connection.peers)
+			// this.connection.leave();
+			this.connection.close();
+			// _.each(this.connection.session.peers, function(xx) {
+			// });
+			// this.connection.peers.forEach(function(peer) {
+			// 	console.log("cc". peer)
+			// });
 		}
 	},
 

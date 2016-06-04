@@ -16,7 +16,7 @@
 			word-break: break-all;
 
 			.username {
-				color: lightgrey;
+				color: grey;
 
 				&:after {
 					content: ':';
@@ -29,7 +29,20 @@
 		}
 	}
 
-	textarea {
-		resize: none;
+	/* === Bottom === */
+
+	/* HACKS */
+	.emojione {
+		height: 20px;
+		width: auto;
+		background: none;
+		margin-top: -3px;
 	}
+
+	.emojionearea-editor {
+		box-sizing: content-box;
+		min-height: 1.4em;
+		max-height: 4em;
+	}
+
 }

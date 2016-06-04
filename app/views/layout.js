@@ -44,7 +44,7 @@ module.exports = Backbone.View.extend({
 		// "Router"
 		if (document.location.hash.length === 0) {
 			this.$('.main-panel').html(this.welcomeTemplate);
-			RTCWrapper.leaveRoom();
+			// RTCWrapper.leaveRoom();
 		} else {
 			this.$('.main-panel').html(this.roomTemplate);
 		}

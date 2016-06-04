@@ -43,7 +43,7 @@ body {
 
 		.main-panel {
 			flex: 1 1 100%;
-			background-color: gray;
+			background-color: lightgrey;
 			display: flex;
 			flex-direction: row;
 

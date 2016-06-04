@@ -37,13 +37,14 @@ module.exports = {
 	load_module: load_module,
 };
 
+// Load all files from a "context" into a single object.
 function load_module(context) {
 	// Helper to turn "snake_case" filenames into module names.
 	// "./sample_view.js" becomes "SampleView".
 	function modularize(str) {
 		return str.replace(/(^(\.\/)?\w|_[a-z])/g, function(s) {
-	    return s.slice(-1).toUpperCase();
-	  }).replace(/\.js$/, '');
+			return s.slice(-1).toUpperCase();
+		}).replace(/\.js$/, '');
 	}
 
 	return _.reduce(context.keys(), function(module, filename) {
