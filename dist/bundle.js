@@ -63,7 +63,7 @@ var RTChat =
 	
 		// DemoApp - Extend these with your own app or game!
 		Views: views,
-		AppConfig: __webpack_require__(39),
+		AppConfig: __webpack_require__(42),
 	
 		// Core Services - don't extend.
 		RTCWrapper: __webpack_require__(17),
@@ -18177,9 +18177,9 @@ var RTChat =
 		"./header.js": 25,
 		"./layout.js": 28,
 		"./room_panel.js": 31,
-		"./sidebar.js": 34,
-		"./user_menu.js": 35,
-		"./welcome_panel.js": 36
+		"./sidebar.js": 37,
+		"./user_menu.js": 38,
+		"./welcome_panel.js": 39
 	};
 	function webpackContext(req) {
 		return __webpack_require__(webpackContextResolve(req));
@@ -18654,6 +18654,13 @@ var RTChat =
 	// require('utils/resume.js'); // Adds the Window:resume event.
 	// $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 	
+	// Tracks what the user has enabled.
+	var userStreams = {
+		audio: false,
+		video: false,
+		oneway: true
+	};
+	
 	module.exports = {
 		// === Room API ===  (and users)
 		users: [],
@@ -18668,6 +18675,16 @@ var RTChat =
 			if (!this.connection) this.connection = new RTCMultiConnection();
 			this.connection.socketURL = RTChat.AppConfig.SocketHost;
 	
+			// ===
+			if (typeof webkitMediaStream !== 'undefined') {
+				this.connection.attachStreams.push(new webkitMediaStream());
+			} else if (typeof MediaStream !== 'undefined') {
+				this.connection.attachStreams.push(new MediaStream());
+			} else {
+				console.error('Neither Chrome nor Firefox. This demo may NOT work.');
+			}
+			// ===
+	
 			// this.connection.token();
 			this.connection.session = {
 				// audio: true,
@@ -18679,15 +18696,18 @@ var RTChat =
 				OfferToReceiveVideo: true
 			};
 	
-			// this.connection.onstream = function(ev) {
-			// 	console.log('eEE', ev, options.videoContainer)
-			// 	options.videoContainer[0].appendChild(ev.mediaElement);
+			var videoContainer = options.xVideoContainer;
 	
-			// 	setTimeout(function() {
-			// 		ev.mediaElement.play();
-			// 	}, 5000);
-	
-			// }
+			this.connection.onstream = function (ev) {
+				console.log('eEE', ev, videoContainer);
+				// if(!ev.stream.getAudioTracks().length && !ev.stream.getVideoTracks().length) {
+				// 	console.log("appending..")
+				videoContainer[0].appendChild(ev.mediaElement);
+				// }
+				// 	setTimeout(function() {
+				// 		ev.mediaElement.play();
+				// 	}, 5000);
+			};
 	
 			// this.connection.onNewSession = function(session) {
 			// 	console.log("new seshh", session)
@@ -18744,6 +18764,63 @@ var RTChat =
 				// 	console.log("cc". peer)
 				// });
 			}
+		},
+	
+		// === User Streams API ===
+		addVoiceStream: function addVoiceStream() {
+			console.log("Adding Voice Stream..");
+			var self = this;
+			this.connection.dontCaptureUserMedia = false;
+			if (this.connection.attachStreams.length) {
+				this.connection.getAllParticipants().forEach(function (p) {
+					self.connection.attachStreams.forEach(function (stream) {
+						self.connection.peers[p].peer.removeStream(stream);
+					});
+				});
+				this.connection.attachStreams = [];
+			}
+	
+			userStreams.audio = true;
+	
+			this.connection.addStream(userStreams);
+		},
+		addVideoStream: function addVideoStream() {
+			var self = this;
+			this.connection.dontCaptureUserMedia = false;
+			if (this.connection.attachStreams.length) {
+				this.connection.getAllParticipants().forEach(function (p) {
+					self.connection.attachStreams.forEach(function (stream) {
+						self.connection.peers[p].peer.removeStream(stream);
+					});
+				});
+				this.connection.attachStreams = [];
+			}
+	
+			userStreams.video = true;
+	
+			this.connection.addStream(userStreams);
+		},
+		removeStreams: function removeStreams() {
+			console.log("REMOVING STREAMS");
+			var self = this;
+			this.connection.dontCaptureUserMedia = false;
+			if (this.connection.attachStreams.length) {
+				this.connection.getAllParticipants().forEach(function (p) {
+					self.connection.attachStreams.forEach(function (stream) {
+						self.connection.peers[p].peer.removeStream(stream);
+					});
+				});
+	
+				this.connection.attachStreams.forEach(function (stream) {
+					stream.stop();
+				});
+	
+				this.connection.attachStreams = [];
+			}
+			this.connection.renegotiate();
+	
+			userStreams.voice = false;
+			userStreams.video = false;
 		},
 	
 		// === AppState API ===
@@ -18815,10 +18892,17 @@ var RTChat =
 /* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// Last time updated: 2016-03-14 12:07:07 PM UTC
+	// Last time updated: 2016-06-05 3:14:50 PM UTC
 	
-	// ______________________________
-	// RTCMultiConnection-v3.0 (Beta)
+	// _____________________
+	// RTCMultiConnection-v3
+	
+	// Open-Sourced: https://github.com/muaz-khan/RTCMultiConnection
+	
+	// --------------------------------------------------
+	// Muaz Khan     - www.MuazKhan.com
+	// MIT License   - www.WebRTC-Experiment.com/licence
+	// --------------------------------------------------
 	
 	'use strict';
 	
@@ -18827,7 +18911,9 @@ var RTChat =
 	    // RTCMultiConnection.js
 	
 	    function RTCMultiConnection(roomid, forceOptions) {
-	        forceOptions = forceOptions || {};
+	        forceOptions = forceOptions || {
+	            useDefaultDevices: true
+	        };
 	
 	        var connection = this;
 	
@@ -18837,7 +18923,8 @@ var RTChat =
 	
 	        mPeer.onGettingLocalMedia = function(stream) {
 	            stream.type = 'local';
-	            setStreamEndHandler(stream);
+	
+	            connection.setStreamEndHandler(stream);
 	
 	            getRMCMediaElement(stream, function(mediaElement) {
 	                mediaElement.id = stream.streamid;
@@ -18868,13 +18955,12 @@ var RTChat =
 	
 	                connection.onstream(connection.streamEvents[stream.streamid]);
 	            }, connection);
-	
-	            connection.observers.all();
 	        };
 	
 	        mPeer.onGettingRemoteMedia = function(stream, remoteUserId) {
 	            stream.type = 'remote';
-	            setStreamEndHandler(stream, 'remote-stream');
+	
+	            connection.setStreamEndHandler(stream, 'remote-stream');
 	
 	            getRMCMediaElement(stream, function(mediaElement) {
 	                mediaElement.id = stream.streamid;
@@ -18919,7 +19005,7 @@ var RTChat =
 	
 	        mPeer.onNegotiationNeeded = function(message, remoteUserId, callback) {
 	            connectSocket(function() {
-	                socket.emit(connection.socketMessageEvent, 'password' in message ? message : {
+	                connection.socket.emit(connection.socketMessageEvent, 'password' in message ? message : {
 	                    remoteUserId: message.remoteUserId || remoteUserId,
 	                    message: message,
 	                    sender: connection.userid
@@ -18933,8 +19019,8 @@ var RTChat =
 	
 	        mPeer.onUserLeft = onUserLeft;
 	        mPeer.disconnectWith = function(remoteUserId, callback) {
-	            if (socket) {
-	                socket.emit('disconnect-with', remoteUserId, callback || function() {});
+	            if (connection.socket) {
+	                connection.socket.emit('disconnect-with', remoteUserId, callback || function() {});
 	            }
 	
 	            connection.deletePeer(remoteUserId);
@@ -18948,12 +19034,12 @@ var RTChat =
 	            'transport': 'polling' // fixing transport:unknown issues
 	        };
 	
-	        var socket;
-	
 	        function connectSocket(connectCallback) {
-	            if (socket) { // todo: check here readySate/etc. to make sure socket is still opened
+	            connection.socketAutoReConnect = true;
+	
+	            if (connection.socket) { // todo: check here readySate/etc. to make sure socket is still opened
 	                if (connectCallback) {
-	                    connectCallback(socket);
+	                    connectCallback(connection.socket);
 	                }
 	                return;
 	            }
@@ -18968,10 +19054,9 @@ var RTChat =
 	                }
 	            }
 	
-	            socket = new SocketConnection(connection, function(s) {
-	                socket = s;
+	            new SocketConnection(connection, function(s) {
 	                if (connectCallback) {
-	                    connectCallback(socket);
+	                    connectCallback(connection.socket);
 	                }
 	            });
 	        }
@@ -19022,10 +19107,10 @@ var RTChat =
 	                connection.userid = connection.sessionid = localUserid || connection.sessionid;
 	                connection.userid += '';
 	
-	                socket.emit('changed-uuid', connection.userid);
+	                connection.socket.emit('changed-uuid', connection.userid);
 	
 	                if (password) {
-	                    socket.emit('set-password', password);
+	                    connection.socket.emit('set-password', password);
 	                }
 	
 	                connection.isInitiator = true;
@@ -19046,7 +19131,7 @@ var RTChat =
 	            connection.isInitiator = true;
 	
 	            connectSocket(function() {
-	                socket.emit('changed-uuid', connection.userid);
+	                connection.socket.emit('changed-uuid', connection.userid);
 	
 	                if (isPublicModerator == true) {
 	                    connection.becomePublicModerator();
@@ -19065,11 +19150,11 @@ var RTChat =
 	
 	        connection.becomePublicModerator = function() {
 	            if (!connection.isInitiator) return;
-	            socket.emit('become-a-public-moderator');
+	            connection.socket.emit('become-a-public-moderator');
 	        };
 	
 	        connection.dontMakeMeModerator = function() {
-	            socket.emit('dont-make-me-moderator');
+	            connection.socket.emit('dont-make-me-moderator');
 	        };
 	
 	        connection.deletePeer = function(remoteUserId) {
@@ -19161,6 +19246,13 @@ var RTChat =
 	            }
 	
 	            options = options || {};
+	
+	            var cb = function() {};
+	            if (typeof options === 'function') {
+	                cb = options;
+	                options = {};
+	            }
+	
 	            if (typeof options.localPeerSdpConstraints !== 'undefined') {
 	                localPeerSdpConstraints = options.localPeerSdpConstraints;
 	            }
@@ -19197,6 +19289,7 @@ var RTChat =
 	                }
 	
 	                mPeer.onNegotiationNeeded(connectionDescription);
+	                cb();
 	            });
 	
 	            return connectionDescription;
@@ -19219,15 +19312,12 @@ var RTChat =
 	            });
 	        };
 	
-	        connection.getUserMedia = connection.captureUserMedia = function(callback, session) {
-	            connection.observers.all();
-	
-	            session = session || connection.session;
+	        connection.getUserMedia = connection.captureUserMedia = function(callback, sessionForced) {
+	            callback = callback || function() {};
+	            var session = sessionForced || connection.session;
 	
 	            if (connection.dontCaptureUserMedia || isData(session)) {
-	                if (callback) {
-	                    callback();
-	                }
+	                callback();
 	                return;
 	            }
 	
@@ -19238,63 +19328,27 @@ var RTChat =
 	                            throw error;
 	                        }
 	
-	                        invokeGetUserMedia({
+	                        connection.invokeGetUserMedia({
+	                            audio: isAudioPlusTab(connection) ? getAudioScreenConstraints(screen_constraints) : false,
 	                            video: screen_constraints,
 	                            isScreen: true
-	                        }, session.audio || session.video ? invokeGetUserMedia : false);
+	                        }, function(stream) {
+	                            if ((session.audio || session.video) && !isAudioPlusTab(connection)) {
+	                                var nonScreenSession = {};
+	                                for (var s in session) {
+	                                    if (s !== 'screen') {
+	                                        nonScreenSession[s] = session[s];
+	                                    }
+	                                }
+	                                connection.invokeGetUserMedia(sessionForced, callback, nonScreenSession);
+	                                return;
+	                            }
+	                            callback(stream);
+	                        });
 	                    });
 	                } else if (session.audio || session.video) {
-	                    invokeGetUserMedia();
+	                    connection.invokeGetUserMedia(sessionForced, callback, session);
 	                }
-	            }
-	
-	            function invokeGetUserMedia(localMediaConstraints, getUserMedia_callback) {
-	                var isScreen = false;
-	                if (localMediaConstraints) {
-	                    isScreen = localMediaConstraints.isScreen;
-	                    delete localMediaConstraints.isScreen;
-	                }
-	
-	                getUserMediaHandler({
-	                    onGettingLocalMedia: function(stream) {
-	                        stream.isAudio = stream.isVideo = stream.isScreen = false;
-	
-	                        if (isScreen) {
-	                            stream.isScreen = true;
-	                        } else if (session.audio && session.video) {
-	                            stream.isVideo = true;
-	                        } else if (session.audio) {
-	                            stream.isAudio = true;
-	                        }
-	
-	                        mPeer.onGettingLocalMedia(stream);
-	
-	                        if (getUserMedia_callback) {
-	                            return getUserMedia_callback();
-	                        }
-	
-	                        if (callback) {
-	                            callback(stream);
-	                        }
-	                    },
-	                    onLocalMediaError: function(error, constraints) {
-	                        mPeer.onLocalMediaError(error, constraints);
-	
-	                        if (constraints.audio && constraints.video && (error.name || '').toString().indexOf('DevicesNotFound') !== -1) {
-	                            constraints.video = false;
-	                            invokeGetUserMedia(constraints, getUserMedia_callback);
-	                            return;
-	                        }
-	
-	                        if (callback) {
-	                            callback();
-	                        }
-	                    },
-	                    localMediaConstraints: localMediaConstraints || {
-	                        audio: !!session.audio ? connection.mediaConstraints.audio : false,
-	                        video: !!session.video ? connection.mediaConstraints.video : false
-	                    }
-	                });
 	            }
 	        };
 	
@@ -19333,47 +19387,11 @@ var RTChat =
 	        connection.userid = getRandomString();
 	        connection.changeUserId = function(newUserId, callback) {
 	            connection.userid = newUserId || getRandomString();
-	            socket.emit('changed-uuid', connection.userid, callback || function() {});
+	            connection.socket.emit('changed-uuid', connection.userid, callback || function() {});
 	        };
 	
-	        connection.observers = {
-	            extra: function() {
-	                observeObject(connection.extra, function(changes) {
-	                    socket.emit('extra-data-updated', connection.extra);
-	                });
-	            },
-	            attachStreams: function() {
-	                observeObject(connection.attachStreams, function(changes) {
-	                    changes.forEach(function(change) {
-	                        if (change.type === 'add') {
-	                            setStreamEndHandler(change.object[change.name]);
-	                        }
-	
-	                        if (change.type === 'remove' || change.type === 'delete') {
-	                            if (connection.removeStreams.indexOf(change.object[change.name]) === -1) {
-	                                connection.removeStreams.push(change.object[change.name]);
-	                            }
-	                        }
-	
-	                        connection.attachStreams = removeNullEntries(connection.attachStreams);
-	                        connection.removeStreams = removeNullEntries(connection.removeStreams);
-	                        connection.observers.all();
-	                    });
-	                });
-	            },
-	            all: function() {
-	                this.extra();
-	                this.attachStreams();
-	
-	                if (socket) {
-	                    socket.emit('extra-data-updated', connection.extra);
-	                }
-	            }
-	        };
 	        connection.extra = {};
 	        connection.attachStreams = [];
-	        connection.removeStreams = [];
-	        connection.observers.all();
 	
 	        connection.session = {
 	            audio: true,
@@ -19440,9 +19458,7 @@ var RTChat =
 	            video: {
 	                mandatory: {},
 	                optional: [{
-	                    bandwidth: connection.bandwidth.audio * 8 * 1024 || 128 * 8 * 1024
-	                }, {
-	                    googLeakyBucket: true
+	                    bandwidth: connection.bandwidth.video * 8 * 1024 || 128 * 8 * 1024
 	                }, {
 	                    facingMode: 'user'
 	                }]
@@ -19614,7 +19630,7 @@ var RTChat =
 	
 	        connection.closeEntireSession = function(callback) {
 	            callback = callback || function() {};
-	            socket.emit('close-entire-session', function looper() {
+	            connection.socket.emit('close-entire-session', function looper() {
 	                if (connection.getAllParticipants().length) {
 	                    setTimeout(looper, 100);
 	                    return;
@@ -19641,8 +19657,7 @@ var RTChat =
 	        connection.onstream = function(e) {
 	            var parentNode = connection.videosContainer;
 	            parentNode.insertBefore(e.mediaElement, parentNode.firstChild);
-	
-	            if (!isMobileDevice) return;
+	            e.mediaElement.play();
 	            setTimeout(function() {
 	                e.mediaElement.play();
 	            }, 5000);
@@ -19675,12 +19690,14 @@ var RTChat =
 	                return;
 	            }
 	
-	            if (connection.removeStreams.indexOf(stream) === -1) {
-	                connection.removeStreams.push(stream);
-	                connection.peers.getAllParticipants().forEach(function(participant) {
-	                    mPeer.renegotiatePeer(participant);
-	                });
-	            }
+	            connection.peers.getAllParticipants().forEach(function(participant) {
+	                var user = connection.peers[participant];
+	                try {
+	                    user.peer.removeStream(stream);
+	                } catch (e) {}
+	            });
+	
+	            connection.renegotiate();
 	        };
 	
 	        connection.addStream = function(session, remoteUserId) {
@@ -19701,72 +19718,72 @@ var RTChat =
 	                return;
 	            }
 	
-	            if (!session.audio || session.video || session.screen) {
+	            if (session.audio || session.video || session.screen) {
 	                if (session.screen) {
 	                    connection.getScreenConstraints(function(error, screen_constraints) {
 	                        if (error) {
 	                            return alert(error);
 	                        }
 	
-	                        invokeGetUserMedia({
-	                            video: screen_constraints
-	                        }, session.audio || session.video ? invokeGetUserMedia : false);
+	                        connection.invokeGetUserMedia({
+	                            audio: isAudioPlusTab(connection) ? getAudioScreenConstraints(screen_constraints) : false,
+	                            video: screen_constraints,
+	                            isScreen: true
+	                        }, (session.audio || session.video) && !isAudioPlusTab(connection) ? connection.invokeGetUserMedia(null, gumCallback) : gumCallback);
 	                    });
 	                } else if (session.audio || session.video) {
-	                    invokeGetUserMedia();
+	                    connection.invokeGetUserMedia(null, gumCallback);
 	                }
 	            }
 	
-	            function invokeGetUserMedia(localMediaConstraints, callback) {
-	                getUserMediaHandler({
-	                    onGettingLocalMedia: function(stream) {
-	                        var videoConstraints = localMediaConstraints ? localMediaConstraints.video : connection.mediaConstraints;
-	                        if (videoConstraints) {
-	                            if (videoConstraints.mediaSource || videoConstraints.mozMediaSource) {
-	                                stream.isScreen = true;
-	                            } else if (videoConstraints.mandatory && videoConstraints.mandatory.chromeMediaSource) {
-	                                stream.isScreen = true;
-	                            }
-	                        }
+	            function gumCallback(stream) {
+	                if (session.streamCallback) {
+	                    session.streamCallback(stream);
+	                }
 	
-	                        if (!stream.isScreen) {
-	                            stream.isVideo = stream.getVideoTracks().length;
-	                            stream.isAudio = !stream.isVideo && stream.getAudioTracks().length;
-	                        }
-	
-	                        mPeer.onGettingLocalMedia(stream);
-	
-	                        if (session.streamCallback) {
-	                            session.streamCallback(stream);
-	                        }
-	
-	                        if (callback) {
-	                            return callback();
-	                        }
-	
-	                        connection.renegotiate(remoteUserId);
-	                    },
-	                    onLocalMediaError: function(error, constraints) {
-	                        mPeer.onLocalMediaError(error, constraints);
-	
-	                        if (constraints.audio && constraints.video && (error.name || '').toString().indexOf('DevicesNotFound') !== -1) {
-	                            constraints.video = false;
-	                            invokeGetUserMedia(constraints, callback);
-	                            return;
-	                        }
-	
-	                        if (callback) {
-	                            return callback();
-	                        }
-	
-	                        connection.renegotiate(remoteUserId);
-	                    },
-	                    localMediaConstraints: localMediaConstraints || {
-	                        audio: session.audio ? connection.mediaConstraints.audio : false,
-	                        video: session.video ? connection.mediaConstraints.video : false
-	                    }
-	                });
+	                connection.renegotiate(remoteUserId);
 	            }
+	        };
+	
+	        connection.invokeGetUserMedia = function(localMediaConstraints, callback, session) {
+	            if (!session) {
+	                session = connection.session;
+	            }
+	
+	            if (!localMediaConstraints) {
+	                localMediaConstraints = connection.mediaConstraints;
+	            }
+	
+	            getUserMediaHandler({
+	                onGettingLocalMedia: function(stream) {
+	                    var videoConstraints = localMediaConstraints.video;
+	                    if (videoConstraints) {
+	                        if (videoConstraints.mediaSource || videoConstraints.mozMediaSource) {
+	                            stream.isScreen = true;
+	                        } else if (videoConstraints.mandatory && videoConstraints.mandatory.chromeMediaSource) {
+	                            stream.isScreen = true;
+	                        }
+	                    }
+	
+	                    if (!stream.isScreen) {
+	                        stream.isVideo = stream.getVideoTracks().length;
+	                        stream.isAudio = !stream.isVideo && stream.getAudioTracks().length;
+	                    }
+	
+	                    mPeer.onGettingLocalMedia(stream);
+	
+	                    if (callback) {
+	                        callback(stream);
+	                    }
+	                },
+	                onLocalMediaError: function(error, constraints) {
+	                    mPeer.onLocalMediaError(error, constraints);
+	                },
+	                localMediaConstraints: localMediaConstraints || {
+	                    audio: session.audio ? localMediaConstraints.audio : false,
+	                    video: session.video ? localMediaConstraints.video : false
+	                }
+	            });
 	        };
 	
 	        function applyConstraints(stream, mediaConstraints) {
@@ -19797,7 +19814,7 @@ var RTChat =
 	            }
 	
 	            if (streamid) {
-	                var streams;
+	                var stream;
 	                if (connection.streamEvents[streamid]) {
 	                    stream = connection.streamEvents[streamid].stream;
 	                }
@@ -19850,51 +19867,26 @@ var RTChat =
 	                return;
 	            }
 	
-	            if (!session.audio || session.video || session.screen) {
+	            if (session.audio || session.video || session.screen) {
 	                if (session.screen) {
 	                    connection.getScreenConstraints(function(error, screen_constraints) {
 	                        if (error) {
 	                            return alert(error);
 	                        }
 	
-	                        invokeGetUserMedia({
-	                            video: screen_constraints
-	                        }, session.audio || session.video ? invokeGetUserMedia : false);
+	                        connection.invokeGetUserMedia({
+	                            audio: isAudioPlusTab(connection) ? getAudioScreenConstraints(screen_constraints) : false,
+	                            video: screen_constraints,
+	                            isScreen: true
+	                        }, (session.audio || session.video) && !isAudioPlusTab(connection) ? connection.invokeGetUserMedia(null, gumCallback) : gumCallback);
 	                    });
 	                } else if (session.audio || session.video) {
-	                    invokeGetUserMedia();
+	                    connection.invokeGetUserMedia(null, gumCallback);
 	                }
 	            }
 	
-	            function invokeGetUserMedia(localMediaConstraints, callback) {
-	                getUserMediaHandler({
-	                    onGettingLocalMedia: function(stream) {
-	                        mPeer.onGettingLocalMedia(stream);
-	
-	                        if (callback) {
-	                            return callback();
-	                        }
-	
-	                        connection.replaceTrack(stream, remoteUserId, isVideoTrack || session.video || session.screen);
-	                    },
-	                    onLocalMediaError: function(error, constraints) {
-	                        mPeer.onLocalMediaError(error, constraints);
-	
-	                        if (constraints.audio && constraints.video && (error.name || '').toString().indexOf('DevicesNotFound') !== -1) {
-	                            constraints.video = false;
-	                            invokeGetUserMedia(constraints, callback);
-	                            return;
-	                        }
-	
-	                        if (callback) {
-	                            callback();
-	                        }
-	                    },
-	                    localMediaConstraints: localMediaConstraints || {
-	                        audio: session.audio ? connection.mediaConstraints.audio : false,
-	                        video: session.video ? connection.mediaConstraints.video : false
-	                    }
-	                });
+	            function gumCallback(stream) {
+	                connection.replaceTrack(stream, remoteUserId, isVideoTrack || session.video || session.screen);
 	            }
 	        };
 	
@@ -19931,14 +19923,15 @@ var RTChat =
 	            });
 	        };
 	
-	        function setStreamEndHandler(stream, isRemote) {
+	        connection.setStreamEndHandler = function(stream, isRemote) {
+	            if (!stream || !stream.addEventListener) return;
+	
 	            isRemote = !!isRemote;
 	
 	            if (stream.alreadySetEndHandler) {
 	                return;
 	            }
 	            stream.alreadySetEndHandler = true;
-	            if (!stream || !stream.addEventListener) return;
 	
 	            stream.addEventListener('ended', function() {
 	                if (stream.idInstance) {
@@ -19947,14 +19940,6 @@ var RTChat =
 	
 	                if (!isRemote) {
 	                    delete connection.attachStreams[connection.attachStreams.indexOf(stream)];
-	
-	                    if (connection.removeStreams.indexOf(stream) === -1) {
-	                        connection.removeStreams.push(stream);
-	                    }
-	
-	                    connection.attachStreams = removeNullEntries(connection.attachStreams);
-	                    connection.removeStreams = removeNullEntries(connection.removeStreams);
-	                    connection.observers.all();
 	                }
 	
 	                // connection.renegotiate();
@@ -19979,7 +19964,7 @@ var RTChat =
 	
 	                delete connection.streamEvents[stream.streamid];
 	            }, false);
-	        }
+	        };
 	
 	        connection.onMediaError = function(error, constraints) {
 	            if (!!connection.enableLogs) {
@@ -20064,7 +20049,7 @@ var RTChat =
 	                }, participant);
 	            });
 	            connection.userid = sender;
-	            socket.emit('changed-uuid', connection.userid);
+	            connection.socket.emit('changed-uuid', connection.userid);
 	        };
 	
 	        connection.shiftModerationControl = function(remoteUserId, existingBroadcasters, firedOnLeave) {
@@ -20091,8 +20076,8 @@ var RTChat =
 	                callback = userIdStartsWith;
 	            }
 	
-	            connectSocket(function(socket) {
-	                socket.emit(
+	            connectSocket(function() {
+	                connection.socket.emit(
 	                    'get-public-moderators',
 	                    typeof userIdStartsWith === 'string' ? userIdStartsWith : '',
 	                    callback
@@ -20101,7 +20086,7 @@ var RTChat =
 	        };
 	
 	        connection.onmute = function(e) {
-	            if (!e.mediaElement) {
+	            if (!e || !e.mediaElement) {
 	                return;
 	            }
 	
@@ -20115,7 +20100,7 @@ var RTChat =
 	        };
 	
 	        connection.onunmute = function(e) {
-	            if (!e.mediaElement) {
+	            if (!e || !e.mediaElement || !e.stream) {
 	                return;
 	            }
 	
@@ -20166,22 +20151,31 @@ var RTChat =
 	            connectSocket(callback);
 	        };
 	
+	        connection.socketAutoReConnect = true;
 	        connection.closeSocket = function() {
-	            if (!socket) return;
-	            if (typeof socket.disconnect !== 'undefined') {
-	                socket.disconnect();
+	            try {
+	                io.sockets = {};
+	            } catch (e) {};
+	
+	            if (!connection.socket) return;
+	
+	            connection.socketAutoReConnect = false;
+	
+	            if (typeof connection.socket.disconnect === 'function') {
+	                connection.socket.disconnect();
 	            }
-	            socket = null;
+	
+	            connection.socket = null;
 	        };
 	
 	        connection.getSocket = function(callback) {
-	            if (!socket) {
+	            if (!connection.socket) {
 	                connectSocket(callback);
 	            } else if (callback) {
-	                callback(socket);
+	                callback(connection.socket);
 	            }
 	
-	            return socket;
+	            return connection.socket;
 	        };
 	
 	        connection.getRemoteStreams = mPeer.getRemoteStreams;
@@ -20235,10 +20229,13 @@ var RTChat =
 	        connection.disconnectWith = mPeer.disconnectWith;
 	
 	        connection.checkPresence = function(remoteUserId, callback) {
-	            mPeer.onNegotiationNeeded({
-	                detectPresence: true,
-	                userid: (remoteUserId || connection.sessionid) + ''
-	            }, 'system', callback);
+	            if (!connection.socket) {
+	                connection.connectSocket(function() {
+	                    connection.checkPresence(remoteUserId, callback);
+	                });
+	                return;
+	            }
+	            connection.socket.emit('check-presence', (remoteUserId || connection.sessionid) + '', callback);
 	        };
 	
 	        connection.onReadyForOffer = function(remoteUserId, userPreferences) {
@@ -20258,7 +20255,7 @@ var RTChat =
 	        };
 	
 	        connection.updateExtraData = function() {
-	            socket.emit('extra-data-updated', connection.extra);
+	            connection.socket.emit('extra-data-updated', connection.extra);
 	        };
 	
 	        connection.enableScalableBroadcast = false;
@@ -20294,13 +20291,17 @@ var RTChat =
 	            connection.getChromeExtensionStatus = getChromeExtensionStatus;
 	        }
 	
-	        connection.getScreenConstraints = function(callback) {
+	        connection.getScreenConstraints = function(callback, audioPlusTab) {
+	            if (isAudioPlusTab(connection, audioPlusTab)) {
+	                audioPlusTab = true;
+	            }
+	
 	            getScreenConstraints(function(error, screen_constraints) {
 	                if (!error) {
 	                    screen_constraints = connection.modifyScreenConstraints(screen_constraints);
 	                    callback(error, screen_constraints);
 	                }
-	            });
+	            }, audioPlusTab);
 	        };
 	
 	        connection.modifyScreenConstraints = function(screen_constraints) {
@@ -20335,7 +20336,7 @@ var RTChat =
 	                    screen: 30
 	                };
 	
-	                if (connection.mediaConstraints.audio && connection.mediaConstraints.audio.optional.length) {
+	                if (connection.mediaConstraints.audio && connection.mediaConstraints.audio.optional && connection.mediaConstraints.audio.optional.length) {
 	                    var newArray = [];
 	                    connection.mediaConstraints.audio.optional.forEach(function(opt) {
 	                        if (typeof opt.bandwidth === 'undefined') {
@@ -20345,7 +20346,7 @@ var RTChat =
 	                    connection.mediaConstraints.audio.optional = newArray;
 	                }
 	
-	                if (connection.mediaConstraints.video && connection.mediaConstraints.video.optional.length) {
+	                if (connection.mediaConstraints.video && connection.mediaConstraints.video.optional && connection.mediaConstraints.video.optional.length) {
 	                    var newArray = [];
 	                    connection.mediaConstraints.video.optional.forEach(function(opt) {
 	                        if (typeof opt.bandwidth === 'undefined') {
@@ -20371,7 +20372,11 @@ var RTChat =
 	            if (connection.enableLogs) {
 	                console.warn('Userid already taken.', useridAlreadyTaken, 'Your new userid:', yourNewUserId);
 	            }
+	
+	            connection.join(useridAlreadyTaken);
 	        };
+	
+	        connection.trickleIce = true;
 	    }
 	
 	    function SocketConnection(connection, connectCallback) {
@@ -20386,17 +20391,19 @@ var RTChat =
 	            parameters += '&maxRelayLimitPerUser=' + (connection.maxRelayLimitPerUser || 2);
 	        }
 	
-	        var socket;
+	        try {
+	            io.sockets = {};
+	        } catch (e) {};
 	
 	        try {
-	            socket = io((connection.socketURL || '/') + parameters);
+	            connection.socket = io((connection.socketURL || '/') + parameters);
 	        } catch (e) {
-	            socket = io.connect((connection.socketURL || '/') + parameters, connection.socketOptions);
+	            connection.socket = io.connect((connection.socketURL || '/') + parameters, connection.socketOptions);
 	        }
 	
 	        var mPeer = connection.multiPeersHandler;
 	
-	        socket.on('extra-data-updated', function(remoteUserId, extra) {
+	        connection.socket.on('extra-data-updated', function(remoteUserId, extra) {
 	            if (!connection.peers[remoteUserId]) return;
 	            connection.peers[remoteUserId].extra = extra;
 	
@@ -20406,7 +20413,7 @@ var RTChat =
 	            });
 	        });
 	
-	        socket.on(connection.socketMessageEvent, function(message) {
+	        connection.socket.on(connection.socketMessageEvent, function(message) {
 	            if (message.remoteUserId != connection.userid) return;
 	
 	            if (connection.peers[message.sender] && connection.peers[message.sender].extra != message.extra) {
@@ -20565,7 +20572,7 @@ var RTChat =
 	            mPeer.addNegotiatedMessage(message.message, message.sender);
 	        });
 	
-	        socket.on('user-left', function(userid) {
+	        connection.socket.on('user-left', function(userid) {
 	            onUserLeft(userid);
 	
 	            connection.onUserStatusChanged({
@@ -20580,36 +20587,46 @@ var RTChat =
 	            });
 	        });
 	
-	        socket.on('connect', function() {
+	        connection.socket.on('connect', function() {
+	            if (!connection.socketAutoReConnect) {
+	                connection.socket = null;
+	                return;
+	            }
+	
 	            if (connection.enableLogs) {
 	                console.info('socket.io connection is opened.');
 	            }
 	
-	            socket.emit('extra-data-updated', connection.extra);
+	            connection.socket.emit('extra-data-updated', connection.extra);
 	
-	            if (connectCallback) connectCallback(socket);
+	            if (connectCallback) connectCallback(connection.socket);
 	        });
 	
-	        socket.on('disconnect', function() {
+	        connection.socket.on('disconnect', function() {
+	            if (!connection.socketAutoReConnect) {
+	                connection.socket = null;
+	                return;
+	            }
+	
 	            if (connection.enableLogs) {
 	                console.info('socket.io connection is closed');
 	                console.warn('socket.io reconnecting');
 	            }
 	        });
 	
-	        socket.on('join-with-password', function(remoteUserId) {
+	        connection.socket.on('join-with-password', function(remoteUserId) {
 	            connection.onJoinWithPassword(remoteUserId);
 	        });
 	
-	        socket.on('invalid-password', function(remoteUserId, oldPassword) {
+	        connection.socket.on('invalid-password', function(remoteUserId, oldPassword) {
 	            connection.onInvalidPassword(remoteUserId, oldPassword);
 	        });
 	
-	        socket.on('password-max-tries-over', function(remoteUserId) {
+	        connection.socket.on('password-max-tries-over', function(remoteUserId) {
 	            connection.onPasswordMaxTriesOver(remoteUserId);
 	        });
 	
-	        socket.on('user-disconnected', function(remoteUserId) {
+	        connection.socket.on('user-disconnected', function(remoteUserId) {
 	            if (remoteUserId === connection.userid) {
 	                return;
 	            }
@@ -20623,7 +20640,7 @@ var RTChat =
 	            connection.deletePeer(remoteUserId);
 	        });
 	
-	        socket.on('user-connected', function(userid) {
+	        connection.socket.on('user-connected', function(userid) {
 	            if (userid === connection.userid) {
 	                return;
 	            }
@@ -20635,7 +20652,7 @@ var RTChat =
 	            });
 	        });
 	
-	        socket.on('closed-entire-session', function(sessionid, extra) {
+	        connection.socket.on('closed-entire-session', function(sessionid, extra) {
 	            connection.leave();
 	            connection.onEntireSessionClosed({
 	                sessionid: sessionid,
@@ -20644,19 +20661,17 @@ var RTChat =
 	            });
 	        });
 	
-	        socket.on('userid-already-taken', function(useridAlreadyTaken, yourNewUserId) {
+	        connection.socket.on('userid-already-taken', function(useridAlreadyTaken, yourNewUserId) {
 	            connection.isInitiator = false;
 	            connection.userid = yourNewUserId;
 	
 	            connection.onUserIdAlreadyTaken(useridAlreadyTaken, yourNewUserId);
 	        })
 	
-	        socket.on('logs', function(log) {
+	        connection.socket.on('logs', function(log) {
 	            if (!connection.enableLogs) return;
 	            console.debug('server-logs', log);
 	        });
-	
-	        return socket;
 	    }
 	
 	    // MultiPeersHandler.js
@@ -20723,6 +20738,15 @@ var RTChat =
 	                if (remoteUserId) {
 	                    var remoteUser = connection.peers[remoteUserId];
 	                    if (remoteUser) {
+	                        if (!remoteUser.channels.length) {
+	                            connection.peers[remoteUserId].createDataChannel();
+	                            connection.renegotiate(remoteUserId);
+	                            setTimeout(function() {
+	                                that.send(data, remoteUserId);
+	                            }, 3000);
+	                            return;
+	                        }
+	
 	                        remoteUser.channels.forEach(function(channel) {
 	                            channel.send(data);
 	                        });
@@ -20731,6 +20755,17 @@ var RTChat =
 	                }
 	
 	                this.getAllParticipants().forEach(function(participant) {
+	                    if (!that[participant].channels.length) {
+	                        connection.peers[participant].createDataChannel();
+	                        connection.renegotiate(participant);
+	                        setTimeout(function() {
+	                            that[participant].channels.forEach(function(channel) {
+	                                channel.send(data);
+	                            });
+	                        }, 3000);
+	                        return;
+	                    }
+	
 	                    that[participant].channels.forEach(function(channel) {
 	                        channel.send(data);
 	                    });
@@ -20756,6 +20791,7 @@ var RTChat =
 	                dontAttachLocalStream: !!userPreferences.dontAttachLocalStream,
 	                renegotiatingPeer: !!userPreferences.renegotiatingPeer,
 	                peerRef: userPreferences.peerRef,
+	                channels: userPreferences.channels || [],
 	                onLocalSdp: function(localSdp) {
 	                    self.onNegotiationNeeded(localSdp, remoteUserId);
 	                },
@@ -20767,7 +20803,7 @@ var RTChat =
 	                },
 	                remoteSdp: remoteSdp,
 	                onDataChannelMessage: function(message) {
-	                    if (!fbr && connection.enableFileSharing) initFileBufferReader();
+	                    if (!connection.fbr && connection.enableFileSharing) initFileBufferReader();
 	
 	                    if (typeof message == 'string' || !connection.enableFileSharing) {
 	                        self.onDataChannelMessage(message, remoteUserId);
@@ -20777,14 +20813,14 @@ var RTChat =
 	                    var that = this;
 	
 	                    if (message instanceof ArrayBuffer || message instanceof DataView) {
-	                        fbr.convertToObject(message, function(object) {
+	                        connection.fbr.convertToObject(message, function(object) {
 	                            that.onDataChannelMessage(object);
 	                        });
 	                        return;
 	                    }
 	
 	                    if (message.readyForNextChunk) {
-	                        fbr.getNextChunk(message.uuid, function(nextChunk, isLastChunk) {
+	                        connection.fbr.getNextChunk(message.uuid, function(nextChunk, isLastChunk) {
 	                            connection.peers[remoteUserId].channels.forEach(function(channel) {
 	                                channel.send(nextChunk);
 	                            });
@@ -20792,7 +20828,7 @@ var RTChat =
 	                        return;
 	                    }
 	
-	                    fbr.addChunk(message, function(promptNextChunk) {
+	                    connection.fbr.addChunk(message, function(promptNextChunk) {
 	                        connection.peers[remoteUserId].peer.channel.send(promptNextChunk);
 	                    });
 	                },
@@ -20808,14 +20844,12 @@ var RTChat =
 	                onRemoteStream: function(stream) {
 	                    connection.peers[remoteUserId].streams.push(stream);
 	
-	                    if (isPluginRTC) {
+	                    if (isPluginRTC && window.PluginRTC) {
 	                        var mediaElement = document.createElement('video');
 	                        var body = connection.videosContainer;
 	                        body.insertBefore(mediaElement, body.firstChild);
-	
 	                        setTimeout(function() {
-	                            Plugin.attachMediaStream(mediaElement, stream);
-	                            self.onGettingRemoteMedia(mediaElement, remoteUserId);
+	                            window.PluginRTC.attachMediaStream(mediaElement, stream);
 	                        }, 3000);
 	                        return;
 	                    }
@@ -20850,6 +20884,12 @@ var RTChat =
 	            }
 	
 	            userPreferences = userPreferences || {};
+	
+	            if (connection.isInitiator && !!connection.session.audio && connection.session.audio === 'two-way' && !userPreferences.streamsToShare) {
+	                userPreferences.isOneWay = false;
+	                userPreferences.isDataOnly = false;
+	                userPreferences.session = connection.session;
+	            }
 	
 	            if (!userPreferences.isOneWay && !userPreferences.isDataOnly) {
 	                userPreferences.isOneWay = true;
@@ -20887,6 +20927,7 @@ var RTChat =
 	
 	            userPreferences.renegotiatingPeer = true;
 	            userPreferences.peerRef = connection.peers[remoteUserId].peer;
+	            userPreferences.channels = connection.peers[remoteUserId].channels;
 	
 	            var localConfig = this.getLocalConfig(remoteSdp, remoteUserId, userPreferences);
 	
@@ -20982,50 +21023,54 @@ var RTChat =
 	                    localMediaConstraints.video = connection.mediaConstraints.video;
 	                }
 	
-	                function invokeGetUserMedia(mediaConstraints) {
-	                    getUserMediaHandler({
-	                        onGettingLocalMedia: function(localStream) {
-	                            self.onGettingLocalMedia(localStream);
+	                var session = userPreferences.session || connection.session;
 	
-	                            var streamsToShare = {};
-	                            connection.attachStreams.forEach(function(stream) {
-	                                streamsToShare[stream.streamid] = {
-	                                    isAudio: !!stream.isAudio,
-	                                    isVideo: !!stream.isVideo,
-	                                    isScreen: !!stream.isScreen
-	                                };
-	                            });
-	                            message.userPreferences.streamsToShare = streamsToShare;
-	
-	                            self.onNegotiationNeeded({
-	                                readyForOffer: true,
-	                                userPreferences: message.userPreferences
-	                            }, remoteUserId);
-	                        },
-	                        onLocalMediaError: function(error, constraints) {
-	                            self.onLocalMediaError(error, constraints);
-	
-	                            if (constraints.audio && constraints.video && (error.name || '').toString().indexOf('DevicesNotFound') !== -1) {
-	                                constraints.video = false;
-	                                invokeGetUserMedia(constraints);
-	                                return;
-	                            }
-	
-	                            self.onNegotiationNeeded({
-	                                readyForOffer: true,
-	                                userPreferences: message.userPreferences
-	                            }, remoteUserId);
-	                        },
-	                        localMediaConstraints: mediaConstraints
-	                    });
+	                if (session.oneway && session.audio && session.audio === 'two-way') {
+	                    session = {
+	                        audio: true
+	                    };
 	                }
-	                invokeGetUserMedia(localMediaConstraints);
+	
+	                if (session.audio || session.video || session.screen) {
+	                    if (session.screen) {
+	                        connection.getScreenConstraints(function(error, screen_constraints) {
+	                            connection.invokeGetUserMedia({
+	                                audio: isAudioPlusTab(connection) ? getAudioScreenConstraints(screen_constraints) : false,
+	                                video: screen_constraints,
+	                                isScreen: true
+	                            }, (session.audio || session.video) && !isAudioPlusTab(connection) ? connection.invokeGetUserMedia(null, cb) : cb);
+	                        });
+	                    } else if (session.audio || session.video) {
+	                        connection.invokeGetUserMedia(null, cb, session);
+	                    }
+	                }
 	            }
 	
 	            if (message.readyForOffer) {
 	                connection.onReadyForOffer(remoteUserId, message.userPreferences);
 	            }
+	
+	            function cb(stream) {
+	                gumCallback(stream, message, remoteUserId);
+	            }
 	        };
+	
+	        function gumCallback(stream, message, remoteUserId) {
+	            var streamsToShare = {};
+	            connection.attachStreams.forEach(function(stream) {
+	                streamsToShare[stream.streamid] = {
+	                    isAudio: !!stream.isAudio,
+	                    isVideo: !!stream.isVideo,
+	                    isScreen: !!stream.isScreen
+	                };
+	            });
+	            message.userPreferences.streamsToShare = streamsToShare;
+	
+	            self.onNegotiationNeeded({
+	                readyForOffer: true,
+	                userPreferences: message.userPreferences
+	            }, remoteUserId);
+	        }
 	
 	        this.connectNewParticipantWithAllBroadcasters = function(newParticipantId, userPreferences, broadcastersList) {
 	            broadcastersList = broadcastersList.split('|-,-|');
@@ -21061,17 +21106,15 @@ var RTChat =
 	            connection.onMediaError(error, constraints);
 	        };
 	
-	        var fbr;
-	
 	        function initFileBufferReader() {
-	            fbr = new FileBufferReader();
-	            fbr.onProgress = function(chunk) {
+	            connection.fbr = new FileBufferReader();
+	            connection.fbr.onProgress = function(chunk) {
 	                connection.onFileProgress(chunk);
 	            };
-	            fbr.onBegin = function(file) {
+	            connection.fbr.onBegin = function(file) {
 	                connection.onFileStart(file);
 	            };
-	            fbr.onEnd = function(file) {
+	            connection.fbr.onEnd = function(file) {
 	                connection.onFileEnd(file);
 	            };
 	        }
@@ -21083,7 +21126,7 @@ var RTChat =
 	
 	            initFileBufferReader();
 	
-	            fbr.readAsArrayBuffer(file, function(uuid) {
+	            connection.fbr.readAsArrayBuffer(file, function(uuid) {
 	                var arrayOfUsers = connection.getAllParticipants();
 	
 	                if (remoteUserId) {
@@ -21091,7 +21134,7 @@ var RTChat =
 	                }
 	
 	                arrayOfUsers.forEach(function(participant) {
-	                    fbr.getNextChunk(uuid, function(nextChunk) {
+	                    connection.fbr.getNextChunk(uuid, function(nextChunk) {
 	                        connection.peers[participant].channels.forEach(function(channel) {
 	                            channel.send(nextChunk);
 	                        });
@@ -21127,6 +21170,7 @@ var RTChat =
 	        this.onDataChannelOpened = function(channel, remoteUserId) {
 	            // keep last channel only; we are not expecting parallel/channels channels
 	            if (connection.peers[remoteUserId].channels.length) {
+	                connection.peers[remoteUserId].channels = [channel];
 	                return;
 	            }
 	
@@ -21136,7 +21180,6 @@ var RTChat =
 	                extra: connection.peers[remoteUserId] ? connection.peers[remoteUserId].extra : {},
 	                channel: channel
 	            });
-	            connection.observers.all();
 	        };
 	
 	        this.onPeerStateChanged = function(state) {
@@ -21175,6 +21218,10 @@ var RTChat =
 	    }
 	
 	    var isPluginRTC = !isMobileDevice && (isSafari || isIE);
+	
+	    if (isPluginRTC && typeof URL !== 'undefined') {
+	        URL.createObjectURL = function() {};
+	    }
 	
 	    // detect node-webkit
 	    var isNodeWebkit = !!(window.process && (typeof window.process === 'object') && window.process.versions && window.process.versions['node-webkit']);
@@ -21238,8 +21285,10 @@ var RTChat =
 	    }
 	
 	    function setMuteHandlers(connection, streamEvent) {
+	        if (!streamEvent.stream || !streamEvent.stream || !streamEvent.stream.addEventListener) return;
+	
 	        streamEvent.stream.addEventListener('mute', function(event) {
-	            event = connection.streamEvents[event.target.streamid];
+	            event = connection.streamEvents[streamEvent.streamid];
 	
 	            event.session = {
 	                audio: event.muteType === 'audio',
@@ -21250,7 +21299,7 @@ var RTChat =
 	        }, false);
 	
 	        streamEvent.stream.addEventListener('unmute', function(event) {
-	            event = connection.streamEvents[event.target.streamid];
+	            event = connection.streamEvents[streamEvent.streamid];
 	
 	            event.session = {
 	                audio: event.unmuteType === 'audio',
@@ -21278,17 +21327,17 @@ var RTChat =
 	
 	    function getRMCMediaElement(stream, callback, connection) {
 	        var isAudioOnly = false;
-	        if (!stream.getVideoTracks().length) {
+	        if (!!stream.getVideoTracks && !stream.getVideoTracks().length) {
 	            isAudioOnly = true;
 	        }
 	
 	        var mediaElement = document.createElement(isAudioOnly ? 'audio' : 'video');
 	
-	        if (isPluginRTC) {
+	        if (isPluginRTC && window.PluginRTC) {
 	            connection.videosContainer.insertBefore(mediaElement, connection.videosContainer.firstChild);
 	
 	            setTimeout(function() {
-	                Plugin.attachMediaStream(mediaElement, stream);
+	                window.PluginRTC.attachMediaStream(mediaElement, stream);
 	                callback(mediaElement);
 	            }, 1000);
 	
@@ -21322,7 +21371,6 @@ var RTChat =
 	                        }
 	                    });
 	                    connection.attachStreams = newStreamsArray;
-	                    connection.observers.all();
 	
 	                    var streamEvent = connection.streamEvents[stream.streamid];
 	
@@ -21390,267 +21438,91 @@ var RTChat =
 	    }
 	
 	    /*global MediaStream:true */
-	    if (typeof MediaStream !== 'undefined' && !('stop' in MediaStream.prototype)) {
-	        MediaStream.prototype.stop = function() {
-	            if (!this.getAudioTracks && !!this.getTracks) {
-	                this.getAudioTracks = function() {
-	                    var array = [];
-	                    this.getTracks.forEach(function(track) {
-	                        if (track.kind.toString().indexOf('audio') !== -1) {
-	                            array.push(track);
-	                        }
-	                    });
-	                    return array;
-	                };
-	            }
-	
-	            if (!this.getVideoTracks && !!this.getTracks) {
-	                this.getVideoTracks = function() {
-	                    var array = [];
-	                    this.getTracks.forEach(function(track) {
-	                        if (track.kind.toString().indexOf('video') !== -1) {
-	                            array.push(track);
-	                        }
-	                    });
-	                    return array;
-	                };
-	            }
-	
-	            this.getAudioTracks().forEach(function(track) {
-	                if (!!track.stop) {
-	                    track.stop();
+	    if (typeof MediaStream !== 'undefined') {
+	        if (!('getVideoTracks' in MediaStream.prototype)) {
+	            MediaStream.prototype.getVideoTracks = function() {
+	                if (!this.getTracks) {
+	                    return [];
 	                }
-	            });
 	
-	            this.getVideoTracks().forEach(function(track) {
-	                if (!!track.stop) {
-	                    track.stop();
+	                var tracks = [];
+	                this.getTracks.forEach(function(track) {
+	                    if (track.kind.toString().indexOf('video') !== -1) {
+	                        tracks.push(track);
+	                    }
+	                });
+	                return tracks;
+	            };
+	
+	            MediaStream.prototype.getAudioTracks = function() {
+	                if (!this.getTracks) {
+	                    return [];
 	                }
-	            });
 	
-	            if (isFirefox) {
-	                fireEvent(this, 'ended');
+	                var tracks = [];
+	                this.getTracks.forEach(function(track) {
+	                    if (track.kind.toString().indexOf('audio') !== -1) {
+	                        tracks.push(track);
+	                    }
+	                });
+	                return tracks;
+	            };
+	        }
+	
+	        if (!('stop' in MediaStream.prototype)) {
+	            MediaStream.prototype.stop = function() {
+	                this.getAudioTracks().forEach(function(track) {
+	                    if (!!track.stop) {
+	                        track.stop();
+	                    }
+	                });
+	
+	                this.getVideoTracks().forEach(function(track) {
+	                    if (!!track.stop) {
+	                        track.stop();
+	                    }
+	                });
+	            };
+	        }
+	    }
+	
+	    function isAudioPlusTab(connection, audioPlusTab) {
+	        if (connection.session.audio && connection.session.audio === 'two-way') {
+	            return false;
+	        }
+	
+	        if (isFirefox && audioPlusTab !== false) {
+	            return true;
+	        }
+	
+	        if (!isChrome || chromeVersion < 50) return false;
+	
+	        if (typeof audioPlusTab === true) {
+	            return true;
+	        }
+	
+	        if (typeof audioPlusTab === 'undefined' && connection.session.audio && connection.session.screen && !connection.session.video) {
+	            audioPlusTab = true;
+	            return true;
+	        }
+	
+	        return false;
+	    }
+	
+	    function getAudioScreenConstraints(screen_constraints) {
+	        if (isFirefox) {
+	            return true;
+	        }
+	
+	        if (!isChrome) return false;
+	
+	        return {
+	            mandatory: {
+	                chromeMediaSource: screen_constraints.mandatory.chromeMediaSource,
+	                chromeMediaSourceId: screen_constraints.mandatory.chromeMediaSourceId
 	            }
 	        };
 	    }
-	
-	    if (typeof MediaStream !== 'undefined') {
-	        // MediaStream.getTracks() maybe?
-	        if (!('getAudioTracks' in MediaStream.prototype) || typeof MediaStream.prototype.getAudioTracks !== 'function') {
-	            MediaStream.prototype.getAudioTracks = function() {}
-	        }
-	
-	        if (!('getVideoTracks' in MediaStream.prototype) || typeof MediaStream.prototype.getVideoTracks !== 'function') {
-	            MediaStream.prototype.getVideoTracks = function() {}
-	        }
-	    }
-	
-	    var lastChanges = '';
-	
-	    function observeObject(obj, callback) {
-	        if (!Object.observe) return;
-	        if (isMobileDevice) return;
-	
-	        Object.observe(obj, function(changes) {
-	            var jsonStringified = JSON.stringify(changes);
-	            if (lastChanges == jsonStringified) return;
-	            lastChanges = jsonStringified;
-	            callback(changes);
-	        });
-	    }
-	
-	    // Last time updated at Feb 08, 2015, 08:32:23
-	
-	    // Latest file can be found here: https://cdn.webrtc-experiment.com/Plugin.EveryWhere.js
-	
-	    // Muaz Khan         - www.MuazKhan.com
-	    // MIT License       - www.WebRTC-Experiment.com/licence
-	    // Source Codes      - https://github.com/muaz-khan/PluginRTC
-	
-	    // _____________________
-	    // Plugin.EveryWhere.js
-	
-	    // Original Source: https://github.com/sarandogou/webrtc-everywhere#downloads
-	
-	    (function() {
-	        var ua = navigator.userAgent.toLowerCase();
-	        var isSafari = ua.indexOf('safari') != -1 && ua.indexOf('chrome') == -1;
-	        var isIE = !!((Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(window, "ActiveXObject")) || ("ActiveXObject" in window));
-	
-	        if (!(isSafari || isIE)) return;
-	
-	        function LoadPluginRTC() {
-	            window.PluginRTC = {};
-	
-	            var extractPluginObj = function(elt) {
-	                return elt.isWebRtcPlugin ? elt : elt.pluginObj;
-	            }
-	            var attachEventListener = function(elt, type, listener, useCapture) {
-	                var _pluginObj = extractPluginObj(elt);
-	                if (_pluginObj) {
-	                    _pluginObj.bindEventListener(type, listener, useCapture);
-	                } else {
-	                    if (typeof elt.addEventListener !== "undefined") {
-	                        elt.addEventListener(type, listener, useCapture);
-	                    } else if (typeof elt.addEvent !== "undefined") {
-	                        elt.addEventListener("on" + type, listener, useCapture);
-	                    }
-	                }
-	            }
-	
-	            function getPlugin() {
-	                return document.getElementById('WebrtcEverywherePluginId');
-	            }
-	
-	            var installPlugin = function() {
-	                if (document.getElementById('WebrtcEverywherePluginId')) {
-	                    return;
-	                }
-	
-	                var pluginObj = document.createElement('object');
-	                if (isIE) {
-	                    pluginObj.setAttribute('classid', 'CLSID:7FD49E23-C8D7-4C4F-93A1-F7EACFA1EC53');
-	                } else {
-	                    pluginObj.setAttribute('type', 'application/webrtc-everywhere');
-	                }
-	                pluginObj.setAttribute('id', 'WebrtcEverywherePluginId');
-	                (document.body || document.documentElement).appendChild(pluginObj);
-	                pluginObj.setAttribute('width', '0');
-	                pluginObj.setAttribute('height', '0');
-	            }
-	
-	            if (document.body) {
-	                installPlugin();
-	            } else {
-	                attachEventListener(window, 'load', function() {
-	                    installPlugin();
-	                });
-	                attachEventListener(document, 'readystatechange', function() {
-	                    if (document.readyState == 'complete') {
-	                        installPlugin();
-	                    }
-	                });
-	            }
-	
-	            var getUserMediaDelayed;
-	            window.PluginRTC.getUserMedia = navigator.getUserMedia = function(constraints, successCallback, errorCallback) {
-	                if (document.readyState !== 'complete') {
-	                    if (!getUserMediaDelayed) {
-	                        getUserMediaDelayed = true;
-	                        attachEventListener(document, 'readystatechange', function() {
-	                            if (getUserMediaDelayed && document.readyState == 'complete') {
-	                                getUserMediaDelayed = false;
-	                                getPlugin().getUserMedia(constraints, successCallback, errorCallback);
-	                            }
-	                        });
-	                    }
-	                } else getPlugin().getUserMedia(constraints, successCallback, errorCallback);
-	            }
-	
-	            window.PluginRTC.attachMediaStream = function(element, stream) {
-	                if (element.isWebRtcPlugin) {
-	                    element.src = stream;
-	                    return element;
-	                } else if (element.nodeName.toLowerCase() === 'video') {
-	                    if (!element.pluginObj && stream) {
-	                        var _pluginObj = document.createElement('object');
-	                        var _isIE = (Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(window, "ActiveXObject")) || ("ActiveXObject" in window);
-	                        if (_isIE) {
-	                            _pluginObj.setAttribute('classid', 'CLSID:7FD49E23-C8D7-4C4F-93A1-F7EACFA1EC53');
-	                        } else {
-	                            _pluginObj.setAttribute('type', 'application/webrtc-everywhere');
-	                        }
-	                        element.pluginObj = _pluginObj;
-	
-	                        _pluginObj.setAttribute('className', element.className);
-	                        _pluginObj.setAttribute('innerHTML', element.innerHTML);
-	                        var width = element.getAttribute('width');
-	                        var height = element.getAttribute('height');
-	                        var bounds = element.getBoundingClientRect();
-	                        if (!width) width = bounds.right - bounds.left;
-	                        if (!height) height = bounds.bottom - bounds.top;
-	
-	                        if ('getComputedStyle' in window) {
-	                            var computedStyle = window.getComputedStyle(element, null);
-	                            if (!width && computedStyle.width != 'auto' && computedStyle.width != '0px') {
-	                                width = computedStyle.width;
-	                            }
-	                            if (!height && computedStyle.height != 'auto' && computedStyle.height != '0px') {
-	                                height = computedStyle.height;
-	                            }
-	                        }
-	                        if (width) _pluginObj.setAttribute('width', width);
-	                        else _pluginObj.setAttribute('autowidth', true);
-	
-	                        if (height) _pluginObj.setAttribute('height', height);
-	                        else _pluginObj.setAttribute('autoheight', true);
-	
-	                        (document.body || document.documentElement).appendChild(_pluginObj);
-	                        if (element.parentNode) {
-	                            element.parentNode.replaceChild(_pluginObj, element); // replace (and remove) element
-	
-	                            document.body.appendChild(element);
-	                            element.style.visibility = 'hidden';
-	                        }
-	                    }
-	
-	                    if (element.pluginObj) {
-	                        element.pluginObj.bindEventListener('play', function(objvid) {
-	                            if (element.pluginObj) {
-	                                if (element.pluginObj.getAttribute('autowidth') && objvid.videoWidth) {
-	                                    element.pluginObj.setAttribute('width', objvid.videoWidth /* + "px"*/ );
-	                                }
-	                                if (element.pluginObj.getAttribute('autoheight') && objvid.videoHeight) {
-	                                    element.pluginObj.setAttribute('height', objvid.videoHeight /* + "px"*/ );
-	                                }
-	                            }
-	                        });
-	                        element.pluginObj.src = stream;
-	                    }
-	
-	                    return element.pluginObj;
-	                } else if (element.nodeName.toLowerCase() === 'audio') {
-	                    return element;
-	                }
-	            };
-	
-	            window.PluginRTC.MediaStreamTrack = {};
-	            var getSourcesDelayed;
-	            window.PluginRTC.MediaStreamTrack.getSources = function(gotSources) {
-	                if (document.readyState !== 'complete') {
-	                    if (!getSourcesDelayed) {
-	                        getSourcesDelayed = true;
-	                        attachEventListener(document, 'readystatechange', function() {
-	                            if (getSourcesDelayed && document.readyState == "complete") {
-	                                getSourcesDelayed = false;
-	                                getPlugin().getSources(gotSources);
-	                            }
-	                        });
-	                    }
-	                } else {
-	                    getPlugin().getSources(gotSources);
-	                }
-	            };
-	
-	            window.PluginRTC.RTCPeerConnection = function(configuration, constraints) {
-	                return getPlugin().createPeerConnection(configuration, constraints);
-	            };
-	
-	            window.PluginRTC.RTCIceCandidate = function(RTCIceCandidateInit) {
-	                return getPlugin().createIceCandidate(RTCIceCandidateInit);
-	            };
-	
-	            window.PluginRTC.RTCSessionDescription = function(RTCSessionDescriptionInit) {
-	                return getPlugin().createSessionDescription(RTCSessionDescriptionInit);
-	            };
-	
-	            if (window.onPluginRTCInitialized) {
-	                window.onPluginRTCInitialized(window.PluginRTC);
-	            }
-	        }
-	
-	        window.addEventListener('load', LoadPluginRTC, false);
-	    })();
 	
 	    // Last time updated: 2016-02-26 11:47:17 AM UTC
 	
@@ -22649,63 +22521,43 @@ var RTChat =
 	        RTCPeerConnection = webkitRTCPeerConnection;
 	    } else if (typeof window.RTCPeerConnection !== 'undefined') {
 	        RTCPeerConnection = window.RTCPeerConnection;
-	    } else {
-	        console.error('WebRTC 1.0 (RTCPeerConnection) API are NOT available in this browser.');
-	        RTCPeerConnection = window.RTCSessionDescription = window.RTCIceCandidate = function() {};
 	    }
 	
 	    var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription;
 	    var RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate;
 	    var MediaStreamTrack = window.MediaStreamTrack;
 	
-	    var Plugin = {};
-	
-	    function onPluginRTCInitialized(pluginRTCObject) {
-	        Plugin = pluginRTCObject;
-	        MediaStreamTrack = Plugin.MediaStreamTrack;
-	        RTCPeerConnection = Plugin.RTCPeerConnection;
-	        RTCIceCandidate = Plugin.RTCIceCandidate;
-	        RTCSessionDescription = Plugin.RTCSessionDescription;
+	    window.onPluginRTCInitialized = function() {
+	        MediaStreamTrack = window.PluginRTC.MediaStreamTrack;
+	        RTCPeerConnection = window.PluginRTC.RTCPeerConnection;
+	        RTCIceCandidate = window.PluginRTC.RTCIceCandidate;
+	        RTCSessionDescription = window.PluginRTC.RTCSessionDescription;
 	    }
-	    if (typeof PluginRTC !== 'undefined') onPluginRTCInitialized(PluginRTC);
+	
+	    if (typeof window.PluginRTC !== 'undefined') {
+	        window.onPluginRTCInitialized();
+	    }
 	
 	    function PeerInitiator(config) {
+	        if (!RTCPeerConnection) {
+	            throw 'WebRTC 1.0 (RTCPeerConnection) API are NOT available in this browser.';
+	        }
+	
 	        var connection = config.rtcMultiConnection;
 	
 	        this.extra = config.remoteSdp ? config.remoteSdp.extra : connection.extra;
 	        this.userid = config.userid;
 	        this.streams = [];
-	        this.channels = [];
+	        this.channels = config.channels || [];
 	        this.connectionDescription = config.connectionDescription;
 	
-	        var that = this;
+	        var self = this;
 	
 	        if (config.remoteSdp) {
 	            this.connectionDescription = config.remoteSdp.connectionDescription;
 	        }
 	
 	        var allRemoteStreams = {};
-	
-	        if (Object.observe) {
-	            var that = this;
-	            Object.observe(this.channels, function(changes) {
-	                changes.forEach(function(change) {
-	                    if (change.type === 'add') {
-	                        change.object[change.name].addEventListener('close', function() {
-	                            delete that.channels[that.channels.indexOf(change.object[change.name])];
-	                            that.channels = removeNullEntries(that.channels);
-	                        }, false);
-	                    }
-	                    if (change.type === 'remove' || change.type === 'delete') {
-	                        if (that.channels.indexOf(change.object[change.name]) !== -1) {
-	                            delete that.channels.indexOf(change.object[change.name]);
-	                        }
-	                    }
-	
-	                    that.channels = removeNullEntries(that.channels);
-	                });
-	            });
-	        }
 	
 	        defaults.sdpConstraints = setSdpConstraints({
 	            OfferToReceiveAudio: true,
@@ -22721,50 +22573,46 @@ var RTChat =
 	
 	        var localStreams = [];
 	        connection.attachStreams.forEach(function(stream) {
-	            if (!!stream) localStreams.push(stream);
+	            if (!!stream) {
+	                localStreams.push(stream);
+	            }
 	        });
 	
 	        if (!renegotiatingPeer) {
+	            var iceTransports = 'all';
+	            if (connection.candidates.turn || connection.candidates.relay) {
+	                if (!connection.candidates.stun && !connection.candidates.reflexive && !connection.candidates.host) {
+	                    iceTransports = 'relay';
+	                }
+	            }
 	            peer = new RTCPeerConnection(navigator.onLine ? {
 	                iceServers: connection.iceServers,
-	                iceTransports: 'all'
-	            } : null, connection.optionalArgument);
+	                iceTransports: iceTransports
+	            } : null, window.PluginRTC ? null : connection.optionalArgument);
 	        } else {
 	            peer = config.peerRef;
-	
-	            peer.getLocalStreams().forEach(function(stream) {
-	                localStreams.forEach(function(localStream, index) {
-	                    if (stream == localStream) {
-	                        delete localStreams[index];
-	                    }
-	                });
-	
-	                connection.removeStreams.forEach(function(streamToRemove, index) {
-	                    if (stream === streamToRemove) {
-	                        stream = connection.beforeRemovingStream(stream);
-	                        if (stream && !!peer.removeStream) {
-	                            peer.removeStream(stream);
-	                        }
-	
-	                        localStreams.forEach(function(localStream, index) {
-	                            if (streamToRemove == localStream) {
-	                                delete localStreams[index];
-	                            }
-	                        });
-	                    }
-	                });
-	            });
-	        }
-	
-	        if (connection.DetectRTC.browser.name === 'Firefox') {
-	            peer.removeStream = function(stream) {
-	                stream.mute();
-	                connection.StreamsHandler.onSyncNeeded(stream.streamid, 'stream-removed');
-	            };
 	        }
 	
 	        peer.onicecandidate = function(event) {
-	            if (!event.candidate) return;
+	            if (!event.candidate) {
+	                if (!connection.trickleIce) {
+	                    var localSdp = peer.localDescription;
+	                    config.onLocalSdp({
+	                        type: localSdp.type,
+	                        sdp: localSdp.sdp,
+	                        remotePeerSdpConstraints: config.remotePeerSdpConstraints || false,
+	                        renegotiatingPeer: !!config.renegotiatingPeer || false,
+	                        connectionDescription: self.connectionDescription,
+	                        dontGetRemoteStream: !!config.dontGetRemoteStream,
+	                        extra: connection ? connection.extra : {},
+	                        streamsToShare: streamsToShare,
+	                        isFirefoxOffered: isFirefox
+	                    });
+	                }
+	                return;
+	            }
+	
+	            if (!connection.trickleIce) return;
 	            config.onLocalCandidate({
 	                candidate: event.candidate.candidate,
 	                sdpMid: event.candidate.sdpMid,
@@ -22787,15 +22635,24 @@ var RTChat =
 	            }
 	
 	            localStream = connection.beforeAddingStream(localStream);
+	
+	            if (!localStream) return;
+	
+	            peer.getLocalStreams().forEach(function(stream) {
+	                if (stream.id == localStream.id) {
+	                    localStream = null;
+	                }
+	            });
+	
 	            if (localStream) {
 	                peer.addStream(localStream);
 	            }
 	        });
 	
 	        peer.oniceconnectionstatechange = peer.onsignalingstatechange = function() {
-	            var extra = that.extra;
-	            if (connection.peers[that.userid]) {
-	                extra = connection.peers[that.userid].extra || extra;
+	            var extra = self.extra;
+	            if (connection.peers[self.userid]) {
+	                extra = connection.peers[self.userid].extra || extra;
 	            }
 	
 	            if (!peer) {
@@ -22807,7 +22664,7 @@ var RTChat =
 	                iceGatheringState: peer.iceGatheringState,
 	                signalingState: peer.signalingState,
 	                extra: extra,
-	                userid: that.userid
+	                userid: self.userid
 	            });
 	        };
 	
@@ -22834,7 +22691,6 @@ var RTChat =
 	                event.stream.isVideo = streamToShare.isVideo;
 	                event.stream.isScreen = streamToShare.isScreen;
 	            }
-	
 	            event.stream.streamid = event.stream.id;
 	            if (!event.stream.stop) {
 	                event.stream.stop = function() {
@@ -22861,11 +22717,11 @@ var RTChat =
 	            peer.addIceCandidate(new RTCIceCandidate(remoteCandidate));
 	        };
 	
-	        this.addRemoteSdp = function(remoteSdp) {
+	        this.addRemoteSdp = function(remoteSdp, cb) {
 	            remoteSdp.sdp = connection.processSdp(remoteSdp.sdp);
-	            peer.setRemoteDescription(new RTCSessionDescription(remoteSdp), function() {}, function(error) {
+	            peer.setRemoteDescription(new RTCSessionDescription(remoteSdp), cb || function() {}, function(error) {
 	                if (!!connection.enableLogs) {
-	                    console.error(JSON.stringify(error, null, '\t'));
+	                    console.error(JSON.stringify(error, null, '\t'), '\n', remoteSdp.type, remoteSdp.sdp);
 	                }
 	            });
 	        };
@@ -22876,8 +22732,20 @@ var RTChat =
 	            isOfferer = false;
 	        }
 	
-	        if (connection.session.data === true) {
-	            createDataChannel();
+	        this.createDataChannel = function() {
+	            var channel = peer.createDataChannel('sctp', {});
+	            setChannelEvents(channel);
+	        };
+	
+	        if (connection.session.data === true && !renegotiatingPeer) {
+	            if (!isOfferer) {
+	                peer.ondatachannel = function(event) {
+	                    var channel = event.channel;
+	                    setChannelEvents(channel);
+	                };
+	            } else {
+	                this.createDataChannel();
+	            }
 	        }
 	
 	        if (config.remoteSdp) {
@@ -22886,19 +22754,6 @@ var RTChat =
 	            }
 	            defaults.sdpConstraints = setSdpConstraints(sdpConstraints);
 	            this.addRemoteSdp(config.remoteSdp);
-	        }
-	
-	        function createDataChannel() {
-	            if (!isOfferer) {
-	                peer.ondatachannel = function(event) {
-	                    var channel = event.channel;
-	                    setChannelEvents(channel);
-	                };
-	                return;
-	            }
-	
-	            var channel = peer.createDataChannel('RTCDataChannel', {});
-	            setChannelEvents(channel);
 	        }
 	
 	        function setChannelEvents(channel) {
@@ -22952,12 +22807,14 @@ var RTChat =
 	        peer[isOfferer ? 'createOffer' : 'createAnswer'](function(localSdp) {
 	            localSdp.sdp = connection.processSdp(localSdp.sdp);
 	            peer.setLocalDescription(localSdp);
+	
+	            if (!connection.trickleIce) return;
 	            config.onLocalSdp({
 	                type: localSdp.type,
 	                sdp: localSdp.sdp,
 	                remotePeerSdpConstraints: config.remotePeerSdpConstraints || false,
 	                renegotiatingPeer: !!config.renegotiatingPeer || false,
-	                connectionDescription: that.connectionDescription,
+	                connectionDescription: self.connectionDescription,
 	                dontGetRemoteStream: !!config.dontGetRemoteStream,
 	                extra: connection ? connection.extra : {},
 	                streamsToShare: streamsToShare,
@@ -22985,7 +22842,7 @@ var RTChat =
 	            } catch (e) {}
 	
 	            peer = null;
-	            that.peer = null;
+	            self.peer = null;
 	        };
 	
 	        this.peer = peer;
@@ -23250,6 +23107,32 @@ var RTChat =
 	            return sdp.replace('SAVPF 100 101', 'SAVPF 101 100');
 	        }
 	
+	        // forceStereoAudio => via webrtcexample.com
+	        // requires getUserMedia => echoCancellation:false
+	        function forceStereoAudio(sdp) {
+	            var sdpLines = sdp.split('\r\n');
+	            var fmtpLineIndex = null;
+	            for (var i = 0; i < sdpLines.length; i++) {
+	                if (sdpLines[i].search('opus/48000') !== -1) {
+	                    var opusPayload = extractSdp(sdpLines[i], /:(\d+) opus\/48000/i);
+	                    break;
+	                }
+	            }
+	            for (var i = 0; i < sdpLines.length; i++) {
+	                if (sdpLines[i].search('a=fmtp') !== -1) {
+	                    var payload = extractSdp(sdpLines[i], /a=fmtp:(\d+)/);
+	                    if (payload === opusPayload) {
+	                        fmtpLineIndex = i;
+	                        break;
+	                    }
+	                }
+	            }
+	            if (fmtpLineIndex === null) return sdp;
+	            sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex].concat('; stereo=1; sprop-stereo=1');
+	            sdp = sdpLines.join('\r\n');
+	            return sdp;
+	        }
+	
 	        return {
 	            removeVPX: removeVPX,
 	            disableNACK: disableNACK,
@@ -23264,7 +23147,8 @@ var RTChat =
 	            setOpusAttributes: function(sdp, params) {
 	                return setOpusAttributes(sdp, params);
 	            },
-	            preferVP9: preferVP9
+	            preferVP9: preferVP9,
+	            forceStereoAudio: forceStereoAudio
 	        };
 	    })();
 	
@@ -23367,44 +23251,63 @@ var RTChat =
 	        });
 	    }
 	
+	    function getSTUNObj(stunStr) {
+	        var urlsParam = 'urls';
+	        if (isPluginRTC) {
+	            urlsParam = 'url';
+	        }
+	
+	        var obj = {};
+	        obj[urlsParam] = stunStr;
+	        return obj;
+	    }
+	
+	    function getTURNObj(turnStr, username, credential) {
+	        var urlsParam = 'urls';
+	        if (isPluginRTC) {
+	            urlsParam = 'url';
+	        }
+	
+	        var obj = {
+	            username: username,
+	            credential: credential
+	        };
+	        obj[urlsParam] = turnStr;
+	        return obj;
+	    }
+	
+	    function getExtenralIceFormatted() {
+	        var iceServers = [];
+	        window.RMCExternalIceServers.forEach(function(ice) {
+	            if (!ice.urls) {
+	                ice.urls = ice.url;
+	            }
+	
+	            if (ice.urls.search('stun|stuns') !== -1) {
+	                iceServers.push(getSTUNObj(ice.urls));
+	            }
+	
+	            if (ice.urls.search('turn|turns') !== -1) {
+	                iceServers.push(getTURNObj(ice.urls, ice.username, ice.credential));
+	            }
+	        });
+	        return iceServers;
+	    }
+	
 	    var IceServersHandler = (function() {
 	        function getIceServers(connection) {
 	            var iceServers = [];
 	
-	            iceServers.push({
-	                urls: 'stun:stun.l.google.com:19302'
-	            }, {
-	                urls: 'stun:mmt-stun.verkstad.net'
-	            }, {
-	                urls: 'stun:stun.anyfirewall.com:3478'
-	            });
-	
-	            iceServers.push({
-	                urls: 'turn:turn.bistri.com:80',
-	                credential: 'homeo',
-	                username: 'homeo'
-	            });
-	
-	            iceServers.push({
-	                urls: 'turn:turn.anyfirewall.com:443',
-	                credential: 'webrtc',
-	                username: 'webrtc'
-	            });
-	
-	            // copyright of mmt-turn.verkstad: Ericsson
-	            iceServers.push({
-	                urls: 'turn:mmt-turn.verkstad.net',
-	                username: 'webrtc',
-	                credential: 'secret'
-	            });
+	            iceServers.push(getSTUNObj('stun:stun.l.google.com:19302'));
+	            iceServers.push(getTURNObj('turn:webrtcweb.com:80', 'muazkh', 'muazkh'));
+	            iceServers.push(getTURNObj('turn:webrtcweb.com:443', 'muazkh', 'muazkh'));
 	
 	            if (window.RMCExternalIceServers) {
-	                iceServers = window.RMCExternalIceServers.concat(iceServers);
-	                connection.iceServers = iceServers;
+	                iceServers = iceServers.concat(getExtenralIceFormatted());
 	            } else if (typeof window.getExternalIceServers !== 'undefined' && window.getExternalIceServers == true) {
+	                connection.iceServers = iceServers;
 	                window.iceServersLoadCallback = function() {
-	                    iceServers = window.RMCExternalIceServers.concat(iceServers);
-	                    connection.iceServers = iceServers;
+	                    connection.iceServers = connection.iceServers.concat(getExtenralIceFormatted());
 	                };
 	            }
 	
@@ -23478,6 +23381,7 @@ var RTChat =
 	                }
 	            });
 	        }
+	
 	        // Proxy existing globals
 	        getUserMedia = window.navigator && window.navigator.getUserMedia;
 	    }
@@ -23835,9 +23739,9 @@ var RTChat =
 	        if (currentUserMediaRequest.streams[idInstance]) {
 	            streaming(currentUserMediaRequest.streams[idInstance].stream, true);
 	        } else {
-	            if (isPluginRTC) {
+	            if (isPluginRTC && window.PluginRTC) {
 	                var mediaElement = document.createElement('video');
-	                Plugin.getUserMedia({
+	                window.PluginRTC.getUserMedia({
 	                    audio: true,
 	                    video: true
 	                }, function(stream) {
@@ -23886,6 +23790,8 @@ var RTChat =
 	        }
 	
 	        function setHandlers(stream, syncAction, connection) {
+	            if (!stream || !stream.addEventListener) return;
+	
 	            if (typeof syncAction == 'undefined' || syncAction == true) {
 	                stream.addEventListener('ended', function() {
 	                    StreamsHandler.onSyncNeeded(this.streamid, 'ended');
@@ -24001,248 +23907,199 @@ var RTChat =
 	        };
 	    })();
 	
-	    // Last time updated at Oct 24, 2015, 08:32:23
+	    // Last time updated at March 30, 2016, 08:32:23
 	
-	    // Latest file can be found here: https://cdn.webrtc-experiment.com/getScreenId.js
+	    // Latest file can be found here: https://cdn.webrtc-experiment.com/Screen-Capturing.js
 	
-	    // Muaz Khan         - www.MuazKhan.com
-	    // MIT License       - www.WebRTC-Experiment.com/licence
-	    // Documentation     - https://github.com/muaz-khan/getScreenId.
+	    // Muaz Khan     - www.MuazKhan.com
+	    // MIT License   - www.WebRTC-Experiment.com/licence
+	    // Documentation - https://github.com/muaz-khan/Chrome-Extensions/tree/master/Screen-Capturing.js
+	    // Demo          - https://www.webrtc-experiment.com/Screen-Capturing/
 	
-	    // ______________
-	    // getScreenId.js
+	    // ___________________
+	    // Screen-Capturing.js
 	
-	    /*
-	    getScreenId(function (error, sourceId, screen_constraints) {
-	        // error    == null || 'permission-denied' || 'not-installed' || 'installed-disabled' || 'not-chrome'
-	        // sourceId == null || 'string' || 'firefox'
-	        
-	        if(sourceId == 'firefox') {
-	            navigator.mozGetUserMedia(screen_constraints, onSuccess, onFailure);
-	        }
-	        else navigator.webkitGetUserMedia(screen_constraints, onSuccess, onFailure);
-	    });
-	    */
-	
-	    (function() {
-	        window.getScreenId = function(callback) {
-	            // for Firefox:
-	            // sourceId == 'firefox'
-	            // screen_constraints = {...}
-	            if (!!navigator.mozGetUserMedia) {
-	                callback(null, 'firefox', {
-	                    video: {
-	                        mozMediaSource: 'window',
-	                        mediaSource: 'window',
-	                        width: 29999,
-	                        height: 8640
-	                    }
-	                });
-	                return;
-	            }
-	
-	            postMessage();
-	
-	            window.addEventListener('message', onIFrameCallback);
-	
-	            function onIFrameCallback(event) {
-	                if (!event.data) return;
-	
-	                if (event.data.chromeMediaSourceId) {
-	                    if (event.data.chromeMediaSourceId === 'PermissionDeniedError') {
-	                        callback('permission-denied');
-	                    } else callback(null, event.data.chromeMediaSourceId, getScreenConstraints(null, event.data.chromeMediaSourceId));
-	                }
-	
-	                if (event.data.chromeExtensionStatus) {
-	                    callback(event.data.chromeExtensionStatus, null, getScreenConstraints(event.data.chromeExtensionStatus));
-	                }
-	
-	                // this event listener is no more needed
-	                window.removeEventListener('message', onIFrameCallback);
-	            }
-	        };
-	
-	        function getScreenConstraints(error, sourceId) {
-	            var screen_constraints = {
-	                audio: false,
-	                video: {
-	                    mandatory: {
-	                        chromeMediaSource: error ? 'screen' : 'desktop',
-	                        maxWidth: 29999,
-	                        maxHeight: 8640,
-	                        minFrameRate: 30,
-	                        maxFrameRate: 128,
-	                        minAspectRatio: 1.77, // 2.39
-	                        googLeakyBucket: true
-	                    },
-	                    optional: []
-	                }
-	            };
-	
-	            if (sourceId) {
-	                screen_constraints.video.mandatory.chromeMediaSourceId = sourceId;
-	            }
-	
-	            return screen_constraints;
-	        }
-	
-	        function postMessage() {
-	            if (!iframe) {
-	                loadIFrame(postMessage);
-	                return;
-	            }
-	
-	            if (!iframe.isLoaded) {
-	                setTimeout(postMessage, 100);
-	                return;
-	            }
-	
-	            iframe.contentWindow.postMessage({
-	                captureSourceId: true
-	            }, '*');
-	        }
-	
-	        function loadIFrame(loadCallback) {
-	            if (iframe) {
-	                loadCallback();
-	                return;
-	            }
-	
-	            iframe = document.createElement('iframe');
-	            iframe.onload = function() {
-	                iframe.isLoaded = true;
-	
-	                loadCallback();
-	            };
-	            iframe.src = 'https://www.webrtc-experiment.com/getSourceId/'; // https://wwww.yourdomain.com/getScreenId.html
-	            iframe.style.display = 'none';
-	            (document.body || document.documentElement).appendChild(iframe);
-	        }
-	
-	        var iframe;
-	
-	        // this function is used in v3.0
-	        window.getScreenConstraints = function(callback) {
-	            loadIFrame(function() {
-	                getScreenId(function(error, sourceId, screen_constraints) {
-	                    callback(error, screen_constraints.video);
-	                });
-	            });
-	        };
-	    })();
-	
-	    (function() {
-	        if (document.domain.indexOf('webrtc-experiment.com') === -1) {
+	    // Listen for postMessage handler
+	    // postMessage is used to exchange "sourceId" between chrome extension and you webpage.
+	    // though, there are tons other options as well, e.g. XHR-signaling, websockets, etc.
+	    window.addEventListener('message', function(event) {
+	        if (event.origin != window.location.origin) {
 	            return;
 	        }
 	
-	        window.getScreenId = function(callback) {
-	            // for Firefox:
-	            // sourceId == 'firefox'
-	            // screen_constraints = {...}
-	            if (!!navigator.mozGetUserMedia) {
-	                callback(null, 'firefox', {
-	                    video: {
-	                        mozMediaSource: 'window',
-	                        mediaSource: 'window',
-	                        width: 29999,
-	                        height: 8640
-	                    }
-	                });
-	                return;
+	        onMessageCallback(event.data);
+	    });
+	
+	    // and the function that handles received messages
+	
+	    function onMessageCallback(data) {
+	        // "cancel" button is clicked
+	        if (data == 'PermissionDeniedError') {
+	            chromeMediaSource = 'PermissionDeniedError';
+	            if (screenCallback) return screenCallback('PermissionDeniedError');
+	            else throw new Error('PermissionDeniedError');
+	        }
+	
+	        // extension notified his presence
+	        if (data == 'rtcmulticonnection-extension-loaded') {
+	            chromeMediaSource = 'desktop';
+	        }
+	
+	        // extension shared temp sourceId
+	        if (data.sourceId && screenCallback) {
+	            screenCallback(sourceId = data.sourceId);
+	        }
+	    }
+	
+	    // global variables
+	    var chromeMediaSource = 'screen';
+	    var sourceId;
+	    var screenCallback;
+	
+	    // this method can be used to check if chrome extension is installed & enabled.
+	    function isChromeExtensionAvailable(callback) {
+	        if (!callback) return;
+	
+	        if (isFirefox) return isFirefoxExtensionAvailable(callback);
+	
+	        if (chromeMediaSource == 'desktop') return callback(true);
+	
+	        // ask extension if it is available
+	        window.postMessage('are-you-there', '*');
+	
+	        setTimeout(function() {
+	            if (chromeMediaSource == 'screen') {
+	                callback(false);
+	            } else callback(true);
+	        }, 2000);
+	    }
+	
+	    function isFirefoxExtensionAvailable(callback) {
+	        if (!callback) return;
+	
+	        if (!isFirefox) return isChromeExtensionAvailable(callback);
+	
+	        var isFirefoxAddonResponded = false;
+	
+	        function messageCallback(event) {
+	            var addonMessage = event.data;
+	
+	            if (!addonMessage || typeof addonMessage.isScreenCapturingEnabled === 'undefined') return;
+	
+	            isFirefoxAddonResponded = true;
+	
+	            if (addonMessage.isScreenCapturingEnabled === true) {
+	                callback(true);
+	            } else {
+	                callback(false);
 	            }
 	
-	            postMessage();
+	            window.removeEventListener("message", messageCallback, false);
+	        }
 	
-	            window.addEventListener('message', onIFrameCallback);
+	        window.addEventListener("message", messageCallback, false);
 	
-	            function onIFrameCallback(event) {
-	                if (!event.data) return;
+	        window.postMessage({
+	            checkIfScreenCapturingEnabled: true,
+	            domains: [document.domain]
+	        }, "*");
 	
-	                if (event.data.chromeMediaSourceId) {
-	                    if (event.data.chromeMediaSourceId === 'PermissionDeniedError') {
-	                        callback('permission-denied');
-	                    } else callback(null, event.data.chromeMediaSourceId, getScreenConstraints(null, event.data.chromeMediaSourceId));
-	                }
-	
-	                if (event.data.chromeExtensionStatus) {
-	                    callback(event.data.chromeExtensionStatus, null, getScreenConstraints(event.data.chromeExtensionStatus));
-	                }
-	
-	                // this event listener is no more needed
-	                window.removeEventListener('message', onIFrameCallback);
+	        setTimeout(function() {
+	            if (!isFirefoxAddonResponded) {
+	                callback(true); // can be old firefox extension
 	            }
+	        }, 2000); // wait 2-seconds-- todo: is this enough limit?
+	    }
+	
+	    // this function can be used to get "source-id" from the extension
+	    function getSourceId(callback, audioPlusTab) {
+	        if (!callback) throw '"callback" parameter is mandatory.';
+	        if (sourceId) {
+	            callback(sourceId);
+	            sourceId = null;
+	            return;
+	        }
+	
+	        screenCallback = callback;
+	
+	        if (!!audioPlusTab) {
+	            window.postMessage('audio-plus-tab', '*');
+	            return;
+	        }
+	        window.postMessage('get-sourceId', '*');
+	    }
+	
+	    function getChromeExtensionStatus(extensionid, callback) {
+	        if (arguments.length != 2) {
+	            callback = extensionid;
+	            extensionid = window.RMCExtensionID || 'ajhifddimkapgcifgcodmmfdlknahffk'; // default extension-id
+	        }
+	
+	        if (isFirefox) return callback('not-chrome');
+	
+	        var image = document.createElement('img');
+	        image.src = 'chrome-extension://' + extensionid + '/icon.png';
+	        image.onload = function() {
+	            chromeMediaSource = 'screen';
+	            window.postMessage('are-you-there', '*');
+	            setTimeout(function() {
+	                if (chromeMediaSource == 'screen') {
+	                    callback(extensionid == extensionid ? 'installed-enabled' : 'installed-disabled');
+	                } else callback('installed-enabled');
+	            }, 2000);
+	        };
+	        image.onerror = function() {
+	            callback('not-installed');
+	        };
+	    }
+	
+	    // this function explains how to use above methods/objects
+	    function getScreenConstraints(callback, audioPlusTab) {
+	        var firefoxScreenConstraints = {
+	            mozMediaSource: 'window',
+	            mediaSource: 'window',
+	            width: 29999,
+	            height: 8640
 	        };
 	
-	        function getScreenConstraints(error, sourceId) {
+	        if (isFirefox) return callback(null, firefoxScreenConstraints);
+	
+	        isChromeExtensionAvailable(function(isAvailable) {
+	            // this statement defines getUserMedia constraints
+	            // that will be used to capture content of screen
 	            var screen_constraints = {
-	                audio: false,
-	                video: {
-	                    mandatory: {
-	                        chromeMediaSource: error ? 'screen' : 'desktop',
-	                        maxWidth: 29999,
-	                        maxHeight: 8640,
-	                        minFrameRate: 30,
-	                        maxFrameRate: 128,
-	                        minAspectRatio: 1.77, // 2.39
-	                        googLeakyBucket: true
-	                    },
-	                    optional: []
-	                }
+	                mandatory: {
+	                    chromeMediaSource: chromeMediaSource,
+	                    maxWidth: 29999,
+	                    maxHeight: 8640,
+	                    minFrameRate: 30,
+	                    maxFrameRate: 128,
+	                    minAspectRatio: 1.77 // 2.39
+	                },
+	                optional: []
 	            };
 	
-	            if (sourceId) {
-	                screen_constraints.video.mandatory.chromeMediaSourceId = sourceId;
-	            }
-	
-	            return screen_constraints;
-	        }
-	
-	        function postMessage() {
-	            if (!iframe) {
-	                loadIFrame(postMessage);
+	            // this statement verifies chrome extension availability
+	            // if installed and available then it will invoke extension API
+	            // otherwise it will fallback to command-line based screen capturing API
+	            if (chromeMediaSource == 'desktop' && !sourceId) {
+	                getSourceId(function() {
+	                    screen_constraints.mandatory.chromeMediaSourceId = sourceId;
+	                    callback(sourceId == 'PermissionDeniedError' ? sourceId : null, screen_constraints);
+	                    sourceId = null;
+	                }, audioPlusTab);
 	                return;
 	            }
 	
-	            if (!iframe.isLoaded) {
-	                setTimeout(postMessage, 100);
-	                return;
+	            // this statement sets gets 'sourceId" and sets "chromeMediaSourceId" 
+	            if (chromeMediaSource == 'desktop') {
+	                screen_constraints.mandatory.chromeMediaSourceId = sourceId;
 	            }
 	
-	            iframe.contentWindow.postMessage({
-	                captureSourceId: true
-	            }, '*');
-	        }
-	
-	        function loadIFrame(loadCallback) {
-	            if (iframe) {
-	                loadCallback();
-	                return;
-	            }
-	
-	            iframe = document.createElement('iframe');
-	            iframe.onload = function() {
-	                iframe.isLoaded = true;
-	
-	                loadCallback();
-	            };
-	            iframe.src = 'https://www.webrtc-experiment.com/getSourceId/'; // https://wwww.yourdomain.com/getScreenId.html
-	            iframe.style.display = 'none';
-	            (document.body || document.documentElement).appendChild(iframe);
-	        }
-	
-	        var iframe;
-	
-	        // this function is used in v3.0
-	        window.getScreenConstraints = function(callback) {
-	            loadIFrame(function() {
-	                getScreenId(function(error, sourceId, screen_constraints) {
-	                    callback(error, screen_constraints.video);
-	                });
-	            });
-	        };
-	    })();
+	            // now invoking native getUserMedia API
+	            callback(null, screen_constraints);
+	        });
+	    }
 	
 	    // TextReceiver.js & TextSender.js
 	
@@ -27450,19 +27307,39 @@ var RTChat =
 /* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
+	/* WEBPACK VAR INJECTION */(function($, Rivets) {'use strict';
 	
 	// RoomPanel
 	
 	__webpack_require__(32);
 	var RTCWrapper = __webpack_require__(17);
 	
+	var Slider = __webpack_require__(34);
+	__webpack_require__(35);
+	
 	module.exports = Backbone.View.extend({
 		id: 'RoomPanel',
-		template: '\n\t\t<div class="sub-panel">\n\t\t\t<br>\n\t\t\t<div class="room-subject">\n\t\t\t\t<button class="btn btn-default">EDIT</button>\n\t\t\t\t<span rv-if="scope.roomSubject"> { scope.roomSubject } </span>\n\t\t\t\t<span rv-unless="scope.roomSubject"> Welcome to { scope.roomName } </span>\n\t\t\t</div>\n\t\t\t<br><br>Users:\n\t\t\t<ul class="users-panel">\n\t\t\t\t<li rv-each-user="scope.users" rv-show="user.extra.name">\n\t\t\t\t\t{ user.extra.name }\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="sub-panel">\n\t\t\t<div data-subview="chat"></div>\n\t\t</div>\n\t',
+		template: '\n\t\t<div class="sub-panel">\n\t\t\t<br>\n\t\t\t<div class="room-subject">\n\t\t\t\t<button class="btn btn-default">EDIT</button>\n\t\t\t\t<span rv-if="scope.roomSubject"> { scope.roomSubject } </span>\n\t\t\t\t<span rv-unless="scope.roomSubject"> Welcome to { scope.roomName } </span>\n\t\t\t</div>\n\t\t\t<div class="user-controls">\n\t\t\t\t<div class="btn-group" data-toggle="buttons">\n\t\t\t\t\t<label class="disconnect btn btn-default active fa fa-times">Disconnected\n\t\t\t\t\t\t<input id="disconnected" type="radio" name="media-status" checked></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="voice btn btn-default fa fa-phone">Voice\n\t\t\t\t\t\t<input id="voice" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="video btn btn-default fa fa-video-camera">Video\n\t\t\t\t\t\t<input id="video" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="screenshare btn btn-default fa fa-television">Screenshare\n\t\t\t\t\t\t<input id="screenshare" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class="more-controls hidden">\n\t\t\t\t\t<div class="btn btn-default fa fa-microphone-slash" data-toggle="button">Mute</div>\n\t\t\t\t\t<div class="btn btn-default fa fa-volume-up" data-toggle="button"></div>\n\t\t\t\t\t<input class="volume-slider" type="text"></input>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<br><br>Users:\n\t\t\t<ul class="users-panel">\n\t\t\t\t<li rv-each-user="scope.users" rv-show="user.extra.name">\n\t\t\t\t\t{ user.extra.name }\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="sub-panel">\n\t\t\t<div data-subview="chat"></div>\n\t\t</div>\n\t\t<div class="sub-panel">\n\t\t\t<div class="video-container"></div>\n\t\t</div>\n\t',
 		events: {
 			'click .room-subject .btn': function clickRoomSubjectBtn() {
 				RTCWrapper.updateState({ roomSubject: window.prompt("New Subject:") });
+			},
+			'click .user-controls .btn-group': function clickUserControlsBtnGroup(e) {
+				if ($(e.target).is('.disconnect')) {
+					this.$('.more-controls').addClass('hidden');
+					RTCWrapper.removeStreams();
+				} else {
+					this.$('.more-controls').removeClass('hidden');
+					RTCWrapper.addVoiceStream();
+				}
+			},
+			'click .more-controls .btn': function clickMoreControlsBtn(e) {
+				var target = $(e.target);
+				target.toggleClass('btn-default btn-danger');
+				if (target.is('.fa-volume-up')) {
+					this.$('.more-controls .slider').toggleClass('disabled');
+					//TODO: styles
+				}
 			}
 		},
 		initialize: function initialize() {
@@ -27481,18 +27358,27 @@ var RTChat =
 		render: function render() {
 			console.log("RenderJoin", window.location.hash);
 			// if (!window.location.hash) return self
-			RTCWrapper.joinRoom(window.location.hash, { videoContainer: this.$('#video-container') });
+	
+			this.$el.html(this.template);
+			Rivets.bind(this.$el, { scope: this.scope });
+	
+			// Make the magic happen~~
+			RTCWrapper.joinRoom(window.location.hash, { xVideoContainer: this.$('.video-container') });
 	
 			this.scope.roomName = window.location.hash;
 			this.scope.users = RTCWrapper.users;
 	
-			this.$el.html(this.template);
-			Rivets.bind(this.$el, { scope: this.scope });
+			var slider = new Slider('.volume-slider', {
+				// var slider = this.$('.volume-slider').slider({
+				min: 0,
+				max: 10
+			});
+	
 			return this;
 		},
 		scope: {}
 	});
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(7)))
 
 /***/ },
 /* 32 */
@@ -27536,6 +27422,1667 @@ var RTChat =
 
 /***/ },
 /* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*! =======================================================
+	                      VERSION  7.0.5              
+	========================================================= */
+	"use strict";
+	
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+	
+	/*! =========================================================
+	 * bootstrap-slider.js
+	 *
+	 * Maintainers:
+	 *		Kyle Kemp
+	 *			- Twitter: @seiyria
+	 *			- Github:  seiyria
+	 *		Rohit Kalkur
+	 *			- Twitter: @Rovolutionary
+	 *			- Github:  rovolution
+	 *
+	 * =========================================================
+	 *
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 * http://www.apache.org/licenses/LICENSE-2.0
+	 *
+	 * Unless required by applicable law or agreed to in writing, software
+	 * distributed under the License is distributed on an "AS IS" BASIS,
+	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	 * See the License for the specific language governing permissions and
+	 * limitations under the License.
+	 * ========================================================= */
+	
+	/**
+	 * Bridget makes jQuery widgets
+	 * v1.0.1
+	 * MIT license
+	 */
+	
+	(function (factory) {
+		if (true) {
+			try {
+				!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(1)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+			} catch (err) {
+				!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+			}
+		} else if ((typeof module === "undefined" ? "undefined" : _typeof(module)) === "object" && module.exports) {
+			var jQuery;
+			try {
+				jQuery = require("jquery");
+			} catch (err) {
+				jQuery = null;
+			}
+			module.exports = factory(jQuery);
+		} else if (window) {
+			window.Slider = factory(window.jQuery);
+		}
+	})(function ($) {
+		// Reference to Slider constructor
+		var Slider;
+	
+		(function ($) {
+	
+			'use strict';
+	
+			// -------------------------- utils -------------------------- //
+	
+			var slice = Array.prototype.slice;
+	
+			function noop() {}
+	
+			// -------------------------- definition -------------------------- //
+	
+			function defineBridget($) {
+	
+				// bail if no jQuery
+				if (!$) {
+					return;
+				}
+	
+				// -------------------------- addOptionMethod -------------------------- //
+	
+				/**
+	    * adds option method -> $().plugin('option', {...})
+	    * @param {Function} PluginClass - constructor class
+	    */
+				function addOptionMethod(PluginClass) {
+					// don't overwrite original option method
+					if (PluginClass.prototype.option) {
+						return;
+					}
+	
+					// option setter
+					PluginClass.prototype.option = function (opts) {
+						// bail out if not an object
+						if (!$.isPlainObject(opts)) {
+							return;
+						}
+						this.options = $.extend(true, this.options, opts);
+					};
+				}
+	
+				// -------------------------- plugin bridge -------------------------- //
+	
+				// helper function for logging errors
+				// $.error breaks jQuery chaining
+				var logError = typeof console === 'undefined' ? noop : function (message) {
+					console.error(message);
+				};
+	
+				/**
+	    * jQuery plugin bridge, access methods like $elem.plugin('method')
+	    * @param {String} namespace - plugin name
+	    * @param {Function} PluginClass - constructor class
+	    */
+				function bridge(namespace, PluginClass) {
+					// add to jQuery fn namespace
+					$.fn[namespace] = function (options) {
+						if (typeof options === 'string') {
+							// call plugin method when first argument is a string
+							// get arguments for method
+							var args = slice.call(arguments, 1);
+	
+							for (var i = 0, len = this.length; i < len; i++) {
+								var elem = this[i];
+								var instance = $.data(elem, namespace);
+								if (!instance) {
+									logError("cannot call methods on " + namespace + " prior to initialization; " + "attempted to call '" + options + "'");
+									continue;
+								}
+								if (!$.isFunction(instance[options]) || options.charAt(0) === '_') {
+									logError("no such method '" + options + "' for " + namespace + " instance");
+									continue;
+								}
+	
+								// trigger method with arguments
+								var returnValue = instance[options].apply(instance, args);
+	
+								// break look and return first value if provided
+								if (returnValue !== undefined && returnValue !== instance) {
+									return returnValue;
+								}
+							}
+							// return this if no return value
+							return this;
+						} else {
+							var objects = this.map(function () {
+								var instance = $.data(this, namespace);
+								if (instance) {
+									// apply options & init
+									instance.option(options);
+									instance._init();
+								} else {
+									// initialize new instance
+									instance = new PluginClass(this, options);
+									$.data(this, namespace, instance);
+								}
+								return $(this);
+							});
+	
+							if (!objects || objects.length > 1) {
+								return objects;
+							} else {
+								return objects[0];
+							}
+						}
+					};
+				}
+	
+				// -------------------------- bridget -------------------------- //
+	
+				/**
+	    * converts a Prototypical class into a proper jQuery plugin
+	    *   the class must have a ._init method
+	    * @param {String} namespace - plugin name, used in $().pluginName
+	    * @param {Function} PluginClass - constructor class
+	    */
+				$.bridget = function (namespace, PluginClass) {
+					addOptionMethod(PluginClass);
+					bridge(namespace, PluginClass);
+				};
+	
+				return $.bridget;
+			}
+	
+			// get jquery from browser global
+			defineBridget($);
+		})($);
+	
+		/*************************************************
+	 			BOOTSTRAP-SLIDER SOURCE CODE
+	 	**************************************************/
+	
+		(function ($) {
+	
+			var ErrorMsgs = {
+				formatInvalidInputErrorMsg: function formatInvalidInputErrorMsg(input) {
+					return "Invalid input value '" + input + "' passed in";
+				},
+				callingContextNotSliderInstance: "Calling context element does not have instance of Slider bound to it. Check your code to make sure the JQuery object returned from the call to the slider() initializer is calling the method"
+			};
+	
+			var SliderScale = {
+				linear: {
+					toValue: function toValue(percentage) {
+						var rawValue = percentage / 100 * (this.options.max - this.options.min);
+						var shouldAdjustWithBase = true;
+						if (this.options.ticks_positions.length > 0) {
+							var minv,
+							    maxv,
+							    minp,
+							    maxp = 0;
+							for (var i = 1; i < this.options.ticks_positions.length; i++) {
+								if (percentage <= this.options.ticks_positions[i]) {
+									minv = this.options.ticks[i - 1];
+									minp = this.options.ticks_positions[i - 1];
+									maxv = this.options.ticks[i];
+									maxp = this.options.ticks_positions[i];
+	
+									break;
+								}
+							}
+							var partialPercentage = (percentage - minp) / (maxp - minp);
+							rawValue = minv + partialPercentage * (maxv - minv);
+							shouldAdjustWithBase = false;
+						}
+	
+						var adjustment = shouldAdjustWithBase ? this.options.min : 0;
+						var value = adjustment + Math.round(rawValue / this.options.step) * this.options.step;
+						if (value < this.options.min) {
+							return this.options.min;
+						} else if (value > this.options.max) {
+							return this.options.max;
+						} else {
+							return value;
+						}
+					},
+					toPercentage: function toPercentage(value) {
+						if (this.options.max === this.options.min) {
+							return 0;
+						}
+	
+						if (this.options.ticks_positions.length > 0) {
+							var minv,
+							    maxv,
+							    minp,
+							    maxp = 0;
+							for (var i = 0; i < this.options.ticks.length; i++) {
+								if (value <= this.options.ticks[i]) {
+									minv = i > 0 ? this.options.ticks[i - 1] : 0;
+									minp = i > 0 ? this.options.ticks_positions[i - 1] : 0;
+									maxv = this.options.ticks[i];
+									maxp = this.options.ticks_positions[i];
+	
+									break;
+								}
+							}
+							if (i > 0) {
+								var partialPercentage = (value - minv) / (maxv - minv);
+								return minp + partialPercentage * (maxp - minp);
+							}
+						}
+	
+						return 100 * (value - this.options.min) / (this.options.max - this.options.min);
+					}
+				},
+	
+				logarithmic: {
+					/* Based on http://stackoverflow.com/questions/846221/logarithmic-slider */
+					toValue: function toValue(percentage) {
+						var min = this.options.min === 0 ? 0 : Math.log(this.options.min);
+						var max = Math.log(this.options.max);
+						var value = Math.exp(min + (max - min) * percentage / 100);
+						value = this.options.min + Math.round((value - this.options.min) / this.options.step) * this.options.step;
+						/* Rounding to the nearest step could exceed the min or
+	      * max, so clip to those values. */
+						if (value < this.options.min) {
+							return this.options.min;
+						} else if (value > this.options.max) {
+							return this.options.max;
+						} else {
+							return value;
+						}
+					},
+					toPercentage: function toPercentage(value) {
+						if (this.options.max === this.options.min) {
+							return 0;
+						} else {
+							var max = Math.log(this.options.max);
+							var min = this.options.min === 0 ? 0 : Math.log(this.options.min);
+							var v = value === 0 ? 0 : Math.log(value);
+							return 100 * (v - min) / (max - min);
+						}
+					}
+				}
+			};
+	
+			/*************************************************
+	  						CONSTRUCTOR
+	  	**************************************************/
+			Slider = function (element, options) {
+				createNewSlider.call(this, element, options);
+				return this;
+			};
+	
+			function createNewSlider(element, options) {
+	
+				/*
+	   	The internal state object is used to store data about the current 'state' of slider.
+	   		This includes values such as the `value`, `enabled`, etc...
+	   */
+				this._state = {
+					value: null,
+					enabled: null,
+					offset: null,
+					size: null,
+					percentage: null,
+					inDrag: false,
+					over: false
+				};
+	
+				if (typeof element === "string") {
+					this.element = document.querySelector(element);
+				} else if (element instanceof HTMLElement) {
+					this.element = element;
+				}
+	
+				/*************************************************
+	   					Process Options
+	   	**************************************************/
+				options = options ? options : {};
+				var optionTypes = Object.keys(this.defaultOptions);
+	
+				for (var i = 0; i < optionTypes.length; i++) {
+					var optName = optionTypes[i];
+	
+					// First check if an option was passed in via the constructor
+					var val = options[optName];
+					// If no data attrib, then check data atrributes
+					val = typeof val !== 'undefined' ? val : getDataAttrib(this.element, optName);
+					// Finally, if nothing was specified, use the defaults
+					val = val !== null ? val : this.defaultOptions[optName];
+	
+					// Set all options on the instance of the Slider
+					if (!this.options) {
+						this.options = {};
+					}
+					this.options[optName] = val;
+				}
+	
+				/*
+	   	Validate `tooltip_position` against 'orientation`
+	   	- if `tooltip_position` is incompatible with orientation, swith it to a default compatible with specified `orientation`
+	   		-- default for "vertical" -> "right"
+	   		-- default for "horizontal" -> "left"
+	   */
+				if (this.options.orientation === "vertical" && (this.options.tooltip_position === "top" || this.options.tooltip_position === "bottom")) {
+	
+					this.options.tooltip_position = "right";
+				} else if (this.options.orientation === "horizontal" && (this.options.tooltip_position === "left" || this.options.tooltip_position === "right")) {
+	
+					this.options.tooltip_position = "top";
+				}
+	
+				function getDataAttrib(element, optName) {
+					var dataName = "data-slider-" + optName.replace(/_/g, '-');
+					var dataValString = element.getAttribute(dataName);
+	
+					try {
+						return JSON.parse(dataValString);
+					} catch (err) {
+						return dataValString;
+					}
+				}
+	
+				/*************************************************
+	   					Create Markup
+	   	**************************************************/
+	
+				var origWidth = this.element.style.width;
+				var updateSlider = false;
+				var parent = this.element.parentNode;
+				var sliderTrackSelection;
+				var sliderTrackLow, sliderTrackHigh;
+				var sliderMinHandle;
+				var sliderMaxHandle;
+	
+				if (this.sliderElem) {
+					updateSlider = true;
+				} else {
+					/* Create elements needed for slider */
+					this.sliderElem = document.createElement("div");
+					this.sliderElem.className = "slider";
+	
+					/* Create slider track elements */
+					var sliderTrack = document.createElement("div");
+					sliderTrack.className = "slider-track";
+	
+					sliderTrackLow = document.createElement("div");
+					sliderTrackLow.className = "slider-track-low";
+	
+					sliderTrackSelection = document.createElement("div");
+					sliderTrackSelection.className = "slider-selection";
+	
+					sliderTrackHigh = document.createElement("div");
+					sliderTrackHigh.className = "slider-track-high";
+	
+					sliderMinHandle = document.createElement("div");
+					sliderMinHandle.className = "slider-handle min-slider-handle";
+					sliderMinHandle.setAttribute('role', 'slider');
+					sliderMinHandle.setAttribute('aria-valuemin', this.options.min);
+					sliderMinHandle.setAttribute('aria-valuemax', this.options.max);
+	
+					sliderMaxHandle = document.createElement("div");
+					sliderMaxHandle.className = "slider-handle max-slider-handle";
+					sliderMaxHandle.setAttribute('role', 'slider');
+					sliderMaxHandle.setAttribute('aria-valuemin', this.options.min);
+					sliderMaxHandle.setAttribute('aria-valuemax', this.options.max);
+	
+					sliderTrack.appendChild(sliderTrackLow);
+					sliderTrack.appendChild(sliderTrackSelection);
+					sliderTrack.appendChild(sliderTrackHigh);
+	
+					/* Add aria-labelledby to handle's */
+					var isLabelledbyArray = Array.isArray(this.options.labelledby);
+					if (isLabelledbyArray && this.options.labelledby[0]) {
+						sliderMinHandle.setAttribute('aria-labelledby', this.options.labelledby[0]);
+					}
+					if (isLabelledbyArray && this.options.labelledby[1]) {
+						sliderMaxHandle.setAttribute('aria-labelledby', this.options.labelledby[1]);
+					}
+					if (!isLabelledbyArray && this.options.labelledby) {
+						sliderMinHandle.setAttribute('aria-labelledby', this.options.labelledby);
+						sliderMaxHandle.setAttribute('aria-labelledby', this.options.labelledby);
+					}
+	
+					/* Create ticks */
+					this.ticks = [];
+					if (Array.isArray(this.options.ticks) && this.options.ticks.length > 0) {
+						for (i = 0; i < this.options.ticks.length; i++) {
+							var tick = document.createElement('div');
+							tick.className = 'slider-tick';
+	
+							this.ticks.push(tick);
+							sliderTrack.appendChild(tick);
+						}
+	
+						sliderTrackSelection.className += " tick-slider-selection";
+					}
+	
+					sliderTrack.appendChild(sliderMinHandle);
+					sliderTrack.appendChild(sliderMaxHandle);
+	
+					this.tickLabels = [];
+					if (Array.isArray(this.options.ticks_labels) && this.options.ticks_labels.length > 0) {
+						this.tickLabelContainer = document.createElement('div');
+						this.tickLabelContainer.className = 'slider-tick-label-container';
+	
+						for (i = 0; i < this.options.ticks_labels.length; i++) {
+							var label = document.createElement('div');
+							var noTickPositionsSpecified = this.options.ticks_positions.length === 0;
+							var tickLabelsIndex = this.options.reversed && noTickPositionsSpecified ? this.options.ticks_labels.length - (i + 1) : i;
+							label.className = 'slider-tick-label';
+							label.innerHTML = this.options.ticks_labels[tickLabelsIndex];
+	
+							this.tickLabels.push(label);
+							this.tickLabelContainer.appendChild(label);
+						}
+					}
+	
+					var createAndAppendTooltipSubElements = function createAndAppendTooltipSubElements(tooltipElem) {
+						var arrow = document.createElement("div");
+						arrow.className = "tooltip-arrow";
+	
+						var inner = document.createElement("div");
+						inner.className = "tooltip-inner";
+	
+						tooltipElem.appendChild(arrow);
+						tooltipElem.appendChild(inner);
+					};
+	
+					/* Create tooltip elements */
+					var sliderTooltip = document.createElement("div");
+					sliderTooltip.className = "tooltip tooltip-main";
+					sliderTooltip.setAttribute('role', 'presentation');
+					createAndAppendTooltipSubElements(sliderTooltip);
+	
+					var sliderTooltipMin = document.createElement("div");
+					sliderTooltipMin.className = "tooltip tooltip-min";
+					sliderTooltipMin.setAttribute('role', 'presentation');
+					createAndAppendTooltipSubElements(sliderTooltipMin);
+	
+					var sliderTooltipMax = document.createElement("div");
+					sliderTooltipMax.className = "tooltip tooltip-max";
+					sliderTooltipMax.setAttribute('role', 'presentation');
+					createAndAppendTooltipSubElements(sliderTooltipMax);
+	
+					/* Append components to sliderElem */
+					this.sliderElem.appendChild(sliderTrack);
+					this.sliderElem.appendChild(sliderTooltip);
+					this.sliderElem.appendChild(sliderTooltipMin);
+					this.sliderElem.appendChild(sliderTooltipMax);
+	
+					if (this.tickLabelContainer) {
+						this.sliderElem.appendChild(this.tickLabelContainer);
+					}
+	
+					/* Append slider element to parent container, right before the original <input> element */
+					parent.insertBefore(this.sliderElem, this.element);
+	
+					/* Hide original <input> element */
+					this.element.style.display = "none";
+				}
+				/* If JQuery exists, cache JQ references */
+				if ($) {
+					this.$element = $(this.element);
+					this.$sliderElem = $(this.sliderElem);
+				}
+	
+				/*************************************************
+	   						Setup
+	   	**************************************************/
+				this.eventToCallbackMap = {};
+				this.sliderElem.id = this.options.id;
+	
+				this.touchCapable = 'ontouchstart' in window || window.DocumentTouch && document instanceof window.DocumentTouch;
+	
+				this.touchX = 0;
+				this.touchY = 0;
+	
+				this.tooltip = this.sliderElem.querySelector('.tooltip-main');
+				this.tooltipInner = this.tooltip.querySelector('.tooltip-inner');
+	
+				this.tooltip_min = this.sliderElem.querySelector('.tooltip-min');
+				this.tooltipInner_min = this.tooltip_min.querySelector('.tooltip-inner');
+	
+				this.tooltip_max = this.sliderElem.querySelector('.tooltip-max');
+				this.tooltipInner_max = this.tooltip_max.querySelector('.tooltip-inner');
+	
+				if (SliderScale[this.options.scale]) {
+					this.options.scale = SliderScale[this.options.scale];
+				}
+	
+				if (updateSlider === true) {
+					// Reset classes
+					this._removeClass(this.sliderElem, 'slider-horizontal');
+					this._removeClass(this.sliderElem, 'slider-vertical');
+					this._removeClass(this.tooltip, 'hide');
+					this._removeClass(this.tooltip_min, 'hide');
+					this._removeClass(this.tooltip_max, 'hide');
+	
+					// Undo existing inline styles for track
+					["left", "top", "width", "height"].forEach(function (prop) {
+						this._removeProperty(this.trackLow, prop);
+						this._removeProperty(this.trackSelection, prop);
+						this._removeProperty(this.trackHigh, prop);
+					}, this);
+	
+					// Undo inline styles on handles
+					[this.handle1, this.handle2].forEach(function (handle) {
+						this._removeProperty(handle, 'left');
+						this._removeProperty(handle, 'top');
+					}, this);
+	
+					// Undo inline styles and classes on tooltips
+					[this.tooltip, this.tooltip_min, this.tooltip_max].forEach(function (tooltip) {
+						this._removeProperty(tooltip, 'left');
+						this._removeProperty(tooltip, 'top');
+						this._removeProperty(tooltip, 'margin-left');
+						this._removeProperty(tooltip, 'margin-top');
+	
+						this._removeClass(tooltip, 'right');
+						this._removeClass(tooltip, 'top');
+					}, this);
+				}
+	
+				if (this.options.orientation === 'vertical') {
+					this._addClass(this.sliderElem, 'slider-vertical');
+					this.stylePos = 'top';
+					this.mousePos = 'pageY';
+					this.sizePos = 'offsetHeight';
+				} else {
+					this._addClass(this.sliderElem, 'slider-horizontal');
+					this.sliderElem.style.width = origWidth;
+					this.options.orientation = 'horizontal';
+					this.stylePos = 'left';
+					this.mousePos = 'pageX';
+					this.sizePos = 'offsetWidth';
+				}
+				this._setTooltipPosition();
+				/* In case ticks are specified, overwrite the min and max bounds */
+				if (Array.isArray(this.options.ticks) && this.options.ticks.length > 0) {
+					this.options.max = Math.max.apply(Math, this.options.ticks);
+					this.options.min = Math.min.apply(Math, this.options.ticks);
+				}
+	
+				if (Array.isArray(this.options.value)) {
+					this.options.range = true;
+					this._state.value = this.options.value;
+				} else if (this.options.range) {
+					// User wants a range, but value is not an array
+					this._state.value = [this.options.value, this.options.max];
+				} else {
+					this._state.value = this.options.value;
+				}
+	
+				this.trackLow = sliderTrackLow || this.trackLow;
+				this.trackSelection = sliderTrackSelection || this.trackSelection;
+				this.trackHigh = sliderTrackHigh || this.trackHigh;
+	
+				if (this.options.selection === 'none') {
+					this._addClass(this.trackLow, 'hide');
+					this._addClass(this.trackSelection, 'hide');
+					this._addClass(this.trackHigh, 'hide');
+				}
+	
+				this.handle1 = sliderMinHandle || this.handle1;
+				this.handle2 = sliderMaxHandle || this.handle2;
+	
+				if (updateSlider === true) {
+					// Reset classes
+					this._removeClass(this.handle1, 'round triangle');
+					this._removeClass(this.handle2, 'round triangle hide');
+	
+					for (i = 0; i < this.ticks.length; i++) {
+						this._removeClass(this.ticks[i], 'round triangle hide');
+					}
+				}
+	
+				var availableHandleModifiers = ['round', 'triangle', 'custom'];
+				var isValidHandleType = availableHandleModifiers.indexOf(this.options.handle) !== -1;
+				if (isValidHandleType) {
+					this._addClass(this.handle1, this.options.handle);
+					this._addClass(this.handle2, this.options.handle);
+	
+					for (i = 0; i < this.ticks.length; i++) {
+						this._addClass(this.ticks[i], this.options.handle);
+					}
+				}
+	
+				this._state.offset = this._offset(this.sliderElem);
+				this._state.size = this.sliderElem[this.sizePos];
+				this.setValue(this._state.value);
+	
+				/******************************************
+	   				Bind Event Listeners
+	   	******************************************/
+	
+				// Bind keyboard handlers
+				this.handle1Keydown = this._keydown.bind(this, 0);
+				this.handle1.addEventListener("keydown", this.handle1Keydown, false);
+	
+				this.handle2Keydown = this._keydown.bind(this, 1);
+				this.handle2.addEventListener("keydown", this.handle2Keydown, false);
+	
+				this.mousedown = this._mousedown.bind(this);
+				this.touchstart = this._touchstart.bind(this);
+				this.touchmove = this._touchmove.bind(this);
+	
+				if (this.touchCapable) {
+					// Bind touch handlers
+					this.sliderElem.addEventListener("touchstart", this.touchstart, false);
+					this.sliderElem.addEventListener("touchmove", this.touchmove, false);
+				}
+				this.sliderElem.addEventListener("mousedown", this.mousedown, false);
+	
+				// Bind window handlers
+				this.resize = this._resize.bind(this);
+				window.addEventListener("resize", this.resize, false);
+	
+				// Bind tooltip-related handlers
+				if (this.options.tooltip === 'hide') {
+					this._addClass(this.tooltip, 'hide');
+					this._addClass(this.tooltip_min, 'hide');
+					this._addClass(this.tooltip_max, 'hide');
+				} else if (this.options.tooltip === 'always') {
+					this._showTooltip();
+					this._alwaysShowTooltip = true;
+				} else {
+					this.showTooltip = this._showTooltip.bind(this);
+					this.hideTooltip = this._hideTooltip.bind(this);
+	
+					this.sliderElem.addEventListener("mouseenter", this.showTooltip, false);
+					this.sliderElem.addEventListener("mouseleave", this.hideTooltip, false);
+	
+					this.handle1.addEventListener("focus", this.showTooltip, false);
+					this.handle1.addEventListener("blur", this.hideTooltip, false);
+	
+					this.handle2.addEventListener("focus", this.showTooltip, false);
+					this.handle2.addEventListener("blur", this.hideTooltip, false);
+				}
+	
+				if (this.options.enabled) {
+					this.enable();
+				} else {
+					this.disable();
+				}
+			}
+	
+			/*************************************************
+	  				INSTANCE PROPERTIES/METHODS
+	  	- Any methods bound to the prototype are considered
+	  part of the plugin's `public` interface
+	  	**************************************************/
+			Slider.prototype = {
+				_init: function _init() {}, // NOTE: Must exist to support bridget
+	
+				constructor: Slider,
+	
+				defaultOptions: {
+					id: "",
+					min: 0,
+					max: 10,
+					step: 1,
+					precision: 0,
+					orientation: 'horizontal',
+					value: 5,
+					range: false,
+					selection: 'before',
+					tooltip: 'show',
+					tooltip_split: false,
+					handle: 'round',
+					reversed: false,
+					enabled: true,
+					formatter: function formatter(val) {
+						if (Array.isArray(val)) {
+							return val[0] + " : " + val[1];
+						} else {
+							return val;
+						}
+					},
+					natural_arrow_keys: false,
+					ticks: [],
+					ticks_positions: [],
+					ticks_labels: [],
+					ticks_snap_bounds: 0,
+					scale: 'linear',
+					focus: false,
+					tooltip_position: null,
+					labelledby: null
+				},
+	
+				getElement: function getElement() {
+					return this.sliderElem;
+				},
+	
+				getValue: function getValue() {
+					if (this.options.range) {
+						return this._state.value;
+					} else {
+						return this._state.value[0];
+					}
+				},
+	
+				setValue: function setValue(val, triggerSlideEvent, triggerChangeEvent) {
+					if (!val) {
+						val = 0;
+					}
+					var oldValue = this.getValue();
+					this._state.value = this._validateInputValue(val);
+					var applyPrecision = this._applyPrecision.bind(this);
+	
+					if (this.options.range) {
+						this._state.value[0] = applyPrecision(this._state.value[0]);
+						this._state.value[1] = applyPrecision(this._state.value[1]);
+	
+						this._state.value[0] = Math.max(this.options.min, Math.min(this.options.max, this._state.value[0]));
+						this._state.value[1] = Math.max(this.options.min, Math.min(this.options.max, this._state.value[1]));
+					} else {
+						this._state.value = applyPrecision(this._state.value);
+						this._state.value = [Math.max(this.options.min, Math.min(this.options.max, this._state.value))];
+						this._addClass(this.handle2, 'hide');
+						if (this.options.selection === 'after') {
+							this._state.value[1] = this.options.max;
+						} else {
+							this._state.value[1] = this.options.min;
+						}
+					}
+	
+					if (this.options.max > this.options.min) {
+						this._state.percentage = [this._toPercentage(this._state.value[0]), this._toPercentage(this._state.value[1]), this.options.step * 100 / (this.options.max - this.options.min)];
+					} else {
+						this._state.percentage = [0, 0, 100];
+					}
+	
+					this._layout();
+					var newValue = this.options.range ? this._state.value : this._state.value[0];
+	
+					this._setDataVal(newValue);
+					if (triggerSlideEvent === true) {
+						this._trigger('slide', newValue);
+					}
+					if (oldValue !== newValue && triggerChangeEvent === true) {
+						this._trigger('change', {
+							oldValue: oldValue,
+							newValue: newValue
+						});
+					}
+	
+					return this;
+				},
+	
+				destroy: function destroy() {
+					// Remove event handlers on slider elements
+					this._removeSliderEventHandlers();
+	
+					// Remove the slider from the DOM
+					this.sliderElem.parentNode.removeChild(this.sliderElem);
+					/* Show original <input> element */
+					this.element.style.display = "";
+	
+					// Clear out custom event bindings
+					this._cleanUpEventCallbacksMap();
+	
+					// Remove data values
+					this.element.removeAttribute("data");
+	
+					// Remove JQuery handlers/data
+					if ($) {
+						this._unbindJQueryEventHandlers();
+						this.$element.removeData('slider');
+					}
+				},
+	
+				disable: function disable() {
+					this._state.enabled = false;
+					this.handle1.removeAttribute("tabindex");
+					this.handle2.removeAttribute("tabindex");
+					this._addClass(this.sliderElem, 'slider-disabled');
+					this._trigger('slideDisabled');
+	
+					return this;
+				},
+	
+				enable: function enable() {
+					this._state.enabled = true;
+					this.handle1.setAttribute("tabindex", 0);
+					this.handle2.setAttribute("tabindex", 0);
+					this._removeClass(this.sliderElem, 'slider-disabled');
+					this._trigger('slideEnabled');
+	
+					return this;
+				},
+	
+				toggle: function toggle() {
+					if (this._state.enabled) {
+						this.disable();
+					} else {
+						this.enable();
+					}
+					return this;
+				},
+	
+				isEnabled: function isEnabled() {
+					return this._state.enabled;
+				},
+	
+				on: function on(evt, callback) {
+					this._bindNonQueryEventHandler(evt, callback);
+					return this;
+				},
+	
+				off: function off(evt, callback) {
+					if ($) {
+						this.$element.off(evt, callback);
+						this.$sliderElem.off(evt, callback);
+					} else {
+						this._unbindNonQueryEventHandler(evt, callback);
+					}
+				},
+	
+				getAttribute: function getAttribute(attribute) {
+					if (attribute) {
+						return this.options[attribute];
+					} else {
+						return this.options;
+					}
+				},
+	
+				setAttribute: function setAttribute(attribute, value) {
+					this.options[attribute] = value;
+					return this;
+				},
+	
+				refresh: function refresh() {
+					this._removeSliderEventHandlers();
+					createNewSlider.call(this, this.element, this.options);
+					if ($) {
+						// Bind new instance of slider to the element
+						$.data(this.element, 'slider', this);
+					}
+					return this;
+				},
+	
+				relayout: function relayout() {
+					this._resize();
+					this._layout();
+					return this;
+				},
+	
+				/******************************+
+	   				HELPERS
+	   	- Any method that is not part of the public interface.
+	   - Place it underneath this comment block and write its signature like so:
+	   	  					_fnName : function() {...}
+	   	********************************/
+				_removeSliderEventHandlers: function _removeSliderEventHandlers() {
+					// Remove keydown event listeners
+					this.handle1.removeEventListener("keydown", this.handle1Keydown, false);
+					this.handle2.removeEventListener("keydown", this.handle2Keydown, false);
+	
+					if (this.showTooltip) {
+						this.handle1.removeEventListener("focus", this.showTooltip, false);
+						this.handle2.removeEventListener("focus", this.showTooltip, false);
+					}
+					if (this.hideTooltip) {
+						this.handle1.removeEventListener("blur", this.hideTooltip, false);
+						this.handle2.removeEventListener("blur", this.hideTooltip, false);
+					}
+	
+					// Remove event listeners from sliderElem
+					if (this.showTooltip) {
+						this.sliderElem.removeEventListener("mouseenter", this.showTooltip, false);
+					}
+					if (this.hideTooltip) {
+						this.sliderElem.removeEventListener("mouseleave", this.hideTooltip, false);
+					}
+					this.sliderElem.removeEventListener("touchstart", this.touchstart, false);
+					this.sliderElem.removeEventListener("touchmove", this.touchmove, false);
+					this.sliderElem.removeEventListener("mousedown", this.mousedown, false);
+	
+					// Remove window event listener
+					window.removeEventListener("resize", this.resize, false);
+				},
+				_bindNonQueryEventHandler: function _bindNonQueryEventHandler(evt, callback) {
+					if (this.eventToCallbackMap[evt] === undefined) {
+						this.eventToCallbackMap[evt] = [];
+					}
+					this.eventToCallbackMap[evt].push(callback);
+				},
+				_unbindNonQueryEventHandler: function _unbindNonQueryEventHandler(evt, callback) {
+					var callbacks = this.eventToCallbackMap[evt];
+					if (callbacks !== undefined) {
+						for (var i = 0; i < callbacks.length; i++) {
+							if (callbacks[i] === callback) {
+								callbacks.splice(i, 1);
+								break;
+							}
+						}
+					}
+				},
+				_cleanUpEventCallbacksMap: function _cleanUpEventCallbacksMap() {
+					var eventNames = Object.keys(this.eventToCallbackMap);
+					for (var i = 0; i < eventNames.length; i++) {
+						var eventName = eventNames[i];
+						this.eventToCallbackMap[eventName] = null;
+					}
+				},
+				_showTooltip: function _showTooltip() {
+					if (this.options.tooltip_split === false) {
+						this._addClass(this.tooltip, 'in');
+						this.tooltip_min.style.display = 'none';
+						this.tooltip_max.style.display = 'none';
+					} else {
+						this._addClass(this.tooltip_min, 'in');
+						this._addClass(this.tooltip_max, 'in');
+						this.tooltip.style.display = 'none';
+					}
+					this._state.over = true;
+				},
+				_hideTooltip: function _hideTooltip() {
+					if (this._state.inDrag === false && this.alwaysShowTooltip !== true) {
+						this._removeClass(this.tooltip, 'in');
+						this._removeClass(this.tooltip_min, 'in');
+						this._removeClass(this.tooltip_max, 'in');
+					}
+					this._state.over = false;
+				},
+				_layout: function _layout() {
+					var positionPercentages;
+	
+					if (this.options.reversed) {
+						positionPercentages = [100 - this._state.percentage[0], this.options.range ? 100 - this._state.percentage[1] : this._state.percentage[1]];
+					} else {
+						positionPercentages = [this._state.percentage[0], this._state.percentage[1]];
+					}
+	
+					this.handle1.style[this.stylePos] = positionPercentages[0] + '%';
+					this.handle1.setAttribute('aria-valuenow', this._state.value[0]);
+	
+					this.handle2.style[this.stylePos] = positionPercentages[1] + '%';
+					this.handle2.setAttribute('aria-valuenow', this._state.value[1]);
+	
+					/* Position ticks and labels */
+					if (Array.isArray(this.options.ticks) && this.options.ticks.length > 0) {
+	
+						var styleSize = this.options.orientation === 'vertical' ? 'height' : 'width';
+						var styleMargin = this.options.orientation === 'vertical' ? 'marginTop' : 'marginLeft';
+						var labelSize = this._state.size / (this.options.ticks.length - 1);
+	
+						if (this.tickLabelContainer) {
+							var extraMargin = 0;
+							if (this.options.ticks_positions.length === 0) {
+								if (this.options.orientation !== 'vertical') {
+									this.tickLabelContainer.style[styleMargin] = -labelSize / 2 + 'px';
+								}
+	
+								extraMargin = this.tickLabelContainer.offsetHeight;
+							} else {
+								/* Chidren are position absolute, calculate height by finding the max offsetHeight of a child */
+								for (i = 0; i < this.tickLabelContainer.childNodes.length; i++) {
+									if (this.tickLabelContainer.childNodes[i].offsetHeight > extraMargin) {
+										extraMargin = this.tickLabelContainer.childNodes[i].offsetHeight;
+									}
+								}
+							}
+							if (this.options.orientation === 'horizontal') {
+								this.sliderElem.style.marginBottom = extraMargin + 'px';
+							}
+						}
+						for (var i = 0; i < this.options.ticks.length; i++) {
+	
+							var percentage = this.options.ticks_positions[i] || this._toPercentage(this.options.ticks[i]);
+	
+							if (this.options.reversed) {
+								percentage = 100 - percentage;
+							}
+	
+							this.ticks[i].style[this.stylePos] = percentage + '%';
+	
+							/* Set class labels to denote whether ticks are in the selection */
+							this._removeClass(this.ticks[i], 'in-selection');
+							if (!this.options.range) {
+								if (this.options.selection === 'after' && percentage >= positionPercentages[0]) {
+									this._addClass(this.ticks[i], 'in-selection');
+								} else if (this.options.selection === 'before' && percentage <= positionPercentages[0]) {
+									this._addClass(this.ticks[i], 'in-selection');
+								}
+							} else if (percentage >= positionPercentages[0] && percentage <= positionPercentages[1]) {
+								this._addClass(this.ticks[i], 'in-selection');
+							}
+	
+							if (this.tickLabels[i]) {
+								this.tickLabels[i].style[styleSize] = labelSize + 'px';
+	
+								if (this.options.orientation !== 'vertical' && this.options.ticks_positions[i] !== undefined) {
+									this.tickLabels[i].style.position = 'absolute';
+									this.tickLabels[i].style[this.stylePos] = percentage + '%';
+									this.tickLabels[i].style[styleMargin] = -labelSize / 2 + 'px';
+								} else if (this.options.orientation === 'vertical') {
+									this.tickLabels[i].style['marginLeft'] = this.sliderElem.offsetWidth + 'px';
+									this.tickLabelContainer.style['marginTop'] = this.sliderElem.offsetWidth / 2 * -1 + 'px';
+								}
+							}
+						}
+					}
+	
+					var formattedTooltipVal;
+	
+					if (this.options.range) {
+						formattedTooltipVal = this.options.formatter(this._state.value);
+						this._setText(this.tooltipInner, formattedTooltipVal);
+						this.tooltip.style[this.stylePos] = (positionPercentages[1] + positionPercentages[0]) / 2 + '%';
+	
+						if (this.options.orientation === 'vertical') {
+							this._css(this.tooltip, 'margin-top', -this.tooltip.offsetHeight / 2 + 'px');
+						} else {
+							this._css(this.tooltip, 'margin-left', -this.tooltip.offsetWidth / 2 + 'px');
+						}
+	
+						if (this.options.orientation === 'vertical') {
+							this._css(this.tooltip, 'margin-top', -this.tooltip.offsetHeight / 2 + 'px');
+						} else {
+							this._css(this.tooltip, 'margin-left', -this.tooltip.offsetWidth / 2 + 'px');
+						}
+	
+						var innerTooltipMinText = this.options.formatter(this._state.value[0]);
+						this._setText(this.tooltipInner_min, innerTooltipMinText);
+	
+						var innerTooltipMaxText = this.options.formatter(this._state.value[1]);
+						this._setText(this.tooltipInner_max, innerTooltipMaxText);
+	
+						this.tooltip_min.style[this.stylePos] = positionPercentages[0] + '%';
+	
+						if (this.options.orientation === 'vertical') {
+							this._css(this.tooltip_min, 'margin-top', -this.tooltip_min.offsetHeight / 2 + 'px');
+						} else {
+							this._css(this.tooltip_min, 'margin-left', -this.tooltip_min.offsetWidth / 2 + 'px');
+						}
+	
+						this.tooltip_max.style[this.stylePos] = positionPercentages[1] + '%';
+	
+						if (this.options.orientation === 'vertical') {
+							this._css(this.tooltip_max, 'margin-top', -this.tooltip_max.offsetHeight / 2 + 'px');
+						} else {
+							this._css(this.tooltip_max, 'margin-left', -this.tooltip_max.offsetWidth / 2 + 'px');
+						}
+					} else {
+						formattedTooltipVal = this.options.formatter(this._state.value[0]);
+						this._setText(this.tooltipInner, formattedTooltipVal);
+	
+						this.tooltip.style[this.stylePos] = positionPercentages[0] + '%';
+						if (this.options.orientation === 'vertical') {
+							this._css(this.tooltip, 'margin-top', -this.tooltip.offsetHeight / 2 + 'px');
+						} else {
+							this._css(this.tooltip, 'margin-left', -this.tooltip.offsetWidth / 2 + 'px');
+						}
+					}
+	
+					if (this.options.orientation === 'vertical') {
+						this.trackLow.style.top = '0';
+						this.trackLow.style.height = Math.min(positionPercentages[0], positionPercentages[1]) + '%';
+	
+						this.trackSelection.style.top = Math.min(positionPercentages[0], positionPercentages[1]) + '%';
+						this.trackSelection.style.height = Math.abs(positionPercentages[0] - positionPercentages[1]) + '%';
+	
+						this.trackHigh.style.bottom = '0';
+						this.trackHigh.style.height = 100 - Math.min(positionPercentages[0], positionPercentages[1]) - Math.abs(positionPercentages[0] - positionPercentages[1]) + '%';
+					} else {
+						this.trackLow.style.left = '0';
+						this.trackLow.style.width = Math.min(positionPercentages[0], positionPercentages[1]) + '%';
+	
+						this.trackSelection.style.left = Math.min(positionPercentages[0], positionPercentages[1]) + '%';
+						this.trackSelection.style.width = Math.abs(positionPercentages[0] - positionPercentages[1]) + '%';
+	
+						this.trackHigh.style.right = '0';
+						this.trackHigh.style.width = 100 - Math.min(positionPercentages[0], positionPercentages[1]) - Math.abs(positionPercentages[0] - positionPercentages[1]) + '%';
+	
+						var offset_min = this.tooltip_min.getBoundingClientRect();
+						var offset_max = this.tooltip_max.getBoundingClientRect();
+	
+						if (this.options.tooltip_position === 'bottom') {
+							if (offset_min.right > offset_max.left) {
+								this._removeClass(this.tooltip_max, 'bottom');
+								this._addClass(this.tooltip_max, 'top');
+								this.tooltip_max.style.top = '';
+								this.tooltip_max.style.bottom = 22 + 'px';
+							} else {
+								this._removeClass(this.tooltip_max, 'top');
+								this._addClass(this.tooltip_max, 'bottom');
+								this.tooltip_max.style.top = this.tooltip_min.style.top;
+								this.tooltip_max.style.bottom = '';
+							}
+						} else {
+							if (offset_min.right > offset_max.left) {
+								this._removeClass(this.tooltip_max, 'top');
+								this._addClass(this.tooltip_max, 'bottom');
+								this.tooltip_max.style.top = 18 + 'px';
+							} else {
+								this._removeClass(this.tooltip_max, 'bottom');
+								this._addClass(this.tooltip_max, 'top');
+								this.tooltip_max.style.top = this.tooltip_min.style.top;
+							}
+						}
+					}
+				},
+				_resize: function _resize(ev) {
+					/*jshint unused:false*/
+					this._state.offset = this._offset(this.sliderElem);
+					this._state.size = this.sliderElem[this.sizePos];
+					this._layout();
+				},
+				_removeProperty: function _removeProperty(element, prop) {
+					if (element.style.removeProperty) {
+						element.style.removeProperty(prop);
+					} else {
+						element.style.removeAttribute(prop);
+					}
+				},
+				_mousedown: function _mousedown(ev) {
+					if (!this._state.enabled) {
+						return false;
+					}
+	
+					this._state.offset = this._offset(this.sliderElem);
+					this._state.size = this.sliderElem[this.sizePos];
+	
+					var percentage = this._getPercentage(ev);
+	
+					if (this.options.range) {
+						var diff1 = Math.abs(this._state.percentage[0] - percentage);
+						var diff2 = Math.abs(this._state.percentage[1] - percentage);
+						this._state.dragged = diff1 < diff2 ? 0 : 1;
+						this._adjustPercentageForRangeSliders(percentage);
+					} else {
+						this._state.dragged = 0;
+					}
+	
+					this._state.percentage[this._state.dragged] = percentage;
+					this._layout();
+	
+					if (this.touchCapable) {
+						document.removeEventListener("touchmove", this.mousemove, false);
+						document.removeEventListener("touchend", this.mouseup, false);
+					}
+	
+					if (this.mousemove) {
+						document.removeEventListener("mousemove", this.mousemove, false);
+					}
+					if (this.mouseup) {
+						document.removeEventListener("mouseup", this.mouseup, false);
+					}
+	
+					this.mousemove = this._mousemove.bind(this);
+					this.mouseup = this._mouseup.bind(this);
+	
+					if (this.touchCapable) {
+						// Touch: Bind touch events:
+						document.addEventListener("touchmove", this.mousemove, false);
+						document.addEventListener("touchend", this.mouseup, false);
+					}
+					// Bind mouse events:
+					document.addEventListener("mousemove", this.mousemove, false);
+					document.addEventListener("mouseup", this.mouseup, false);
+	
+					this._state.inDrag = true;
+					var newValue = this._calculateValue();
+	
+					this._trigger('slideStart', newValue);
+	
+					this._setDataVal(newValue);
+					this.setValue(newValue, false, true);
+	
+					this._pauseEvent(ev);
+	
+					if (this.options.focus) {
+						this._triggerFocusOnHandle(this._state.dragged);
+					}
+	
+					return true;
+				},
+				_touchstart: function _touchstart(ev) {
+					if (ev.changedTouches === undefined) {
+						this._mousedown(ev);
+						return;
+					}
+	
+					var touch = ev.changedTouches[0];
+					this.touchX = touch.pageX;
+					this.touchY = touch.pageY;
+				},
+				_triggerFocusOnHandle: function _triggerFocusOnHandle(handleIdx) {
+					if (handleIdx === 0) {
+						this.handle1.focus();
+					}
+					if (handleIdx === 1) {
+						this.handle2.focus();
+					}
+				},
+				_keydown: function _keydown(handleIdx, ev) {
+					if (!this._state.enabled) {
+						return false;
+					}
+	
+					var dir;
+					switch (ev.keyCode) {
+						case 37: // left
+						case 40:
+							// down
+							dir = -1;
+							break;
+						case 39: // right
+						case 38:
+							// up
+							dir = 1;
+							break;
+					}
+					if (!dir) {
+						return;
+					}
+	
+					// use natural arrow keys instead of from min to max
+					if (this.options.natural_arrow_keys) {
+						var ifVerticalAndNotReversed = this.options.orientation === 'vertical' && !this.options.reversed;
+						var ifHorizontalAndReversed = this.options.orientation === 'horizontal' && this.options.reversed;
+	
+						if (ifVerticalAndNotReversed || ifHorizontalAndReversed) {
+							dir = -dir;
+						}
+					}
+	
+					var val = this._state.value[handleIdx] + dir * this.options.step;
+					if (this.options.range) {
+						val = [!handleIdx ? val : this._state.value[0], handleIdx ? val : this._state.value[1]];
+					}
+	
+					this._trigger('slideStart', val);
+					this._setDataVal(val);
+					this.setValue(val, true, true);
+	
+					this._setDataVal(val);
+					this._trigger('slideStop', val);
+					this._layout();
+	
+					this._pauseEvent(ev);
+	
+					return false;
+				},
+				_pauseEvent: function _pauseEvent(ev) {
+					if (ev.stopPropagation) {
+						ev.stopPropagation();
+					}
+					if (ev.preventDefault) {
+						ev.preventDefault();
+					}
+					ev.cancelBubble = true;
+					ev.returnValue = false;
+				},
+				_mousemove: function _mousemove(ev) {
+					if (!this._state.enabled) {
+						return false;
+					}
+	
+					var percentage = this._getPercentage(ev);
+					this._adjustPercentageForRangeSliders(percentage);
+					this._state.percentage[this._state.dragged] = percentage;
+					this._layout();
+	
+					var val = this._calculateValue(true);
+					this.setValue(val, true, true);
+	
+					return false;
+				},
+				_touchmove: function _touchmove(ev) {
+					if (ev.changedTouches === undefined) {
+						return;
+					}
+	
+					var touch = ev.changedTouches[0];
+	
+					var xDiff = touch.pageX - this.touchX;
+					var yDiff = touch.pageY - this.touchY;
+	
+					if (!this._state.inDrag) {
+						// Vertical Slider
+						if (this.options.orientation === 'vertical' && xDiff <= 5 && xDiff >= -5 && (yDiff >= 15 || yDiff <= -15)) {
+							this._mousedown(ev);
+						}
+						// Horizontal slider.
+						else if (yDiff <= 5 && yDiff >= -5 && (xDiff >= 15 || xDiff <= -15)) {
+								this._mousedown(ev);
+							}
+					}
+				},
+				_adjustPercentageForRangeSliders: function _adjustPercentageForRangeSliders(percentage) {
+					if (this.options.range) {
+						var precision = this._getNumDigitsAfterDecimalPlace(percentage);
+						precision = precision ? precision - 1 : 0;
+						var percentageWithAdjustedPrecision = this._applyToFixedAndParseFloat(percentage, precision);
+						if (this._state.dragged === 0 && this._applyToFixedAndParseFloat(this._state.percentage[1], precision) < percentageWithAdjustedPrecision) {
+							this._state.percentage[0] = this._state.percentage[1];
+							this._state.dragged = 1;
+						} else if (this._state.dragged === 1 && this._applyToFixedAndParseFloat(this._state.percentage[0], precision) > percentageWithAdjustedPrecision) {
+							this._state.percentage[1] = this._state.percentage[0];
+							this._state.dragged = 0;
+						}
+					}
+				},
+				_mouseup: function _mouseup() {
+					if (!this._state.enabled) {
+						return false;
+					}
+					if (this.touchCapable) {
+						// Touch: Unbind touch event handlers:
+						document.removeEventListener("touchmove", this.mousemove, false);
+						document.removeEventListener("touchend", this.mouseup, false);
+					}
+					// Unbind mouse event handlers:
+					document.removeEventListener("mousemove", this.mousemove, false);
+					document.removeEventListener("mouseup", this.mouseup, false);
+	
+					this._state.inDrag = false;
+					if (this._state.over === false) {
+						this._hideTooltip();
+					}
+					var val = this._calculateValue(true);
+	
+					this._layout();
+					this._setDataVal(val);
+					this._trigger('slideStop', val);
+	
+					return false;
+				},
+				_calculateValue: function _calculateValue(snapToClosestTick) {
+					var val;
+					if (this.options.range) {
+						val = [this.options.min, this.options.max];
+						if (this._state.percentage[0] !== 0) {
+							val[0] = this._toValue(this._state.percentage[0]);
+							val[0] = this._applyPrecision(val[0]);
+						}
+						if (this._state.percentage[1] !== 100) {
+							val[1] = this._toValue(this._state.percentage[1]);
+							val[1] = this._applyPrecision(val[1]);
+						}
+					} else {
+						val = this._toValue(this._state.percentage[0]);
+						val = parseFloat(val);
+						val = this._applyPrecision(val);
+					}
+	
+					if (snapToClosestTick) {
+						var min = [val, Infinity];
+						for (var i = 0; i < this.options.ticks.length; i++) {
+							var diff = Math.abs(this.options.ticks[i] - val);
+							if (diff <= min[1]) {
+								min = [this.options.ticks[i], diff];
+							}
+						}
+						if (min[1] <= this.options.ticks_snap_bounds) {
+							return min[0];
+						}
+					}
+	
+					return val;
+				},
+				_applyPrecision: function _applyPrecision(val) {
+					var precision = this.options.precision || this._getNumDigitsAfterDecimalPlace(this.options.step);
+					return this._applyToFixedAndParseFloat(val, precision);
+				},
+				_getNumDigitsAfterDecimalPlace: function _getNumDigitsAfterDecimalPlace(num) {
+					var match = ('' + num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+					if (!match) {
+						return 0;
+					}
+					return Math.max(0, (match[1] ? match[1].length : 0) - (match[2] ? +match[2] : 0));
+				},
+				_applyToFixedAndParseFloat: function _applyToFixedAndParseFloat(num, toFixedInput) {
+					var truncatedNum = num.toFixed(toFixedInput);
+					return parseFloat(truncatedNum);
+				},
+				/*
+	   	Credits to Mike Samuel for the following method!
+	   	Source: http://stackoverflow.com/questions/10454518/javascript-how-to-retrieve-the-number-of-decimals-of-a-string-number
+	   */
+				_getPercentage: function _getPercentage(ev) {
+					if (this.touchCapable && (ev.type === 'touchstart' || ev.type === 'touchmove')) {
+						ev = ev.touches[0];
+					}
+	
+					var eventPosition = ev[this.mousePos];
+					var sliderOffset = this._state.offset[this.stylePos];
+					var distanceToSlide = eventPosition - sliderOffset;
+					// Calculate what percent of the length the slider handle has slid
+					var percentage = distanceToSlide / this._state.size * 100;
+					percentage = Math.round(percentage / this._state.percentage[2]) * this._state.percentage[2];
+					if (this.options.reversed) {
+						percentage = 100 - percentage;
+					}
+	
+					// Make sure the percent is within the bounds of the slider.
+					// 0% corresponds to the 'min' value of the slide
+					// 100% corresponds to the 'max' value of the slide
+					return Math.max(0, Math.min(100, percentage));
+				},
+				_validateInputValue: function _validateInputValue(val) {
+					if (typeof val === 'number') {
+						return val;
+					} else if (Array.isArray(val)) {
+						this._validateArray(val);
+						return val;
+					} else {
+						throw new Error(ErrorMsgs.formatInvalidInputErrorMsg(val));
+					}
+				},
+				_validateArray: function _validateArray(val) {
+					for (var i = 0; i < val.length; i++) {
+						var input = val[i];
+						if (typeof input !== 'number') {
+							throw new Error(ErrorMsgs.formatInvalidInputErrorMsg(input));
+						}
+					}
+				},
+				_setDataVal: function _setDataVal(val) {
+					this.element.setAttribute('data-value', val);
+					this.element.setAttribute('value', val);
+					this.element.value = val;
+				},
+				_trigger: function _trigger(evt, val) {
+					val = val || val === 0 ? val : undefined;
+	
+					var callbackFnArray = this.eventToCallbackMap[evt];
+					if (callbackFnArray && callbackFnArray.length) {
+						for (var i = 0; i < callbackFnArray.length; i++) {
+							var callbackFn = callbackFnArray[i];
+							callbackFn(val);
+						}
+					}
+	
+					/* If JQuery exists, trigger JQuery events */
+					if ($) {
+						this._triggerJQueryEvent(evt, val);
+					}
+				},
+				_triggerJQueryEvent: function _triggerJQueryEvent(evt, val) {
+					var eventData = {
+						type: evt,
+						value: val
+					};
+					this.$element.trigger(eventData);
+					this.$sliderElem.trigger(eventData);
+				},
+				_unbindJQueryEventHandlers: function _unbindJQueryEventHandlers() {
+					this.$element.off();
+					this.$sliderElem.off();
+				},
+				_setText: function _setText(element, text) {
+					if (typeof element.textContent !== "undefined") {
+						element.textContent = text;
+					} else if (typeof element.innerText !== "undefined") {
+						element.innerText = text;
+					}
+				},
+				_removeClass: function _removeClass(element, classString) {
+					var classes = classString.split(" ");
+					var newClasses = element.className;
+	
+					for (var i = 0; i < classes.length; i++) {
+						var classTag = classes[i];
+						var regex = new RegExp("(?:\\s|^)" + classTag + "(?:\\s|$)");
+						newClasses = newClasses.replace(regex, " ");
+					}
+	
+					element.className = newClasses.trim();
+				},
+				_addClass: function _addClass(element, classString) {
+					var classes = classString.split(" ");
+					var newClasses = element.className;
+	
+					for (var i = 0; i < classes.length; i++) {
+						var classTag = classes[i];
+						var regex = new RegExp("(?:\\s|^)" + classTag + "(?:\\s|$)");
+						var ifClassExists = regex.test(newClasses);
+	
+						if (!ifClassExists) {
+							newClasses += " " + classTag;
+						}
+					}
+	
+					element.className = newClasses.trim();
+				},
+				_offsetLeft: function _offsetLeft(obj) {
+					return obj.getBoundingClientRect().left;
+				},
+				_offsetTop: function _offsetTop(obj) {
+					var offsetTop = obj.offsetTop;
+					while ((obj = obj.offsetParent) && !isNaN(obj.offsetTop)) {
+						offsetTop += obj.offsetTop;
+						if (obj.tagName !== 'BODY') {
+							offsetTop -= obj.scrollTop;
+						}
+					}
+					return offsetTop;
+				},
+				_offset: function _offset(obj) {
+					return {
+						left: this._offsetLeft(obj),
+						top: this._offsetTop(obj)
+					};
+				},
+				_css: function _css(elementRef, styleName, value) {
+					if ($) {
+						$.style(elementRef, styleName, value);
+					} else {
+						var style = styleName.replace(/^-ms-/, "ms-").replace(/-([\da-z])/gi, function (all, letter) {
+							return letter.toUpperCase();
+						});
+						elementRef.style[style] = value;
+					}
+				},
+				_toValue: function _toValue(percentage) {
+					return this.options.scale.toValue.apply(this, [percentage]);
+				},
+				_toPercentage: function _toPercentage(value) {
+					return this.options.scale.toPercentage.apply(this, [value]);
+				},
+				_setTooltipPosition: function _setTooltipPosition() {
+					var tooltips = [this.tooltip, this.tooltip_min, this.tooltip_max];
+					if (this.options.orientation === 'vertical') {
+						var tooltipPos = this.options.tooltip_position || 'right';
+						var oppositeSide = tooltipPos === 'left' ? 'right' : 'left';
+						tooltips.forEach((function (tooltip) {
+							this._addClass(tooltip, tooltipPos);
+							tooltip.style[oppositeSide] = '100%';
+						}).bind(this));
+					} else if (this.options.tooltip_position === 'bottom') {
+						tooltips.forEach((function (tooltip) {
+							this._addClass(tooltip, 'bottom');
+							tooltip.style.top = 22 + 'px';
+						}).bind(this));
+					} else {
+						tooltips.forEach((function (tooltip) {
+							this._addClass(tooltip, 'top');
+							tooltip.style.top = -this.tooltip.outerHeight - 14 + 'px';
+						}).bind(this));
+					}
+				}
+			};
+	
+			/*********************************
+	  		Attach to global namespace
+	  	*********************************/
+			if ($) {
+				var namespace = $.fn.slider ? 'bootstrapSlider' : 'slider';
+				$.bridget(namespace, Slider);
+	
+				// Auto-Register data-provide="slider" Elements
+				$(function () {
+					$("input[data-provide=slider]")[namespace]();
+				});
+			}
+		})($);
+	
+		return Slider;
+	});
+
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// style-loader: Adds some css to the DOM by adding a <style> tag
+	
+	// load the styles
+	var content = __webpack_require__(36);
+	if(typeof content === 'string') content = [[module.id, content, '']];
+	// add the styles to the DOM
+	var update = __webpack_require__(16)(content, {});
+	if(content.locals) module.exports = content.locals;
+	// Hot Module Replacement
+	if(false) {
+		// When the styles change, update the <style> tags
+		if(!content.locals) {
+			module.hot.accept("!!./../../../css-loader/index.js?sourceMap!./../../../sass-loader/index.js!./bootstrap-slider.css", function() {
+				var newContent = require("!!./../../../css-loader/index.js?sourceMap!./../../../sass-loader/index.js!./bootstrap-slider.css");
+				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+				update(newContent);
+			});
+		}
+		// When the module is disposed, remove the <style> tags
+		module.hot.dispose(function() { update(); });
+	}
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
+	exports = module.exports = __webpack_require__(15)();
+	// imports
+	
+	
+	// module
+	exports.push([module.id, "/*! =======================================================\n                      VERSION  7.0.5              \n========================================================= */\n/*! =========================================================\n * bootstrap-slider.js\n *\n * Maintainers:\n *\t\tKyle Kemp\n *\t\t\t- Twitter: @seiyria\n *\t\t\t- Github:  seiyria\n *\t\tRohit Kalkur\n *\t\t\t- Twitter: @Rovolutionary\n *\t\t\t- Github:  rovolution\n *\n * =========================================================\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n * http://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n * ========================================================= */\n.slider {\n  display: inline-block;\n  vertical-align: middle;\n  position: relative; }\n\n.slider.slider-horizontal {\n  width: 210px;\n  height: 20px; }\n\n.slider.slider-horizontal .slider-track {\n  height: 10px;\n  width: 100%;\n  margin-top: -5px;\n  top: 50%;\n  left: 0; }\n\n.slider.slider-horizontal .slider-selection,\n.slider.slider-horizontal .slider-track-low,\n.slider.slider-horizontal .slider-track-high {\n  height: 100%;\n  top: 0;\n  bottom: 0; }\n\n.slider.slider-horizontal .slider-tick,\n.slider.slider-horizontal .slider-handle {\n  margin-left: -10px;\n  margin-top: -5px; }\n\n.slider.slider-horizontal .slider-tick.triangle,\n.slider.slider-horizontal .slider-handle.triangle {\n  border-width: 0 10px 10px 10px;\n  width: 0;\n  height: 0;\n  border-bottom-color: #0480be;\n  margin-top: 0; }\n\n.slider.slider-horizontal .slider-tick-label-container {\n  white-space: nowrap;\n  margin-top: 20px; }\n\n.slider.slider-horizontal .slider-tick-label-container .slider-tick-label {\n  padding-top: 4px;\n  display: inline-block;\n  text-align: center; }\n\n.slider.slider-vertical {\n  height: 210px;\n  width: 20px; }\n\n.slider.slider-vertical .slider-track {\n  width: 10px;\n  height: 100%;\n  margin-left: -5px;\n  left: 50%;\n  top: 0; }\n\n.slider.slider-vertical .slider-selection {\n  width: 100%;\n  left: 0;\n  top: 0;\n  bottom: 0; }\n\n.slider.slider-vertical .slider-track-low,\n.slider.slider-vertical .slider-track-high {\n  width: 100%;\n  left: 0;\n  right: 0; }\n\n.slider.slider-vertical .slider-tick,\n.slider.slider-vertical .slider-handle {\n  margin-left: -5px;\n  margin-top: -10px; }\n\n.slider.slider-vertical .slider-tick.triangle,\n.slider.slider-vertical .slider-handle.triangle {\n  border-width: 10px 0 10px 10px;\n  width: 1px;\n  height: 1px;\n  border-left-color: #0480be;\n  margin-left: 0; }\n\n.slider.slider-vertical .slider-tick-label-container {\n  white-space: nowrap; }\n\n.slider.slider-vertical .slider-tick-label-container .slider-tick-label {\n  padding-left: 4px; }\n\n.slider.slider-disabled .slider-handle {\n  background-image: -webkit-linear-gradient(top, #dfdfdf 0%, #bebebe 100%);\n  background-image: -o-linear-gradient(top, #dfdfdf 0%, #bebebe 100%);\n  background-image: linear-gradient(to bottom, #dfdfdf 0%, #bebebe 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdfdfdf', endColorstr='#ffbebebe', GradientType=0); }\n\n.slider.slider-disabled .slider-track {\n  background-image: -webkit-linear-gradient(top, #e5e5e5 0%, #e9e9e9 100%);\n  background-image: -o-linear-gradient(top, #e5e5e5 0%, #e9e9e9 100%);\n  background-image: linear-gradient(to bottom, #e5e5e5 0%, #e9e9e9 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffe5e5e5', endColorstr='#ffe9e9e9', GradientType=0);\n  cursor: not-allowed; }\n\n.slider input {\n  display: none; }\n\n.slider .tooltip.top {\n  margin-top: -36px; }\n\n.slider .tooltip-inner {\n  white-space: nowrap;\n  max-width: none; }\n\n.slider .hide {\n  display: none; }\n\n.slider-track {\n  position: absolute;\n  cursor: pointer;\n  background-image: -webkit-linear-gradient(top, #f5f5f5 0%, #f9f9f9 100%);\n  background-image: -o-linear-gradient(top, #f5f5f5 0%, #f9f9f9 100%);\n  background-image: linear-gradient(to bottom, #f5f5f5 0%, #f9f9f9 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff5f5f5', endColorstr='#fff9f9f9', GradientType=0);\n  -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);\n  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);\n  border-radius: 4px; }\n\n.slider-selection {\n  position: absolute;\n  background-image: -webkit-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: -o-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: linear-gradient(to bottom, #f9f9f9 0%, #f5f5f5 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff9f9f9', endColorstr='#fff5f5f5', GradientType=0);\n  -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  -webkit-box-sizing: border-box;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border-radius: 4px; }\n\n.slider-selection.tick-slider-selection {\n  background-image: -webkit-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: -o-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: linear-gradient(to bottom, #89cdef 0%, #81bfde 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff89cdef', endColorstr='#ff81bfde', GradientType=0); }\n\n.slider-track-low,\n.slider-track-high {\n  position: absolute;\n  background: transparent;\n  -webkit-box-sizing: border-box;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border-radius: 4px; }\n\n.slider-handle {\n  position: absolute;\n  width: 20px;\n  height: 20px;\n  background-color: #337ab7;\n  background-image: -webkit-linear-gradient(top, #149bdf 0%, #0480be 100%);\n  background-image: -o-linear-gradient(top, #149bdf 0%, #0480be 100%);\n  background-image: linear-gradient(to bottom, #149bdf 0%, #0480be 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf', endColorstr='#ff0480be', GradientType=0);\n  filter: none;\n  -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);\n  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);\n  border: 0px solid transparent; }\n\n.slider-handle.round {\n  border-radius: 50%; }\n\n.slider-handle.triangle {\n  background: transparent none; }\n\n.slider-handle.custom {\n  background: transparent none; }\n\n.slider-handle.custom::before {\n  line-height: 20px;\n  font-size: 20px;\n  content: '\\2605';\n  color: #726204; }\n\n.slider-tick {\n  position: absolute;\n  width: 20px;\n  height: 20px;\n  background-image: -webkit-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: -o-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: linear-gradient(to bottom, #f9f9f9 0%, #f5f5f5 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff9f9f9', endColorstr='#fff5f5f5', GradientType=0);\n  -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  -webkit-box-sizing: border-box;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  filter: none;\n  opacity: 0.8;\n  border: 0px solid transparent; }\n\n.slider-tick.round {\n  border-radius: 50%; }\n\n.slider-tick.triangle {\n  background: transparent none; }\n\n.slider-tick.custom {\n  background: transparent none; }\n\n.slider-tick.custom::before {\n  line-height: 20px;\n  font-size: 20px;\n  content: '\\2605';\n  color: #726204; }\n\n.slider-tick.in-selection {\n  background-image: -webkit-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: -o-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: linear-gradient(to bottom, #89cdef 0%, #81bfde 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff89cdef', endColorstr='#ff81bfde', GradientType=0);\n  opacity: 1; }\n", "", {"version":3,"sources":["/./node_modules/bootstrap-slider/dist/css/bootstrap-slider.css"],"names":[],"mappings":"AAAA;;4DAE4D;AAC5D;;;;;;;;;;;;;;;;;;;;;;;;+DAwB+D;AAC/D;EACE,sBAAsB;EACtB,uBAAuB;EACvB,mBAAmB,EAAE;;AAEvB;EACE,aAAa;EACb,aAAa,EAAE;;AAEjB;EACE,aAAa;EACb,YAAY;EACZ,iBAAiB;EACjB,SAAS;EACT,QAAQ,EAAE;;AAEZ;;;EAGE,aAAa;EACb,OAAO;EACP,UAAU,EAAE;;AAEd;;EAEE,mBAAmB;EACnB,iBAAiB,EAAE;;AAErB;;EAEE,+BAA+B;EAC/B,SAAS;EACT,UAAU;EACV,6BAA6B;EAC7B,cAAc,EAAE;;AAElB;EACE,oBAAoB;EACpB,iBAAiB,EAAE;;AAErB;EACE,iBAAiB;EACjB,sBAAsB;EACtB,mBAAmB,EAAE;;AAEvB;EACE,cAAc;EACd,YAAY,EAAE;;AAEhB;EACE,YAAY;EACZ,aAAa;EACb,kBAAkB;EAClB,UAAU;EACV,OAAO,EAAE;;AAEX;EACE,YAAY;EACZ,QAAQ;EACR,OAAO;EACP,UAAU,EAAE;;AAEd;;EAEE,YAAY;EACZ,QAAQ;EACR,SAAS,EAAE;;AAEb;;EAEE,kBAAkB;EAClB,kBAAkB,EAAE;;AAEtB;;EAEE,+BAA+B;EAC/B,WAAW;EACX,YAAY;EACZ,2BAA2B;EAC3B,eAAe,EAAE;;AAEnB;EACE,oBAAoB,EAAE;;AAExB;EACE,kBAAkB,EAAE;;AAEtB;EACE,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH,EAAE;;AAE3H;EACE,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH;EACvH,oBAAoB,EAAE;;AAExB;EACE,cAAc,EAAE;;AAElB;EACE,kBAAkB,EAAE;;AAEtB;EACE,oBAAoB;EACpB,gBAAgB,EAAE;;AAEpB;EACE,cAAc,EAAE;;AAElB;EACE,mBAAmB;EACnB,gBAAgB;EAChB,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH;EACvH,uDAAuD;EACvD,+CAA+C;EAC/C,mBAAmB,EAAE;;AAEvB;EACE,mBAAmB;EACnB,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH;EACvH,uDAAuD;EACvD,+CAA+C;EAC/C,+BAA+B;EAC/B,4BAA4B;EAC5B,uBAAuB;EACvB,mBAAmB,EAAE;;AAEvB;EACE,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH,EAAE;;AAE3H;;EAEE,mBAAmB;EACnB,wBAAwB;EACxB,+BAA+B;EAC/B,4BAA4B;EAC5B,uBAAuB;EACvB,mBAAmB,EAAE;;AAEvB;EACE,mBAAmB;EACnB,YAAY;EACZ,aAAa;EACb,0BAA0B;EAC1B,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH;EACvH,aAAa;EACb,0FAA0F;EAC1F,kFAAkF;EAClF,8BAA8B,EAAE;;AAElC;EACE,mBAAmB,EAAE;;AAEvB;EACE,6BAA6B,EAAE;;AAEjC;EACE,6BAA6B,EAAE;;AAEjC;EACE,kBAAkB;EAClB,gBAAgB;EAChB,iBAAiB;EACjB,eAAe,EAAE;;AAEnB;EACE,mBAAmB;EACnB,YAAY;EACZ,aAAa;EACb,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH;EACvH,uDAAuD;EACvD,+CAA+C;EAC/C,+BAA+B;EAC/B,4BAA4B;EAC5B,uBAAuB;EACvB,aAAa;EACb,aAAa;EACb,8BAA8B,EAAE;;AAElC;EACE,mBAAmB,EAAE;;AAEvB;EACE,6BAA6B,EAAE;;AAEjC;EACE,6BAA6B,EAAE;;AAEjC;EACE,kBAAkB;EAClB,gBAAgB;EAChB,iBAAiB;EACjB,eAAe,EAAE;;AAEnB;EACE,yEAAyE;EACzE,oEAAoE;EACpE,uEAAuE;EACvE,4BAA4B;EAC5B,uHAAuH;EACvH,WAAW,EAAE","file":"bootstrap-slider.css","sourcesContent":["/*! =======================================================\n                      VERSION  7.0.5              \n========================================================= */\n/*! =========================================================\n * bootstrap-slider.js\n *\n * Maintainers:\n *\t\tKyle Kemp\n *\t\t\t- Twitter: @seiyria\n *\t\t\t- Github:  seiyria\n *\t\tRohit Kalkur\n *\t\t\t- Twitter: @Rovolutionary\n *\t\t\t- Github:  rovolution\n *\n * =========================================================\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n * http://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n * ========================================================= */\n.slider {\n  display: inline-block;\n  vertical-align: middle;\n  position: relative; }\n\n.slider.slider-horizontal {\n  width: 210px;\n  height: 20px; }\n\n.slider.slider-horizontal .slider-track {\n  height: 10px;\n  width: 100%;\n  margin-top: -5px;\n  top: 50%;\n  left: 0; }\n\n.slider.slider-horizontal .slider-selection,\n.slider.slider-horizontal .slider-track-low,\n.slider.slider-horizontal .slider-track-high {\n  height: 100%;\n  top: 0;\n  bottom: 0; }\n\n.slider.slider-horizontal .slider-tick,\n.slider.slider-horizontal .slider-handle {\n  margin-left: -10px;\n  margin-top: -5px; }\n\n.slider.slider-horizontal .slider-tick.triangle,\n.slider.slider-horizontal .slider-handle.triangle {\n  border-width: 0 10px 10px 10px;\n  width: 0;\n  height: 0;\n  border-bottom-color: #0480be;\n  margin-top: 0; }\n\n.slider.slider-horizontal .slider-tick-label-container {\n  white-space: nowrap;\n  margin-top: 20px; }\n\n.slider.slider-horizontal .slider-tick-label-container .slider-tick-label {\n  padding-top: 4px;\n  display: inline-block;\n  text-align: center; }\n\n.slider.slider-vertical {\n  height: 210px;\n  width: 20px; }\n\n.slider.slider-vertical .slider-track {\n  width: 10px;\n  height: 100%;\n  margin-left: -5px;\n  left: 50%;\n  top: 0; }\n\n.slider.slider-vertical .slider-selection {\n  width: 100%;\n  left: 0;\n  top: 0;\n  bottom: 0; }\n\n.slider.slider-vertical .slider-track-low,\n.slider.slider-vertical .slider-track-high {\n  width: 100%;\n  left: 0;\n  right: 0; }\n\n.slider.slider-vertical .slider-tick,\n.slider.slider-vertical .slider-handle {\n  margin-left: -5px;\n  margin-top: -10px; }\n\n.slider.slider-vertical .slider-tick.triangle,\n.slider.slider-vertical .slider-handle.triangle {\n  border-width: 10px 0 10px 10px;\n  width: 1px;\n  height: 1px;\n  border-left-color: #0480be;\n  margin-left: 0; }\n\n.slider.slider-vertical .slider-tick-label-container {\n  white-space: nowrap; }\n\n.slider.slider-vertical .slider-tick-label-container .slider-tick-label {\n  padding-left: 4px; }\n\n.slider.slider-disabled .slider-handle {\n  background-image: -webkit-linear-gradient(top, #dfdfdf 0%, #bebebe 100%);\n  background-image: -o-linear-gradient(top, #dfdfdf 0%, #bebebe 100%);\n  background-image: linear-gradient(to bottom, #dfdfdf 0%, #bebebe 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdfdfdf', endColorstr='#ffbebebe', GradientType=0); }\n\n.slider.slider-disabled .slider-track {\n  background-image: -webkit-linear-gradient(top, #e5e5e5 0%, #e9e9e9 100%);\n  background-image: -o-linear-gradient(top, #e5e5e5 0%, #e9e9e9 100%);\n  background-image: linear-gradient(to bottom, #e5e5e5 0%, #e9e9e9 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffe5e5e5', endColorstr='#ffe9e9e9', GradientType=0);\n  cursor: not-allowed; }\n\n.slider input {\n  display: none; }\n\n.slider .tooltip.top {\n  margin-top: -36px; }\n\n.slider .tooltip-inner {\n  white-space: nowrap;\n  max-width: none; }\n\n.slider .hide {\n  display: none; }\n\n.slider-track {\n  position: absolute;\n  cursor: pointer;\n  background-image: -webkit-linear-gradient(top, #f5f5f5 0%, #f9f9f9 100%);\n  background-image: -o-linear-gradient(top, #f5f5f5 0%, #f9f9f9 100%);\n  background-image: linear-gradient(to bottom, #f5f5f5 0%, #f9f9f9 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff5f5f5', endColorstr='#fff9f9f9', GradientType=0);\n  -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);\n  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);\n  border-radius: 4px; }\n\n.slider-selection {\n  position: absolute;\n  background-image: -webkit-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: -o-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: linear-gradient(to bottom, #f9f9f9 0%, #f5f5f5 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff9f9f9', endColorstr='#fff5f5f5', GradientType=0);\n  -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  -webkit-box-sizing: border-box;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border-radius: 4px; }\n\n.slider-selection.tick-slider-selection {\n  background-image: -webkit-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: -o-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: linear-gradient(to bottom, #89cdef 0%, #81bfde 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff89cdef', endColorstr='#ff81bfde', GradientType=0); }\n\n.slider-track-low,\n.slider-track-high {\n  position: absolute;\n  background: transparent;\n  -webkit-box-sizing: border-box;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  border-radius: 4px; }\n\n.slider-handle {\n  position: absolute;\n  width: 20px;\n  height: 20px;\n  background-color: #337ab7;\n  background-image: -webkit-linear-gradient(top, #149bdf 0%, #0480be 100%);\n  background-image: -o-linear-gradient(top, #149bdf 0%, #0480be 100%);\n  background-image: linear-gradient(to bottom, #149bdf 0%, #0480be 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf', endColorstr='#ff0480be', GradientType=0);\n  filter: none;\n  -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);\n  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);\n  border: 0px solid transparent; }\n\n.slider-handle.round {\n  border-radius: 50%; }\n\n.slider-handle.triangle {\n  background: transparent none; }\n\n.slider-handle.custom {\n  background: transparent none; }\n\n.slider-handle.custom::before {\n  line-height: 20px;\n  font-size: 20px;\n  content: '\\2605';\n  color: #726204; }\n\n.slider-tick {\n  position: absolute;\n  width: 20px;\n  height: 20px;\n  background-image: -webkit-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: -o-linear-gradient(top, #f9f9f9 0%, #f5f5f5 100%);\n  background-image: linear-gradient(to bottom, #f9f9f9 0%, #f5f5f5 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff9f9f9', endColorstr='#fff5f5f5', GradientType=0);\n  -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);\n  -webkit-box-sizing: border-box;\n  -moz-box-sizing: border-box;\n  box-sizing: border-box;\n  filter: none;\n  opacity: 0.8;\n  border: 0px solid transparent; }\n\n.slider-tick.round {\n  border-radius: 50%; }\n\n.slider-tick.triangle {\n  background: transparent none; }\n\n.slider-tick.custom {\n  background: transparent none; }\n\n.slider-tick.custom::before {\n  line-height: 20px;\n  font-size: 20px;\n  content: '\\2605';\n  color: #726204; }\n\n.slider-tick.in-selection {\n  background-image: -webkit-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: -o-linear-gradient(top, #89cdef 0%, #81bfde 100%);\n  background-image: linear-gradient(to bottom, #89cdef 0%, #81bfde 100%);\n  background-repeat: repeat-x;\n  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff89cdef', endColorstr='#ff81bfde', GradientType=0);\n  opacity: 1; }\n"],"sourceRoot":"webpack://"}]);
+	
+	// exports
+
+
+/***/ },
+/* 37 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -27552,7 +29099,7 @@ var RTChat =
 	});
 
 /***/ },
-/* 35 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
@@ -27595,12 +29142,12 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ },
-/* 36 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(37);
+	__webpack_require__(40);
 	
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
@@ -27613,13 +29160,13 @@ var RTChat =
 	});
 
 /***/ },
-/* 37 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(38);
+	var content = __webpack_require__(41);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -27639,7 +29186,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 38 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -27653,10 +29200,10 @@ var RTChat =
 
 
 /***/ },
-/* 39 */
+/* 42 */
 /***/ function(module, exports) {
 
-	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443"}
+	module.exports = {"AppName":"RTChat"}
 
 /***/ }
 /******/ ]);

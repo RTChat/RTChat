@@ -8,6 +8,7 @@
     - Sidebar
         - [ ] Mobile UserMenu
         - [ ] Apps List
+    - [ ] Voice & Video controls
     - [ ] Random Channel Button
     - [ ] Friends
     - [ ] Multiple Profiles

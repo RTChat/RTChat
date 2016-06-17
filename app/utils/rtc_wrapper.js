@@ -8,6 +8,13 @@ var UserService = require('utils/user_service.js');
 // require('utils/resume.js'); // Adds the Window:resume event.
 // $(window).on("resume", function() { console.log("RESUMING!"); self.render(); });
 
+// Tracks what the user has enabled.
+var userStreams = {
+	audio: false,
+	video: false,
+	oneway: true
+}
+
 module.exports = {
 	// === Room API ===  (and users)
 	users: [],
@@ -22,6 +29,19 @@ module.exports = {
 		if (!this.connection) this.connection = new RTCMultiConnection();
 		this.connection.socketURL = RTChat.AppConfig.SocketHost;
 
+		// ===
+		if(typeof webkitMediaStream !== 'undefined') {
+			this.connection.attachStreams.push(new webkitMediaStream());
+		}
+		else if(typeof MediaStream !== 'undefined'){
+			this.connection.attachStreams.push(new MediaStream());
+		}
+		else {
+			console.error('Neither Chrome nor Firefox. This demo may NOT work.');
+		}
+		// ===
+
+
 		// this.connection.token();
 		this.connection.session = {
 			// audio: true,
@@ -33,15 +53,19 @@ module.exports = {
 			OfferToReceiveVideo: true
 		};
 
-		// this.connection.onstream = function(ev) {
-		// 	console.log('eEE', ev, options.videoContainer)
-		// 	options.videoContainer[0].appendChild(ev.mediaElement);
+		var videoContainer = options.xVideoContainer;
 
+		this.connection.onstream = function(ev) {
+			console.log('eEE', ev, videoContainer)
+			// if(!ev.stream.getAudioTracks().length && !ev.stream.getVideoTracks().length) {
+			// 	console.log("appending..")
+				videoContainer[0].appendChild(ev.mediaElement);
+			// }
 		// 	setTimeout(function() {
 		// 		ev.mediaElement.play();
 		// 	}, 5000);
 
-		// }
+		}
 
 		// this.connection.onNewSession = function(session) {
 		// 	console.log("new seshh", session)
@@ -98,6 +122,63 @@ module.exports = {
 			// 	console.log("cc". peer)
 			// });
 		}
+	},
+
+	// === User Streams API ===
+	addVoiceStream: function() {
+		console.log("Adding Voice Stream..");
+		var self = this;
+		this.connection.dontCaptureUserMedia = false;
+		if(this.connection.attachStreams.length) {
+				this.connection.getAllParticipants().forEach(function(p) {
+						self.connection.attachStreams.forEach(function(stream) {
+								self.connection.peers[p].peer.removeStream(stream);
+						});
+				});
+				this.connection.attachStreams = [];
+		}
+
+		userStreams.audio = true;
+
+		this.connection.addStream(userStreams);
+	},
+	addVideoStream: function() {
+		var self = this;
+		this.connection.dontCaptureUserMedia = false;
+		if(this.connection.attachStreams.length) {
+				this.connection.getAllParticipants().forEach(function(p) {
+						self.connection.attachStreams.forEach(function(stream) {
+								self.connection.peers[p].peer.removeStream(stream);
+						});
+				});
+				this.connection.attachStreams = [];
+		}
+
+		userStreams.video = true;
+
+		this.connection.addStream(userStreams);
+	},
+	removeStreams: function() {
+		console.log("REMOVING STREAMS")
+		var self = this;
+		this.connection.dontCaptureUserMedia = false;
+		if(this.connection.attachStreams.length) {
+				this.connection.getAllParticipants().forEach(function(p) {
+						self.connection.attachStreams.forEach(function(stream) {
+								self.connection.peers[p].peer.removeStream(stream);
+						});
+				});
+
+				this.connection.attachStreams.forEach(function(stream) {
+					stream.stop();
+				});
+
+				this.connection.attachStreams = [];
+		}
+		this.connection.renegotiate();
+
+		userStreams.voice = false;
+		userStreams.video = false;
 	},
 
 	// === AppState API ===
