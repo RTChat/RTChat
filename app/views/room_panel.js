@@ -99,11 +99,11 @@ module.exports = Backbone.View.extend({
 		this.scope.roomName = window.location.hash;
 		this.scope.users = RTCWrapper.users;
 
-		var slider = new Slider('.volume-slider', {
-		// var slider = this.$('.volume-slider').slider({
-			min: 0,
-			max: 10,
-		});
+		//var slider = new Slider('.volume-slider', {
+		//// var slider = this.$('.volume-slider').slider({
+			//min: 0,
+			//max: 10,
+		//});
 
 		return this;
 	},

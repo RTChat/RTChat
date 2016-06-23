@@ -53,6 +53,7 @@ module.exports = {
 			OfferToReceiveVideo: true
 		};
 
+		if (!options) options = {};
 		var videoContainer = options.xVideoContainer;
 
 		this.connection.onstream = function(ev) {
@@ -87,6 +88,10 @@ module.exports = {
 				self.updateState(AppState, false);
 				//TODO: send only to requester!
 			}
+
+			_.forEach(peerJoinHandlers, function(fn) {
+				fn.call(sess);
+			})
 		};
 
 		this.connection.onleave = function(sess) {
@@ -122,6 +127,10 @@ module.exports = {
 			// 	console.log("cc". peer)
 			// });
 		}
+	},
+	onPeerJoin: function(fn) { // Register handler to be triggered when someone joins.
+		if (typeof fn !== 'function') throw "Must pass a function!";
+		peerJoinHandlers.push(fn);
 	},
 
 	// === User Streams API ===
@@ -211,12 +220,31 @@ module.exports = {
 
 	// === PrivateChat API ===
 	// sendPrivateMsg: function() {},
+
+	// === Request Connection API == //
+	// Creates a small secondary connection to a pool, to request a private session.
+	//TODO: should this exist? maybe the wrapper shouldnt create singleton connetcions instead..
+	requestPrivateSession: function(public_room, private_room) {
+		console.log("PPP", public_room, private_room)
+		this.reqConnection = new RTCMultiConnection();
+		this.reqConnection.socketURL = RTChat.AppConfig.SocketHost;
+		this.reqConnection.extra = {requestPrivateSession: private_room};
+		this.reqConnection.session = {data : true};
+		this.reqConnection.sdpConstraints.mandatory = {
+			OfferToReceiveAudio: false,
+			OfferToReceiveVideo: false
+		};
+
+		this.reqConnection.openOrJoin(RTChat.AppConfig.AppName +'_'+ public_room);
+	},
+
 };
 
 /* ===== PRIVATE ===== */
 
 var AppState = {};
 var oldState = {};
+var peerJoinHandlers = [];
 var stateChangeHandlers = [];
 var receiveBroadcastHandlers = [];
 
