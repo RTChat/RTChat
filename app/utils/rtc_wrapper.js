@@ -19,12 +19,10 @@ module.exports = {
 	// === Room API ===  (and users)
 	users: [],
 	joinRoom: function(roomName, options) {
-		//TODO: close connection?
 		var self = this;
 		this.users = [];
-		this.leaveRoom();
+		this.leaveRoom(); //TODO: close connection?
 		console.log("Joining", roomName, !this.connection)
-		if (!roomName) return;
 
 		if (!this.connection) this.connection = new RTCMultiConnection();
 		this.connection.socketURL = RTChat.AppConfig.SocketHost;

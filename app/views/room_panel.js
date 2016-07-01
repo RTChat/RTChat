@@ -85,9 +85,6 @@ module.exports = Backbone.View.extend({
 		chat: function() { return new RTChat.Views.ChatPanel(); },
 	},
 	render: function(){
-		console.log("RenderJoin", window.location.hash)
-		// if (!window.location.hash) return self
-
 		this.$el.html(this.template);
 		Rivets.bind(this.$el, {scope: this.scope});
 
@@ -99,13 +96,15 @@ module.exports = Backbone.View.extend({
 		this.scope.roomName = window.location.hash;
 		this.scope.users = RTCWrapper.users;
 
-		//var slider = new Slider('.volume-slider', {
-		//// var slider = this.$('.volume-slider').slider({
-			//min: 0,
-			//max: 10,
-		//});
+		var slider = new Slider('.volume-slider', {
+			min: 0,
+			max: 10,
+		});
 
 		return this;
+	},
+	onRemove: function() {
+		RTCWrapper.leaveRoom();
 	},
 	scope: {}
 });
