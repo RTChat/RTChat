@@ -34,6 +34,7 @@ module.exports = {
 	},
 
 	// Helpers
+	Rivets: Rivets,
 	load_module: load_module,
 };
 

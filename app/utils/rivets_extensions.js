@@ -52,7 +52,14 @@ Rivets.formatters.to_a = function(value) {
 
 // Escape special html characters to prevent injection. (use this first)
 Rivets.formatters.htmlEscape = function(value) {
-  return !!value && value.replace('<', '&lt;') || '';
+  return !!value && value.replace(/[<>]/g, function(char) {
+    switch (char) {
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+    }
+  }) || '';
   //TODO: should this be more complete?
 }
 
