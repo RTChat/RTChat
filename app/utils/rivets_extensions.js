@@ -1,10 +1,6 @@
 
 // === Formatters ===
 
-Rivets.formatters.length = function(value) {
-  return value && value.length;
-};
-
 Rivets.formatters.gt = function(value, arg) {
   return value > arg;
 };
@@ -18,7 +14,7 @@ Rivets.formatters.lt = function(value, arg) {
 };
 
 Rivets.formatters.lte = function(value, arg) {
-  return value >= arg;
+  return value <= arg;
 };
 
 Rivets.formatters.eq = function(value, arg) {
@@ -33,7 +29,11 @@ Rivets.formatters.or = function(value, arg) {
   return value || arg;
 };
 
-// Concatenate
+Rivets.formatters.length = function(value) {
+  return value && value.length;
+};
+
+// Concatenate or add
 Rivets.formatters['+'] = function(value, arg) {
   return value + arg;
 };
@@ -55,31 +55,35 @@ Rivets.formatters.htmlEscape = function(value) {
   return !!value && value.replace(/[<>]/g, function(char) {
     switch (char) {
       case '<':
-        return '&lt;'
+        return '&lt;';
       case '>':
-        return '&gt;'
+        return '&gt;';
     }
   }) || '';
   //TODO: should this be more complete?
-}
+};
 
 // Linky - Turn text that looks like links _into_ anchor tags.
 Rivets.formatters.linky = function(value) {
   if (!value) return '';
-  var re = /(https?|ssh|ftp|mailto):\/\/[a-z0-9\-\._~:\/?#\[\]@!$&'\(\)\*\+,;=]+/gi;
-  return value.replace(re, function(match) {
-    return `<a class='linky' href='${ match }' target='_blank' rel='nofollow'>${ match }</a></span>`
+  var re = /(^|\s)((https?|ssh|ftp|mailto):\/\/[a-z0-9\-\._~:\/?#\[\]@!$&'\(\)\*\+,;=]+)(\s|$)/gi;
+  // return value.replace(re, function(match) {
+  return value.replace(re, function(str, begin, url, protocol, end) {
+    return `${ begin }<a class='linky' href='${ url }' target='_blank' rel='nofollow'>${ url }</a></span>${ end }`;
   });
-}
+};
 
-// ChatMarkdown - Renders _italic_, *bold*, ~strike~, and `code` text.
+// ChatMarkdown - Renders "rich" text.
 Rivets.formatters.chatMarkdown = function(value) {
   if (!value) return '';
+  // Trim whitespace and render newlines.
+  value = value.replace(/((^\s+)|(\s+$))/g, "").replace(/\r?\n/g, "<br>");
+  // _italic_, *bold*, ~strike~, and `code` text.
   var re = /(^|\s)(_(.+)_|~(.+)~|\*(.+)\*|\`(.+)\`)(\s|$)/g;
   return value.replace(re, function(str, begin, middle, italics, strike, bold, code, end) {
     if (italics) return `${ begin }<i>${ italics }</i>${ end }`;
     if (strike) return `${ begin }<s>${ strike }</s>${ end }`;
-    if (bold) return `${ begin }<strong>${ bold }</strong>${ end }`;
+    if (bold) return `${ begin }<b>${ bold }</b>${ end }`;
     if (code) return `${ begin }<code>${ code }</code>${ end }`;
   });
 };
@@ -87,7 +91,7 @@ Rivets.formatters.chatMarkdown = function(value) {
 // EmojiOne
 var EmojiOne = window.emojione = require('emojione');
 EmojiOne.cacheBustParam = ''; //HACK: makes emojione use the same url as EmojioneArea.
-Rivets.formatters.emojione = function(value) {
+Rivets.formatters.emojiOne = function(value) {
   return !!value && EmojiOne.toImage(value) || '';
 };
 
