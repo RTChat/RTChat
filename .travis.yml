@@ -21,18 +21,18 @@ matrix:
 # before_install:
 #   - ./setup.sh
 
+install:
+  - npm install
+  - ./node_modules/.bin/webdriver-manager update
+
 before_script:
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-
-
-beforescript:
+  # Setup dummy display
   - "export DISPLAY=:99.0"
   - sh -e /etc/init.d/xvfb start
-  - nohup bash -c "./nodemodules/protractor/bin/webdriver-manager start 2>&1 &"
+  # Start the socket server for testing.
+  - npm start &
   - sleep 5
 
 script:
   # - grunt travis-protractor
-  - npm install
   - npm test
