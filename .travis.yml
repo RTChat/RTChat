@@ -1,0 +1,38 @@
+language: node_js
+node_js:
+  - 4.4.6
+
+env:
+  matrix:
+    - BROWSER=chrome  BVER=stable
+    # - BROWSER=chrome  BVER=beta
+    # - BROWSER=chrome  BVER=unstable
+    # - BROWSER=firefox BVER=stable
+    # - BROWSER=firefox BVER=beta
+    # - BROWSER=firefox BVER=nightly
+
+matrix:
+  fast_finish: true
+
+  # allowed_failures:
+  #   - env: BROWSER=chrome  BVER=unstable
+  #   - env: BROWSER=firefox BVER=nightly
+
+# before_install:
+#   - ./setup.sh
+
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+
+
+beforescript:
+  - "export DISPLAY=:99.0"
+  - sh -e /etc/init.d/xvfb start
+  - nohup bash -c "./nodemodules/protractor/bin/webdriver-manager start 2>&1 &"
+  - sleep 5
+
+script:
+  # - grunt travis-protractor
+  - npm install
+  - npm test
