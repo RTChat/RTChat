@@ -31,6 +31,10 @@ module.exports = {
 					(new self.Views.Layout()).render();
 			});
 		});
+
+		// Overload the "SocketHost" when served locally (for testing and local dev)
+		if (window.location.hostname == "localhost")
+			RTChat.AppConfig.SocketHost = undefined;
 	},
 
 	// Helpers
