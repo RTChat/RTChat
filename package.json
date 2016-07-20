@@ -4,8 +4,9 @@
   "repository": "https://github.com/RTChat/RTChat",
   "version": "0.0.1",
   "scripts": {
-    "test": "./node_modules/karma/bin/karma start --single-run && ./node_modules/protractor/bin/protractor protractor.conf.js"
+    "test": "./node_modules/karma/bin/karma start test/unit/karma.conf.js --single-run && ./node_modules/protractor/bin/protractor test/e2e/protractor.conf.js"
   },
+  "engine": "^4.4.6",
   "license": "AGPL-3.0",
   "dependencies": {},
   "devDependencies": {

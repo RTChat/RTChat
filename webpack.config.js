@@ -46,15 +46,18 @@ module.exports = {
 if (process.argv.indexOf('--minify') >= 0) {
 	var CompressionPlugin = require("compression-webpack-plugin");
 
-	module.exports.plugins.concat([
+	module.exports.plugins.push(
 		new webpack.optimize.UglifyJsPlugin({
 			minimize: true,
 			compress: {warnings: false}
-		}),
+		})
+	);
+
+	module.exports.plugins.push(
 		new CompressionPlugin({
 			test: /\.js$/,
 			algorithm: "gzip",
 			asset: "[path].gz[query]"
 		})
-	]);
+	);
 }

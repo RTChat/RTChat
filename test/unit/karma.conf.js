@@ -16,14 +16,14 @@ module.exports = function(config) {
 	// list of files / patterns to load in the browser
 	files: [
 	  // Load App - webpack should watch/build the app independently.
-	  'dist/bundle.js',
+	  '../../dist/bundle.js',
 
 	  // Libraries used in tests
-	  'node_modules/jquery/dist/jquery.js',
-	  'node_modules/underscore/underscore.js',
+	  '../../node_modules/jquery/dist/jquery.js',
+	  '../../node_modules/underscore/underscore.js',
 
 	  // Unit Tests
-	  'test/unit/**/*.js'
+	  './**/*.js'
 	],
 
 
@@ -68,7 +68,6 @@ module.exports = function(config) {
 		// 'Chrome',
 		// 'Firefox'
 	],
-
 
 	// Continuous Integration mode
 	// if true, Karma captures browsers, runs the tests and exits
