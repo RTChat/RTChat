@@ -31,12 +31,18 @@
 
 	/* === Bottom === */
 
-	/* HACKS */
+	/* mostly taken from emojionearea */
 	.emojione {
-		height: 20px;
-		width: auto;
-		background: none;
-		margin-top: -3px;
+		font-size: inherit;
+		height: 2ex;
+		width: 2.1ex;
+		min-height: 20px;
+		min-width: 20px;
+		margin: -.2ex .15em .2ex;
+		line-height: normal;
+		vertical-align: middle;
+		max-width: 100%;
+		top:0;
 	}
 
 	.emojionearea-editor {
