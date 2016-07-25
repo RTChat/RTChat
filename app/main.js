@@ -33,7 +33,8 @@ module.exports = {
 		});
 
 		// Overload the "SocketHost" when served locally (for testing and local dev)
-		if (window.location.hostname == "localhost")
+		// if (window.location.hostname == "localhost")
+		if (window.location.hostname.match(/^(localhost$|192\.168\.)/))
 			RTChat.AppConfig.SocketHost = undefined;
 	},
 
