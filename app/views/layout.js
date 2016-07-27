@@ -10,19 +10,16 @@ module.exports = Backbone.View.extend({
 			<div data-subview="header"></div>
 		</div>
 		<div class="main-bar">
-			<div class="left-side-bar hidden">
-				<div data-subview="sidebar"></div>
-			</div>
+			<div data-subview="sidebar"></div>
 			<div class="main-panel"></div>
-			<div class="right-side-bar hidden">Right Side Bar</div>
 		</div>
 		<div class="footer"></div>
 	`,
 	welcomeTemplate: '<div data-subview="welcome"></div>',
 	roomTemplate: '<div data-subview="room"></div>',
 	events: {
-		'click .header .fa-bars': function() {
-			this.$('.left-side-bar').toggleClass('hidden');
+		'click .header .toggle-left-sidebar': function() {
+			this.subviews.sidebar.toggle()
 		},
 	},
 	initialize: function() {

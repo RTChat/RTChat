@@ -27,20 +27,6 @@ body {
 		display: flex;
 		flex-flow: row;
 
-		.left-side-bar,
-		.right-side-bar {
-			/*position: absolute;*/
-			overflow: hidden;
-			flex: 0 0 210px;
-			background-color: blue;
-
-			&.hidden {
-				display: flex!important;
-				width: 0;
-				flex-basis: 0px;
-			}
-		}
-
 		.main-panel {
 			flex: 1 1 100%;
 			background-color: lightgrey;

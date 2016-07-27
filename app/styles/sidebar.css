@@ -1,0 +1,11 @@
+
+
+#Sidebar {
+	background-color: grey;
+	overflow-y: auto;
+	flex: 0 0 0;
+
+	&.open {
+		flex-basis: 210px;
+	}
+}

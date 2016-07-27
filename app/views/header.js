@@ -4,7 +4,7 @@ require('styles/header.css');
 module.exports = Backbone.View.extend({
 	id: 'Header',
 	template: `
-		<div class="fa fa-bars"></div>
+		<div class="fa fa-bars toggle-left-sidebar"></div>
 		<span>
 			<span rv-unless="scope.roomName">{ scope.appName }</span>
 			<span rv-if="scope.roomName"><a href="#">{ scope.appName }</a> / { scope.roomName }</span>

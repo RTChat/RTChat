@@ -63,7 +63,7 @@ var RTChat =
 	
 		// DemoApp - Extend these with your own app or game!
 		Views: views,
-		AppConfig: __webpack_require__(42),
+		AppConfig: __webpack_require__(44),
 	
 		// Core Services - don't extend.
 		RTCWrapper: __webpack_require__(17),
@@ -18175,8 +18175,8 @@ var RTChat =
 		"./layout.js": 28,
 		"./room_panel.js": 31,
 		"./sidebar.js": 37,
-		"./user_menu.js": 38,
-		"./welcome_panel.js": 39
+		"./user_menu.js": 40,
+		"./welcome_panel.js": 41
 	};
 	function webpackContext(req) {
 		return __webpack_require__(webpackContextResolve(req));
@@ -27071,7 +27071,7 @@ var RTChat =
 	
 	module.exports = Backbone.View.extend({
 		id: 'Header',
-		template: '\n\t\t<div class="fa fa-bars"></div>\n\t\t<span>\n\t\t\t<span rv-unless="scope.roomName">{ scope.appName }</span>\n\t\t\t<span rv-if="scope.roomName"><a href="#">{ scope.appName }</a> / { scope.roomName }</span>\n\t\t</span>\n\t\t<div data-subview="user_menu"></div>\n\t',
+		template: '\n\t\t<div class="fa fa-bars toggle-left-sidebar"></div>\n\t\t<span>\n\t\t\t<span rv-unless="scope.roomName">{ scope.appName }</span>\n\t\t\t<span rv-if="scope.roomName"><a href="#">{ scope.appName }</a> / { scope.roomName }</span>\n\t\t</span>\n\t\t<div data-subview="user_menu"></div>\n\t',
 		initialize: function initialize() {
 			Backbone.Subviews.add(this);
 		},
@@ -27146,12 +27146,12 @@ var RTChat =
 	
 	module.exports = Backbone.View.extend({
 		el: 'body',
-		template: '\n\t\t<div class="header">\n\t\t\t<div data-subview="header"></div>\n\t\t</div>\n\t\t<div class="main-bar">\n\t\t\t<div class="left-side-bar hidden">\n\t\t\t\t<div data-subview="sidebar"></div>\n\t\t\t</div>\n\t\t\t<div class="main-panel"></div>\n\t\t\t<div class="right-side-bar hidden">Right Side Bar</div>\n\t\t</div>\n\t\t<div class="footer"></div>\n\t',
+		template: '\n\t\t<div class="header">\n\t\t\t<div data-subview="header"></div>\n\t\t</div>\n\t\t<div class="main-bar">\n\t\t\t<div data-subview="sidebar"></div>\n\t\t\t<div class="main-panel"></div>\n\t\t</div>\n\t\t<div class="footer"></div>\n\t',
 		welcomeTemplate: '<div data-subview="welcome"></div>',
 		roomTemplate: '<div data-subview="room"></div>',
 		events: {
-			'click .header .fa-bars': function clickHeaderFaBars() {
-				this.$('.left-side-bar').toggleClass('hidden');
+			'click .header .toggle-left-sidebar': function clickHeaderToggleLeftSidebar() {
+				this.subviews.sidebar.toggle();
 			}
 		},
 		subviewCreators: {
@@ -27227,7 +27227,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body .header, body .footer {\n    position: relative;\n    font-size: 22px;\n    display: flex;\n    flex-flow: row;\n    z-index: 1;\n    /* Allows UserMenu to go overtop of the main-bar */ }\n  body .header {\n    background-color: green; }\n  body .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n  body .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body .main-bar .left-side-bar,\n    body .main-bar .right-side-bar {\n      /*position: absolute;*/\n      overflow: hidden;\n      flex: 0 0 210px;\n      background-color: blue; }\n      body .main-bar .left-side-bar.hidden,\n      body .main-bar .right-side-bar.hidden {\n        display: flex !important;\n        width: 0;\n        flex-basis: 0px; }\n    body .main-bar .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body .main-bar .main-panel > * {\n        flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,mBAAmB;IACnB,gBAAgB;IAChB,cAAc;IACd,eAAe;IACf,WAAW;IACX,mDAAmD,EAAE;EACvD;IACE,wBAAwB,EAAE;EAC5B;IACE,cAAc;IACd,uCAAuC;IACvC,yBAAyB,EAAE;EAC7B;IACE,eAAe;IACf,cAAc;IACd,eAAe,EAAE;IACjB;;MAEE,uBAAuB;MACvB,iBAAiB;MACjB,gBAAgB;MAChB,uBAAuB,EAAE;MACzB;;QAEE,yBAAyB;QACzB,SAAS;QACT,gBAAgB,EAAE;IACtB;MACE,eAAe;MACf,4BAA4B;MAC5B,cAAc;MACd,oBAAoB,EAAE;MACtB;QACE,QAAQ,EAAE;;AAElB,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body .header, body .footer {\n    position: relative;\n    font-size: 22px;\n    display: flex;\n    flex-flow: row;\n    z-index: 1;\n    /* Allows UserMenu to go overtop of the main-bar */ }\n  body .header {\n    background-color: green; }\n  body .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n  body .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body .main-bar .left-side-bar,\n    body .main-bar .right-side-bar {\n      /*position: absolute;*/\n      overflow: hidden;\n      flex: 0 0 210px;\n      background-color: blue; }\n      body .main-bar .left-side-bar.hidden,\n      body .main-bar .right-side-bar.hidden {\n        display: flex !important;\n        width: 0;\n        flex-basis: 0px; }\n    body .main-bar .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body .main-bar .main-panel > * {\n        flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body .header, body .footer {\n    position: relative;\n    font-size: 22px;\n    display: flex;\n    flex-flow: row;\n    z-index: 1;\n    /* Allows UserMenu to go overtop of the main-bar */ }\n  body .header {\n    background-color: green; }\n  body .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n  body .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body .main-bar .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body .main-bar .main-panel > * {\n        flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,mBAAmB;IACnB,gBAAgB;IAChB,cAAc;IACd,eAAe;IACf,WAAW;IACX,mDAAmD,EAAE;EACvD;IACE,wBAAwB,EAAE;EAC5B;IACE,cAAc;IACd,uCAAuC;IACvC,yBAAyB,EAAE;EAC7B;IACE,eAAe;IACf,cAAc;IACd,eAAe,EAAE;IACjB;MACE,eAAe;MACf,4BAA4B;MAC5B,cAAc;MACd,oBAAoB,EAAE;MACtB;QACE,QAAQ,EAAE;;AAElB,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body .header, body .footer {\n    position: relative;\n    font-size: 22px;\n    display: flex;\n    flex-flow: row;\n    z-index: 1;\n    /* Allows UserMenu to go overtop of the main-bar */ }\n  body .header {\n    background-color: green; }\n  body .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n  body .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body .main-bar .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body .main-bar .main-panel > * {\n        flex: 1; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
@@ -29017,11 +29017,13 @@ var RTChat =
 
 /***/ },
 /* 37 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	// Sidebar
+	
+	__webpack_require__(38);
 	
 	module.exports = Backbone.View.extend({
 		id: 'Sidebar',
@@ -29029,12 +29031,55 @@ var RTChat =
 		render: function render() {
 			this.$el.html(this.template);
 			return this;
+		},
+		toggle: function toggle(bool) {
+			this.$el.toggleClass("open", bool);
 		}
 	
 	});
 
 /***/ },
 /* 38 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// style-loader: Adds some css to the DOM by adding a <style> tag
+	
+	// load the styles
+	var content = __webpack_require__(39);
+	if(typeof content === 'string') content = [[module.id, content, '']];
+	// add the styles to the DOM
+	var update = __webpack_require__(16)(content, {});
+	if(content.locals) module.exports = content.locals;
+	// Hot Module Replacement
+	if(false) {
+		// When the styles change, update the <style> tags
+		if(!content.locals) {
+			module.hot.accept("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./sidebar.css", function() {
+				var newContent = require("!!./../../node_modules/css-loader/index.js?sourceMap!./../../node_modules/sass-loader/index.js!./sidebar.css");
+				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+				update(newContent);
+			});
+		}
+		// When the module is disposed, remove the <style> tags
+		module.hot.dispose(function() { update(); });
+	}
+
+/***/ },
+/* 39 */
+/***/ function(module, exports, __webpack_require__) {
+
+	exports = module.exports = __webpack_require__(15)();
+	// imports
+	
+	
+	// module
+	exports.push([module.id, "#Sidebar {\n  background-color: grey;\n  overflow-y: auto;\n  flex: 0 0 0; }\n  #Sidebar.open {\n    flex-basis: 210px; }\n", "", {"version":3,"sources":["/./app/styles/sidebar.css"],"names":[],"mappings":"AAAA;EACE,uBAAuB;EACvB,iBAAiB;EACjB,YAAY,EAAE;EACd;IACE,kBAAkB,EAAE","file":"sidebar.css","sourcesContent":["#Sidebar {\n  background-color: grey;\n  overflow-y: auto;\n  flex: 0 0 0; }\n  #Sidebar.open {\n    flex-basis: 210px; }\n"],"sourceRoot":"webpack://"}]);
+	
+	// exports
+
+
+/***/ },
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
@@ -29077,12 +29122,12 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
-/* 39 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(40);
+	__webpack_require__(42);
 	
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
@@ -29095,13 +29140,13 @@ var RTChat =
 	});
 
 /***/ },
-/* 40 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(41);
+	var content = __webpack_require__(43);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -29121,7 +29166,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 41 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -29135,7 +29180,7 @@ var RTChat =
 
 
 /***/ },
-/* 42 */
+/* 44 */
 /***/ function(module, exports) {
 
 	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443"}
