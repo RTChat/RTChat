@@ -5,29 +5,12 @@ body {
 	display: flex;
 	flex-direction: column;
 
-	.header, .footer {
-		position: relative;
-		font-size: 22px;
-		display: flex;
-		flex-flow: row;
-		z-index: 1; /* Allows UserMenu to go overtop of the main-bar */
-	}
-
-	.header {
-		background-color: green;
-	}
-	.footer {
-		display: none; /* Delete this if you want a footer! */
-		background-color: yellow;
-	}
-
-
-	.main-bar {
+	> .main-bar {
 		flex: 1 1 100%;
 		display: flex;
 		flex-flow: row;
 
-		.main-panel {
+		> .main-panel {
 			flex: 1 1 100%;
 			background-color: lightgrey;
 			display: flex;
@@ -37,6 +20,11 @@ body {
 				flex: 1;
 			}
 		}
+	}
+
+	> .footer {
+		display: none; /* Delete this if you want a footer! */
+		background-color: yellow;
 	}
 }
 

@@ -6,9 +6,7 @@ var RTCWrapper = require('utils/rtc_wrapper.js');
 module.exports = Backbone.View.extend({
 	el: 'body',
 	template: `
-		<div class="header">
-			<div data-subview="header"></div>
-		</div>
+		<div data-subview="header"></div>
 		<div class="main-bar">
 			<div data-subview="sidebar"></div>
 			<div class="main-panel"></div>
@@ -18,7 +16,7 @@ module.exports = Backbone.View.extend({
 	welcomeTemplate: '<div data-subview="welcome"></div>',
 	roomTemplate: '<div data-subview="room"></div>',
 	events: {
-		'click .header .toggle-left-sidebar': function() {
+		'click #Header .toggle-left-sidebar': function() {
 			this.subviews.sidebar.toggle()
 		},
 	},

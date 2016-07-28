@@ -1,6 +1,12 @@
 
 #Header {
+	position: relative;
 	width: 100%;
+	font-size: 22px;
+	display: flex;
+	flex-flow: row;
+	z-index: 1; /* Allows UserMenu to go overtop of the main-bar */
+	background-color: green;
 
 	> * {
 		margin-top: 5px;
