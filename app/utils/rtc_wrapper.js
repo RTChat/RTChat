@@ -18,7 +18,7 @@ var userStreams = {
 module.exports = {
 	// === Room API ===  (and users)
 	users: [],
-	joinRoom: function(roomName, options) {
+	joinRoom: function(roomName, options, callback) {
 		var self = this;
 		this.users = [];
 		this.leaveRoom(); //TODO: close connection?
@@ -112,7 +112,7 @@ module.exports = {
 			}
 		};
 
-		this.connection.openOrJoin(RTChat.AppConfig.AppName +'_'+ roomName);
+		this.connection.openOrJoin(RTChat.AppConfig.AppName +'_'+ roomName, callback);
 	},
 	leaveRoom: function() {
 		if (this.connection) {
@@ -124,6 +124,11 @@ module.exports = {
 			// this.connection.peers.forEach(function(peer) {
 			// 	console.log("cc". peer)
 			// });
+
+			// Wipe out state
+			AppState = {}
+			this.updateState();
+
 		}
 	},
 	onPeerJoin: function(fn) { // Register handler to be triggered when someone joins.

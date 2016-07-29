@@ -18666,7 +18666,7 @@ var RTChat =
 	module.exports = {
 		// === Room API ===  (and users)
 		users: [],
-		joinRoom: function joinRoom(roomName, options) {
+		joinRoom: function joinRoom(roomName, options, callback) {
 			var self = this;
 			this.users = [];
 			this.leaveRoom(); //TODO: close connection?
@@ -18761,7 +18761,7 @@ var RTChat =
 				}
 			};
 	
-			this.connection.openOrJoin(RTChat.AppConfig.AppName + '_' + roomName);
+			this.connection.openOrJoin(RTChat.AppConfig.AppName + '_' + roomName, callback);
 			// TODO: ??
 			// RTCWrapper.connection.updateExtraData();
 		},
@@ -18780,6 +18780,10 @@ var RTChat =
 				stateChangeHandlers = [];
 				receiveBroadcastHandlers = [];
 				startFriendChatHandlers = [];
+	
+				// Wipe out state
+				AppState = {};
+				this.updateState();
 			}
 		},
 		onPeerJoin: function onPeerJoin(fn) {
