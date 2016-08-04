@@ -78,20 +78,21 @@ Rivets.formatters.chatMarkdown = function(value) {
   if (!value) return '';
   // Trim whitespace and render newlines.
   value = value.replace(/((^\s+)|(\s+$))/g, "").replace(/\r?\n/g, "<br>");
-  // _italic_, *bold*, ~strike~, and `code` text.
-  var re = /(^|\s)(_(.+)_|~(.+)~|\*(.+)\*|\`(.+)\`)(\s|$)/g;
-  return value.replace(re, function(str, begin, middle, italics, strike, bold, code, end) {
-    if (italics) return `${ begin }<i>${ italics }</i>${ end }`;
-    if (strike) return `${ begin }<s>${ strike }</s>${ end }`;
-    if (bold) return `${ begin }<b>${ bold }</b>${ end }`;
-    if (code) return `${ begin }<code>${ code }</code>${ end }`;
+  // `code`, ~strike~, _italic_, and *bold* text. (respecting escape chars)
+  var re = /(^|\s)(\`(.*?[^\\])\`|~(.*?[^\\])~|_(.*?[^\\])_|\*(.*?[^\\])\*)/g;
+  return value.replace(re, function(str, begin, middle, code, strike, italics, bold) {
+    if (italics) return `${ begin }<i>${ italics }</i>`;
+    if (strike) return `${ begin }<s>${ strike }</s>`;
+    if (bold) return `${ begin }<b>${ bold }</b>`;
+    if (code) return `${ begin }<code>${ code }</code>`;
+    // <span style="position:absolute;opacity:0;">`</span>
   });
 };
 
 // EmojiOne
 var EmojiOne = window.emojione = require('emojione');
 EmojiOne.cacheBustParam = ''; //HACK: makes emojione use the same url as EmojioneArea.
-Rivets.formatters.emojiOne = function(value) {
+Rivets.formatters.emojione = function(value) {
   return !!value && EmojiOne.toImage(value) || '';
 };
 

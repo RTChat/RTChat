@@ -12,9 +12,11 @@ module.exports = Backbone.View.extend({
 		<div class="sub-panel">
 			<br>
 			<div class="room-subject">
-				<button class="btn btn-default">EDIT</button>
-				<span rv-if="scope.roomSubject"> { scope.roomSubject } </span>
-				<span rv-unless="scope.roomSubject"> Welcome to { scope.roomName } </span>
+				<button class="btn btn-default">
+					<span rv-hide="scope.editing">EDIT</span>
+					<span rv-show="scope.editing">SAVE</span>
+				</button>
+				<div class="editor" rv-html="scope.roomSubject | linky | chatMarkdown | emojione"></div>
 			</div>
 			<div class="user-controls">
 				<div class="btn-group" data-toggle="buttons">
@@ -47,13 +49,20 @@ module.exports = Backbone.View.extend({
 		<div class="sub-panel">
 			<div data-subview="chat"></div>
 		</div>
-		<div class="sub-panel">
+		<div class="sub-panel hidden">
 			<div class="video-container"></div>
 		</div>
 	`,
 	events: {
 		'click .room-subject .btn': function() {
-			RTCWrapper.updateState({roomSubject: window.prompt("New Subject:")});
+			var div = this.$('.room-subject > .editor');
+			div.attr('contenteditable', !this.scope.editing);
+			if (this.scope.editing) {
+				RTCWrapper.updateState({roomSubject: div.html()});
+			} else {
+				div.focus();
+			}
+			this.scope.editing = !this.scope.editing;
 		},
 		'click .user-controls .btn-group': function(e) {
 			if ($(e.target).is('.disconnect')) {
@@ -94,6 +103,7 @@ module.exports = Backbone.View.extend({
 		);
 
 		this.scope.roomName = window.location.hash;
+		this.scope.roomSubject = "Welcome to "+this.scope.roomName;
 		this.scope.users = RTCWrapper.users;
 
 		var slider = new Slider('.volume-slider', {

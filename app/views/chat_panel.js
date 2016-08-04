@@ -16,7 +16,7 @@ module.exports = Backbone.View.extend({
 			<li rv-each-msg="scope.messages">
 				<span class="timestamp">{ msg.timestamp }</span>
 				<span class="username">{ msg.name }</span>
-				<span rv-html="msg.text | htmlEscape | linky | chatMarkdown | emojiOne "></span>
+				<span rv-html="msg.text | htmlEscape | linky | chatMarkdown | emojione "></span>
 			</li>
 		</ul>
 		<div>

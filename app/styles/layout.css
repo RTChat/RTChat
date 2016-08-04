@@ -23,7 +23,6 @@ body {
 	}
 
 	> .footer {
-		display: none; /* Delete this if you want a footer! */
 		background-color: yellow;
 	}
 }
