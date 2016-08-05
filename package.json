@@ -39,6 +39,7 @@
     "node-getopt": "^0.2.3",
     "node-sass": "^3.4.2",
     "protractor": "^3.3.0",
+    "protractor-console": "^2.0.1",
     "rivets": "^0.8.1",
     "rtcmulticonnection-v3": "^3.3.6",
     "sass-loader": "^3.2.0",

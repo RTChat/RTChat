@@ -76,6 +76,25 @@ describe("Rivets Extensions", function() {
 			Rivets.bind(element, {text: "one `two` three"});
 			expect(element.find('div').html()).toEqual("one <code>two</code> three");
 		});
+
+		it("should render regexp's 'lazily'", function() {
+			element.html("<div rv-html='text | chatMarkdown'></div>");
+			Rivets.bind(element, {text: "one ` two ` three ` four ` five"});
+			expect(element.find('div').html()).toEqual("one <code> two </code> three <code> four </code> five");
+		});
+
+		it("should not render underscored words as italics, etc", function() {
+			element.html("<div rv-html='text | chatMarkdown'></div>");
+			Rivets.bind(element, {text: "one_two three_four"});
+			expect(element.find('div').html()).toEqual("one_two three_four");
+		});
+
+		it("should render properly with escape characters", function() {
+			element.html("<div rv-html='text | chatMarkdown'></div>");
+			Rivets.bind(element, {text: "one ` two \\` three ` four"});
+			expect(element.find('div').html()).toEqual("one <code> two \\` three </code> four");
+		});
+
 	});
 
 	describe("EmojiOne", function() {

@@ -39,6 +39,7 @@ module.exports = {
 	},
 
 	// Helpers
+	jQuery: $,
 	Rivets: Rivets,
 	load_module: load_module,
 };

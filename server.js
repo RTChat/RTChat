@@ -5,7 +5,7 @@ var options = { // defaults
 	ip: "0.0.0.0",
 	port: 9001,
 	plugin: [],
-}
+};
 
 var opt = require("node-getopt").create([
 	['', 'http', 'Disable SSL'],
@@ -31,6 +31,7 @@ var fs = require('fs'),
 var server_opts = {};
 var connect = require('connect')();
 var server = require(options.http ? 'http' : 'https');
+var watcher;
 
 if (!options.http) {
   try {
@@ -52,7 +53,7 @@ if (!options.http) {
 
   // Setup HTTP-redirect server.
   require('http').createServer(function(req, res) {
-    res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+    res.writeHead(301, { "Location": "https://" + req.headers.host + req.url });
     res.end();
   }).on('error', function(err) {
     console.warn("WARNING: unable to start http-redirect server. GOT:", err.toString());
@@ -68,6 +69,7 @@ var app = server.createServer(server_opts, connect).
 
 app.on('error', function(err) {
 	console.error('ServerError:', err.code);
+	process.exit(1);
 });
 
 
@@ -121,7 +123,7 @@ for (var i in options.plugin) {
 
 // --Watch
 if (options.watch) {
-	var watcher = require('child_process').spawn('webpack', ['--watch', '--colors']);
+	watcher = require('child_process').spawn('webpack', ['--watch', '--colors']);
 
 	watcher.stdout.on('data', function(data) {
 		console.log(data.toString());
