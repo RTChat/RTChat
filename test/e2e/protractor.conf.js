@@ -28,12 +28,16 @@ exports.config = {
 		]
 	}],
 
+	jasmineNodeOpts: {
+		// defaultTimeoutInterval: 25000
+	},
+
 	onPrepare: function() {
 		browser.ignoreSynchronization = true;
 
 		// Add Helpers
 		protractor.Protractor.prototype.fork = function(url) {
-			var new_browser = browser.forkNewDriverInstance(url || true);
+			var new_browser = browser.forkNewDriverInstance(true);
 			new_browser.ignoreSynchronization = true;
 
 			if (url) new_browser.get(url);
@@ -48,6 +52,12 @@ exports.config = {
 			});
 		};
 
+		protractor.Protractor.prototype.waitConstant = function(time) {
+			var ready = false;
+			setTimeout(function() {ready = true;}, time);
+			this.wait(function() {return ready;}, time+200);
+		}
+
 		// Useful shortcut for matching in a wait.
 		protractor.ElementFinder.prototype.toMatch = function(str) {
 			return this.then(function(el) {
@@ -56,8 +66,9 @@ exports.config = {
 		};
 		// USAGE:
 		// browser.wait(function() {
-		// 		return browser2.$('.blah').getAttribute('innerHTML').toMatch("something");
+		// 		return browser.$('.blah').getAttribute('innerHTML').toMatch("something");
 		// });
+
 	},
 };
 

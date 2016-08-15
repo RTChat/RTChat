@@ -85,6 +85,7 @@ module.exports = {
 			if (self.connection.isInitiator) {
 				self.updateState(AppState, false);
 				//TODO: send only to requester!
+				self.connection.updateExtraData(); //TODO: This is needed because of a bug in RTCMultiConnection =/
 			}
 
 			_.forEach(peerJoinHandlers, function(fn) {
@@ -93,9 +94,11 @@ module.exports = {
 		};
 
 		this.connection.onleave = function(sess) {
-			console.log("onclose", sess);
-			var ii = _.findIndex(self.users, {remoteUserId: sess.userid});
-			self.users.splice(ii, 1);
+			var ii = _.findIndex(self.users, {userid: sess.userid});
+			// console.log("onclose", sess, self.users, ii);
+			if(ii >= 0) self.users.splice(ii, 1);
+			// _.each(self.connection.peers, console.log)
+			// console.log("QQQQ",self.connection.peers.getAllParticipants())
 		};
 
 		this.connection.onmessage = function(e) {
@@ -127,8 +130,7 @@ module.exports = {
 
 			// Wipe out state
 			AppState = {}
-			this.updateState();
-
+			triggerStateChange();
 		}
 	},
 	onPeerJoin: function(fn) { // Register handler to be triggered when someone joins.

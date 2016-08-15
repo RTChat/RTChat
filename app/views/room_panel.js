@@ -41,7 +41,7 @@ module.exports = Backbone.View.extend({
 			</div>
 			<br><br>Users:
 			<ul class="users-panel">
-				<li rv-each-user="scope.users" rv-show="user.extra.name">
+				<li rv-each-user="scope.users">
 					{ user.extra.name }
 				</li>
 			</ul>
@@ -113,8 +113,10 @@ module.exports = Backbone.View.extend({
 
 		return this;
 	},
-	onRemove: function() {
+	remove: function() {
+		// Ensure we leave the room when navigating away.
 		RTCWrapper.leaveRoom();
+		Backbone.View.prototype.remove.apply(this, arguments); // "super"
 	},
 	scope: {}
 });

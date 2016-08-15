@@ -17632,20 +17632,21 @@ var RTChat =
 	  if (!value) return '';
 	  // Trim whitespace and render newlines.
 	  value = value.replace(/((^\s+)|(\s+$))/g, "").replace(/\r?\n/g, "<br>");
-	  // _italic_, *bold*, ~strike~, and `code` text.
-	  var re = /(^|\s)(_(.+)_|~(.+)~|\*(.+)\*|\`(.+)\`)(\s|$)/g;
-	  return value.replace(re, function (str, begin, middle, italics, strike, bold, code, end) {
-	    if (italics) return begin + '<i>' + italics + '</i>' + end;
-	    if (strike) return begin + '<s>' + strike + '</s>' + end;
-	    if (bold) return begin + '<b>' + bold + '</b>' + end;
-	    if (code) return begin + '<code>' + code + '</code>' + end;
+	  // `code`, ~strike~, _italic_, and *bold* text. (respecting escape chars)
+	  var re = /(^|\s)(\`(.*?[^\\])\`|~(.*?[^\\])~|_(.*?[^\\])_|\*(.*?[^\\])\*)/g;
+	  return value.replace(re, function (str, begin, middle, code, strike, italics, bold) {
+	    if (italics) return begin + '<i>' + italics + '</i>';
+	    if (strike) return begin + '<s>' + strike + '</s>';
+	    if (bold) return begin + '<b>' + bold + '</b>';
+	    if (code) return begin + '<code>' + code + '</code>';
+	    // <span style="position:absolute;opacity:0;">`</span>
 	  });
 	};
 	
 	// EmojiOne
 	var EmojiOne = window.emojione = __webpack_require__(10);
 	EmojiOne.cacheBustParam = ''; //HACK: makes emojione use the same url as EmojioneArea.
-	Rivets.formatters.emojiOne = function (value) {
+	Rivets.formatters.emojione = function (value) {
 	  return !!value && EmojiOne.toImage(value) || '';
 	};
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(5)))
@@ -18211,7 +18212,7 @@ var RTChat =
 	
 	module.exports = Backbone.View.extend({
 		id: 'ChatPanel',
-		template: '\n\t\t<ul>\n\t\t\t<li rv-each-msg="scope.messages">\n\t\t\t\t<span class="timestamp">{ msg.timestamp }</span>\n\t\t\t\t<span class="username">{ msg.name }</span>\n\t\t\t\t<span rv-html="msg.text | htmlEscape | linky | chatMarkdown | emojiOne "></span>\n\t\t\t</li>\n\t\t</ul>\n\t\t<div>\n\t\t\t<div class="fa fa-cloud-upload hidden"></div>\n\t\t\t<div class="input-container">\n\t\t\t\t<textarea></textarea>\n\t\t\t</div>\n\t\t</div>\n\t',
+		template: '\n\t\t<ul>\n\t\t\t<li rv-each-msg="scope.messages">\n\t\t\t\t<span class="timestamp">{ msg.timestamp }</span>\n\t\t\t\t<span class="username">{ msg.name }</span>\n\t\t\t\t<span rv-html="msg.text | htmlEscape | linky | chatMarkdown | emojione "></span>\n\t\t\t</li>\n\t\t</ul>\n\t\t<div>\n\t\t\t<div class="fa fa-cloud-upload hidden"></div>\n\t\t\t<div class="input-container">\n\t\t\t\t<textarea></textarea>\n\t\t\t</div>\n\t\t</div>\n\t',
 		events: {
 			'keydown textarea': function keydownTextarea(ev) {
 				// Prevent cursor from moving before sending.
@@ -18730,6 +18731,7 @@ var RTChat =
 				if (self.connection.isInitiator) {
 					self.updateState(AppState, false);
 					//TODO: send only to requester!
+					self.connection.updateExtraData(); //TODO: This is needed because of a bug in RTCMultiConnection =/
 				}
 	
 				_.forEach(peerJoinHandlers, function (fn) {
@@ -18738,9 +18740,11 @@ var RTChat =
 			};
 	
 			this.connection.onleave = function (sess) {
-				console.log("onclose", sess);
-				var ii = _.findIndex(self.users, { remoteUserId: sess.userid });
-				self.users.splice(ii, 1);
+				var ii = _.findIndex(self.users, { userid: sess.userid });
+				// console.log("onclose", sess, self.users, ii);
+				if (ii >= 0) self.users.splice(ii, 1);
+				// _.each(self.connection.peers, console.log)
+				// console.log("QQQQ",self.connection.peers.getAllParticipants())
 			};
 	
 			this.connection.onExtraDataUpdated = function (ev) {
@@ -18762,8 +18766,6 @@ var RTChat =
 			};
 	
 			this.connection.openOrJoin(RTChat.AppConfig.AppName + '_' + roomName, callback);
-			// TODO: ??
-			// RTCWrapper.connection.updateExtraData();
 		},
 		leaveRoom: function leaveRoom() {
 			if (this.connection) {
@@ -18776,14 +18778,15 @@ var RTChat =
 				// 	console.log("cc". peer)
 				// });
 	
-				peerJoinHandlers = [];
-				stateChangeHandlers = [];
-				receiveBroadcastHandlers = [];
-				startFriendChatHandlers = [];
+				// peerJoinHandlers = [];
+				// stateChangeHandlers = [];
+				// receiveBroadcastHandlers = [];
+				// startFriendChatHandlers = [];
+	
 	
 				// Wipe out state
 				AppState = {};
-				this.updateState();
+				triggerStateChange();
 			}
 		},
 		onPeerJoin: function onPeerJoin(fn) {
@@ -27150,7 +27153,7 @@ var RTChat =
 	
 	module.exports = Backbone.View.extend({
 		el: 'body',
-		template: '\n\t\t<div data-subview="header"></div>\n\t\t<div class="main-bar">\n\t\t\t<div data-subview="sidebar"></div>\n\t\t\t<div class="main-panel"></div>\n\t\t</div>\n\t\t<div class="footer"></div>\n\t',
+		template: '\n\t\t<div data-subview="header"></div>\n\t\t<div class="main-bar">\n\t\t\t<div data-subview="sidebar"></div>\n\t\t\t<div class="main-panel"></div>\n\t\t</div>\n\t\t<div class="footer hidden"></div>\n\t',
 		welcomeTemplate: '<div data-subview="welcome"></div>',
 		roomTemplate: '<div data-subview="room"></div>',
 		events: {
@@ -27176,12 +27179,16 @@ var RTChat =
 			var self = this;
 			Backbone.Subviews.add(this);
 			$(window).on('hashchange', function () {
+				self.removeSubviews(); // Re-initialize all views.
+				// NOTE: all views are re-created, because they might have added handers to RTCWrapper.
 				self.render();
 			});
 		},
-		render: function render() {
+		setTitle: function setTitle() {
 			document.title = RTChat.AppConfig.AppName + ' ' + document.location.hash;
-	
+		},
+		render: function render() {
+			this.setTitle();
 			this.$el.html(this.template);
 	
 			// "Router"
@@ -27231,7 +27238,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,eAAe;IACf,cAAc;IACd,eAAe,EAAE;IACjB;MACE,eAAe;MACf,4BAA4B;MAC5B,cAAc;MACd,oBAAoB,EAAE;MACtB;QACE,QAAQ,EAAE;EAChB;IACE,cAAc;IACd,uCAAuC;IACvC,yBAAyB,EAAE;;AAE/B,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    display: none;\n    /* Delete this if you want a footer! */\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,eAAe;IACf,cAAc;IACd,eAAe,EAAE;IACjB;MACE,eAAe;MACf,4BAA4B;MAC5B,cAAc;MACd,oBAAoB,EAAE;MACtB;QACE,QAAQ,EAAE;EAChB;IACE,yBAAyB,EAAE;;AAE/B,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
@@ -27252,10 +27259,17 @@ var RTChat =
 	
 	module.exports = Backbone.View.extend({
 		id: 'RoomPanel',
-		template: '\n\t\t<div class="sub-panel">\n\t\t\t<br>\n\t\t\t<div class="room-subject">\n\t\t\t\t<button class="btn btn-default">EDIT</button>\n\t\t\t\t<span rv-if="scope.roomSubject"> { scope.roomSubject } </span>\n\t\t\t\t<span rv-unless="scope.roomSubject"> Welcome to { scope.roomName } </span>\n\t\t\t</div>\n\t\t\t<div class="user-controls">\n\t\t\t\t<div class="btn-group" data-toggle="buttons">\n\t\t\t\t\t<label class="disconnect btn btn-default active fa fa-times">Disconnected\n\t\t\t\t\t\t<input id="disconnected" type="radio" name="media-status" checked></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="voice btn btn-default fa fa-phone">Voice\n\t\t\t\t\t\t<input id="voice" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="video btn btn-default fa fa-video-camera">Video\n\t\t\t\t\t\t<input id="video" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="screenshare btn btn-default fa fa-television">Screenshare\n\t\t\t\t\t\t<input id="screenshare" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class="more-controls hidden">\n\t\t\t\t\t<div class="btn btn-default fa fa-microphone-slash" data-toggle="button">Mute</div>\n\t\t\t\t\t<div class="btn btn-default fa fa-volume-up" data-toggle="button"></div>\n\t\t\t\t\t<input class="volume-slider" type="text"></input>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<button class="btn btn-primary">dummy</button>\n\t\t\t<br><br>Users:\n\t\t\t<ul class="users-panel">\n\t\t\t\t<li rv-each-user="scope.users" rv-show="user.extra.name">\n\t\t\t\t\t{ user.extra.name }\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="sub-panel">\n\t\t\t<div data-subview="chat"></div>\n\t\t</div>\n\t\t<div class="sub-panel hidden">\n\t\t\t<div class="video-container"></div>\n\t\t</div>\n\t',
+		template: '\n\t\t<div class="sub-panel">\n\t\t\t<br>\n\t\t\t<div class="room-subject">\n\t\t\t\t<button class="btn btn-default">\n\t\t\t\t\t<span rv-hide="scope.editing">EDIT</span>\n\t\t\t\t\t<span rv-show="scope.editing">SAVE</span>\n\t\t\t\t</button>\n\t\t\t\t<div class="editor" rv-html="scope.roomSubject |or scope.defaultSubject | linky | chatMarkdown | emojione"></div>\n\t\t\t</div>\n\t\t\t<div class="user-controls">\n\t\t\t\t<div class="btn-group" data-toggle="buttons">\n\t\t\t\t\t<label class="disconnect btn btn-default active fa fa-times">Disconnected\n\t\t\t\t\t\t<input id="disconnected" type="radio" name="media-status" checked></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="voice btn btn-default fa fa-phone">Voice\n\t\t\t\t\t\t<input id="voice" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="video btn btn-default fa fa-video-camera">Video\n\t\t\t\t\t\t<input id="video" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t\t<label class="screenshare btn btn-default fa fa-television">Screenshare\n\t\t\t\t\t\t<input id="screenshare" type="radio" name="media-status"></input>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class="more-controls hidden">\n\t\t\t\t\t<div class="btn btn-default fa fa-microphone-slash" data-toggle="button">Mute</div>\n\t\t\t\t\t<div class="btn btn-default fa fa-volume-up" data-toggle="button"></div>\n\t\t\t\t\t<input class="volume-slider" type="text"></input>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<br><br>Users:\n\t\t\t<ul class="users-panel">\n\t\t\t\t<li rv-each-user="scope.users">\n\t\t\t\t\t{ user.extra.name }\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="sub-panel">\n\t\t\t<div data-subview="chat"></div>\n\t\t</div>\n\t\t<div class="sub-panel hidden">\n\t\t\t<div class="video-container"></div>\n\t\t</div>\n\t',
 		events: {
 			'click .room-subject .btn': function clickRoomSubjectBtn() {
-				RTCWrapper.updateState({ roomSubject: window.prompt("New Subject:") });
+				var div = this.$('.room-subject > .editor');
+				div.attr('contenteditable', !this.scope.editing);
+				if (this.scope.editing) {
+					RTCWrapper.updateState({ roomSubject: div.html() });
+				} else {
+					div.focus();
+				}
+				this.scope.editing = !this.scope.editing;
 			},
 			'click .user-controls .btn-group': function clickUserControlsBtnGroup(e) {
 				if ($(e.target).is('.disconnect')) {
@@ -27273,12 +27287,6 @@ var RTChat =
 					this.$('.more-controls .slider').toggleClass('disabled');
 					//TODO: styles
 				}
-			},
-			'click .btn-primary': function clickBtnPrimary() {
-				// dummy
-				console.log("DUMMY"); // Testing purposes only..
-				console.log("EX", RTCWrapper.connection.extra);
-				RTCWrapper.connection.updateExtraData();
 			}
 		},
 		initialize: function initialize() {
@@ -27302,6 +27310,7 @@ var RTChat =
 			RTCWrapper.joinRoom(window.location.hash, { xVideoContainer: this.$('.video-container') });
 	
 			this.scope.roomName = window.location.hash;
+			this.scope.defaultSubject = "Welcome to " + this.scope.roomName;
 			this.scope.users = RTCWrapper.users;
 	
 			var slider = new Slider('.volume-slider', {
@@ -27311,8 +27320,10 @@ var RTChat =
 	
 			return this;
 		},
-		onRemove: function onRemove() {
+		remove: function remove() {
+			// Ensure we leave the room when navigating away.
 			RTCWrapper.leaveRoom();
+			Backbone.View.prototype.remove.apply(this, arguments); // "super"
 		},
 		scope: {}
 	});
@@ -27353,7 +27364,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n", "", {"version":3,"sources":["/./app/styles/room_panel.css"],"names":[],"mappings":"AAAA,2BAA2B;AAC3B;EACE,cAAc;EACd,wBAAwB;EACxB,qBAAqB;EACrB,iBAAiB,EAAE;EACnB;IACE;MACE,yBAAyB,EAAE,EAAE;EACjC;IACE,kBAAkB;IAClB,cAAc;IACd,cAAc;IACd,uBAAuB;IACvB,qBAAqB,EAAE;IACvB;MACE;QACE,gBAAgB;QAChB,UAAU,EAAE,EAAE;EACpB;IACE,cAAc;IACd,mBAAmB;IACnB,oBAAoB,EAAE;IACtB;MACE,mCAAmC,EAAE;MACrC;QACE,eAAe,EAAE;IACrB;MACE,cAAc;MACd,mBAAmB;MACnB,UAAU;MACV,SAAS;MACT,aAAa,EAAE","file":"room_panel.css","sourcesContent":["/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    padding: 10px;\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.3; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.5; }\n    #RoomPanel .room-subject > .editor {\n      padding: 10px; }\n", "", {"version":3,"sources":["/./app/styles/room_panel.css"],"names":[],"mappings":"AAAA,2BAA2B;AAC3B;EACE,cAAc;EACd,wBAAwB;EACxB,qBAAqB;EACrB,iBAAiB,EAAE;EACnB;IACE;MACE,yBAAyB,EAAE,EAAE;EACjC;IACE,kBAAkB;IAClB,cAAc;IACd,cAAc;IACd,uBAAuB;IACvB,qBAAqB,EAAE;IACvB;MACE;QACE,gBAAgB;QAChB,UAAU,EAAE,EAAE;EACpB;IACE,mBAAmB;IACnB,oBAAoB,EAAE;IACtB;MACE,mCAAmC,EAAE;MACrC;QACE,eAAe,EAAE;IACrB;MACE,cAAc;MACd,mBAAmB;MACnB,UAAU;MACV,SAAS;MACT,aAAa,EAAE;IACjB;MACE,cAAc,EAAE","file":"room_panel.css","sourcesContent":["/* === Media Queries === */\n#RoomPanel {\n  display: flex;\n  justify-content: center;\n  align-items: stretch;\n  overflow-x: auto; }\n  @media (max-width: 600px) {\n    #RoomPanel {\n      justify-content: initial; } }\n  #RoomPanel > .sub-panel {\n    flex-basis: 500px;\n    padding: 10px;\n    display: flex;\n    flex-direction: column;\n    align-items: stretch; }\n    @media (max-width: 600px) {\n      #RoomPanel > .sub-panel {\n        min-width: 100%;\n        flex: 0 0; } }\n  #RoomPanel .room-subject {\n    position: relative;\n    border-radius: 10px; }\n    #RoomPanel .room-subject:hover {\n      box-shadow: inset 0 0 10px 0 black; }\n      #RoomPanel .room-subject:hover button {\n        display: block; }\n    #RoomPanel .room-subject button {\n      display: none;\n      position: absolute;\n      bottom: 0;\n      right: 0;\n      opacity: 0.5; }\n    #RoomPanel .room-subject > .editor {\n      padding: 10px; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 

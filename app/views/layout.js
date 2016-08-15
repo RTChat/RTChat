@@ -11,7 +11,7 @@ module.exports = Backbone.View.extend({
 			<div data-subview="sidebar"></div>
 			<div class="main-panel"></div>
 		</div>
-		<div class="footer"></div>
+		<div class="footer hidden"></div>
 	`,
 	welcomeTemplate: '<div data-subview="welcome"></div>',
 	roomTemplate: '<div data-subview="room"></div>',
@@ -31,6 +31,7 @@ module.exports = Backbone.View.extend({
 		Backbone.Subviews.add( this );
 		$(window).on('hashchange', function() {
 			self.removeSubviews(); // Re-initialize all views.
+			// NOTE: all views are re-created, because they might have added handers to RTCWrapper.
 			self.render();
 		});
 	},

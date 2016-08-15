@@ -29,14 +29,16 @@ describe("Chat Panel", function() {
 		it("should show chats to eachother.", function() {
 			browser.$('.emojionearea-editor').sendKeys("I'm number one! :cat:\n\n");
 
-			browser2.wait(function() {
-				return browser.$$('#ChatPanel li').get(0).getAttribute('innerHTML').toMatch("I'm number one!")
+			browser.wait(function() {
+				return browser.$$('#ChatPanel li').get(0).getAttribute('innerHTML').toMatch("I'm number one!") &&
+				      browser2.$$('#ChatPanel li').get(0).getAttribute('innerHTML').toMatch("I'm number one!");
 			});
 
 			browser2.$('.emojionearea-editor').sendKeys("I'm number two! :cat2:\n\n");
 
-			browser2.wait(function() {
-				return browser.$$('#ChatPanel li').get(0).getAttribute('innerHTML').toMatch("I'm number one!")
+			browser.wait(function() {
+				return browser.$$('#ChatPanel li').get(1).getAttribute('innerHTML').toMatch("I'm number two!") &&
+				      browser2.$$('#ChatPanel li').get(1).getAttribute('innerHTML').toMatch("I'm number two!");
 			});
 		});
 
