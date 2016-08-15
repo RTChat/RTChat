@@ -85,6 +85,7 @@ module.exports = Backbone.View.extend({
 	initialize: function() {
 		Backbone.Subviews.add( this );
 		var self = this;
+		this.scope = {}; //NOTE: on re-init, this doesnt get reset automatically.
 		RTCWrapper.onStateChange(function(old, newState) {
 			console.log("StateUpdate", old, newState);
 			self.scope.roomSubject = newState.roomSubject;

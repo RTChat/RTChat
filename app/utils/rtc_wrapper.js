@@ -15,13 +15,19 @@ var userStreams = {
 	oneway: true
 }
 
+var AppState = {};
+var oldState = {};
+var peerJoinHandlers = [];
+var stateChangeHandlers = [];
+var receiveBroadcastHandlers = [];
+var startFriendChatHandlers = [];
+
 module.exports = {
 	// === Room API ===  (and users)
 	users: [],
 	joinRoom: function(roomName, options, callback) {
 		var self = this;
 		this.users = [];
-		this.leaveRoom(); //TODO: close connection?
 		console.log("Joining", roomName, !this.connection)
 
 		if (!this.connection) this.connection = new RTCMultiConnection();
@@ -74,7 +80,7 @@ module.exports = {
 		// this.connection.extra = UserService.currentUser.attributes
 
 		this.connection.onopen = function(sess) {
-			console.log("onopen", sess);
+			console.log("onopen", sess, sess.extra);
 			// console.log("new_user", cc.peers[sess.userid])
 			// console.log("users", cc.peers, cc.peers.getLength())
 			// if (cc.peers[sess.userid].extra.name == undefined) {
@@ -127,6 +133,11 @@ module.exports = {
 			// this.connection.peers.forEach(function(peer) {
 			// 	console.log("cc". peer)
 			// });
+
+			peerJoinHandlers = [];
+			stateChangeHandlers = [];
+			receiveBroadcastHandlers = [];
+			startFriendChatHandlers = [];
 
 			// Wipe out state
 			AppState = {}
@@ -243,15 +254,37 @@ module.exports = {
 		this.reqConnection.openOrJoin(RTChat.AppConfig.AppName +'_'+ public_room);
 	},
 
+	// // === Friends API === //
+	// //TODO: ??
+	// // connection.onNewParticipant = function(participantId, userPreferences) {
+	// enableFriends: function() { // go online
+	// 	this.friendConnection = new RTCMultiConnection();
+	// 	this.friendConnection.socketURL = RTChat.AppConfig.SocketHost;
+	// 	// this.reqConnection.extra = {requestPrivateSession: private_room};
+	// 	this.friendConnection.openOrJoin("RTChat_" + UserService.getExtras().fullId);
+	// },
+	// disableFriends: function() { // go offline
+	// 	//TODO: close chats?
+	// 	this.friendConnection && this.friendConnection.close();
+	// },
+	// addFriend: function(fid) {
+
+	// },
+	// removeFriend(fid) {
+
+	// },
+	// onFriendRequest(fid) {
+
+	// },
+	// onStartFriendChat(fn) {
+	// 	if (typeof fn !== 'function') throw "Must pass a function!";
+	// 	startFriendChatHandlers.push(fn);
+	// },
 };
 
 /* ===== PRIVATE ===== */
 
-var AppState = {};
-var oldState = {};
-var peerJoinHandlers = [];
-var stateChangeHandlers = [];
-var receiveBroadcastHandlers = [];
+
 
 // Instead of atomically updating the state, only update the present keys
 var mergeAppState = function(newState) {

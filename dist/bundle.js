@@ -18670,7 +18670,6 @@ var RTChat =
 		joinRoom: function joinRoom(roomName, options, callback) {
 			var self = this;
 			this.users = [];
-			this.leaveRoom(); //TODO: close connection?
 			console.log("Joining", roomName, !this.connection);
 	
 			if (!this.connection) this.connection = new RTCMultiConnection();
@@ -18747,10 +18746,6 @@ var RTChat =
 				// console.log("QQQQ",self.connection.peers.getAllParticipants())
 			};
 	
-			this.connection.onExtraDataUpdated = function (ev) {
-				console.log("EXTRA_UPDATE:", ev.userid, ev.extra);
-			};
-	
 			this.connection.onmessage = function (e) {
 				switch (e.data.type) {
 					case 'UpdateAppState':
@@ -18778,11 +18773,10 @@ var RTChat =
 				// 	console.log("cc". peer)
 				// });
 	
-				// peerJoinHandlers = [];
-				// stateChangeHandlers = [];
-				// receiveBroadcastHandlers = [];
-				// startFriendChatHandlers = [];
-	
+				peerJoinHandlers = [];
+				stateChangeHandlers = [];
+				receiveBroadcastHandlers = [];
+				startFriendChatHandlers = [];
 	
 				// Wipe out state
 				AppState = {};
@@ -18901,30 +18895,8 @@ var RTChat =
 			};
 	
 			this.reqConnection.openOrJoin(RTChat.AppConfig.AppName + '_' + public_room);
-		},
-	
-		// === Friends API === //
-		//TODO: ??
-		// connection.onNewParticipant = function(participantId, userPreferences) {
-		enableFriends: function enableFriends() {
-			// go online
-			this.friendConnection = new RTCMultiConnection();
-			this.friendConnection.socketURL = RTChat.AppConfig.SocketHost;
-			// this.reqConnection.extra = {requestPrivateSession: private_room};
-			this.friendConnection.openOrJoin("RTChat_" + UserService.getExtras().fullId);
-		},
-		disableFriends: function disableFriends() {
-			// go offline
-			//TODO: close chats?
-			this.friendConnection && this.friendConnection.close();
-		},
-		addFriend: function addFriend(fid) {},
-		removeFriend: function removeFriend(fid) {},
-		onFriendRequest: function onFriendRequest(fid) {},
-		onStartFriendChat: function onStartFriendChat(fn) {
-			if (typeof fn !== 'function') throw "Must pass a function!";
-			startFriendChatHandlers.push(fn);
 		}
+	
 	};
 	
 	/* ===== PRIVATE ===== */
@@ -27179,7 +27151,7 @@ var RTChat =
 			var self = this;
 			Backbone.Subviews.add(this);
 			$(window).on('hashchange', function () {
-				self.removeSubviews(); // Re-initialize all views.
+				self.removeSubviews(); // Re-initialize all subviews.
 				// NOTE: all views are re-created, because they might have added handers to RTCWrapper.
 				self.render();
 			});
@@ -27292,6 +27264,7 @@ var RTChat =
 		initialize: function initialize() {
 			Backbone.Subviews.add(this);
 			var self = this;
+			this.scope = {}; //NOTE: on re-init, this doesnt get reset automatically.
 			RTCWrapper.onStateChange(function (old, newState) {
 				console.log("StateUpdate", old, newState);
 				self.scope.roomSubject = newState.roomSubject;

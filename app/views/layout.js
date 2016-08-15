@@ -30,7 +30,7 @@ module.exports = Backbone.View.extend({
 		var self = this;
 		Backbone.Subviews.add( this );
 		$(window).on('hashchange', function() {
-			self.removeSubviews(); // Re-initialize all views.
+			self.removeSubviews(); // Re-initialize all subviews.
 			// NOTE: all views are re-created, because they might have added handers to RTCWrapper.
 			self.render();
 		});
