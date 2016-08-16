@@ -29061,7 +29061,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "#Sidebar {\n  background-color: grey;\n  overflow-y: auto;\n  flex: 0 0 0; }\n  #Sidebar.open {\n    flex-basis: 210px; }\n", "", {"version":3,"sources":["/./app/styles/sidebar.css"],"names":[],"mappings":"AAAA;EACE,uBAAuB;EACvB,iBAAiB;EACjB,YAAY,EAAE;EACd;IACE,kBAAkB,EAAE","file":"sidebar.css","sourcesContent":["#Sidebar {\n  background-color: grey;\n  overflow-y: auto;\n  flex: 0 0 0; }\n  #Sidebar.open {\n    flex-basis: 210px; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "#Sidebar {\n  background-color: grey;\n  overflow-y: auto;\n  overflow-x: hidden;\n  flex: 0 0 0; }\n  #Sidebar.open {\n    flex-basis: 210px; }\n", "", {"version":3,"sources":["/./app/styles/sidebar.css"],"names":[],"mappings":"AAAA;EACE,uBAAuB;EACvB,iBAAiB;EACjB,mBAAmB;EACnB,YAAY,EAAE;EACd;IACE,kBAAkB,EAAE","file":"sidebar.css","sourcesContent":["#Sidebar {\n  background-color: grey;\n  overflow-y: auto;\n  overflow-x: hidden;\n  flex: 0 0 0; }\n  #Sidebar.open {\n    flex-basis: 210px; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 

@@ -54,8 +54,14 @@ exports.config = {
 
 		protractor.Protractor.prototype.waitConstant = function(time) {
 			var ready = false;
-			setTimeout(function() {ready = true;}, time);
-			this.wait(function() {return ready;}, time+200);
+			var first = true;
+			this.wait(function() {
+				if (first) {
+					setTimeout(function() {ready = true;}, time);
+					first = false;
+				}
+				return ready;
+			}, time+200);
 		}
 
 		// Useful shortcut for matching in a wait.
