@@ -29,11 +29,7 @@ module.exports = Backbone.View.extend({
 	initialize: function() {
 		var self = this;
 		Backbone.Subviews.add( this );
-		$(window).on('hashchange', function() {
-			self.removeSubviews(); // Re-initialize all subviews.
-			// NOTE: all views are re-created, because they might have added handers to RTCWrapper.
-			self.render();
-		});
+		$(window).on('hashchange', function() { self.render(); });
 	},
 	setTitle: function() {
 		document.title = RTChat.AppConfig.AppName+' '+document.location.hash;

@@ -84,17 +84,14 @@ module.exports = Backbone.View.extend({
 	},
 	initialize: function() {
 		Backbone.Subviews.add( this );
-		var self = this;
-		this.scope = {}; //NOTE: on re-init, this doesnt get reset automatically.
-		RTCWrapper.onStateChange(function(old, newState) {
-			console.log("StateUpdate", old, newState);
-			self.scope.roomSubject = newState.roomSubject;
-		});
 	},
 	subviewCreators: {
 		chat: function() { return new RTChat.Views.ChatPanel(); },
 	},
 	render: function(){
+		var self = this;
+		this.scope = {}; //NOTE: on re-init, this doesnt get reset automatically.
+
 		this.$el.html(this.template);
 		Rivets.bind(this.$el, {scope: this.scope});
 
@@ -102,6 +99,12 @@ module.exports = Backbone.View.extend({
 		RTCWrapper.joinRoom(window.location.hash,
 			{xVideoContainer: this.$('.video-container')}
 		);
+
+		//NOTE: handlers get reset on "joinRoom"
+		RTCWrapper.onStateChange(function(old, newState) {
+			console.log("StateUpdate", old, newState);
+			self.scope.roomSubject = newState.roomSubject;
+		});
 
 		this.scope.roomName = window.location.hash;
 		this.scope.defaultSubject = "Welcome to "+this.scope.roomName;
@@ -119,5 +122,4 @@ module.exports = Backbone.View.extend({
 		RTCWrapper.leaveRoom();
 		Backbone.View.prototype.remove.apply(this, arguments); // "super"
 	},
-	scope: {}
 });

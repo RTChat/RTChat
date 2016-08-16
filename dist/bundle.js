@@ -18670,9 +18670,11 @@ var RTChat =
 		joinRoom: function joinRoom(roomName, options, callback) {
 			var self = this;
 			this.users = [];
-			console.log("Joining", roomName, !this.connection);
+			console.log("Joining", roomName);
 	
-			if (!this.connection) this.connection = new RTCMultiConnection();
+			if (this.connection) this.leaveRoom();
+	
+			this.connection = new RTCMultiConnection();
 			this.connection.socketURL = RTChat.AppConfig.SocketHost;
 	
 			// ===
@@ -18764,6 +18766,7 @@ var RTChat =
 		},
 		leaveRoom: function leaveRoom() {
 			if (this.connection) {
+				//TODO: necessary?
 				console.log("LLLEAVING", this.connection, this.connection && this.connection.peers);
 				// this.connection.leave();
 				this.connection.close();
@@ -18781,6 +18784,8 @@ var RTChat =
 				// Wipe out state
 				AppState = {};
 				triggerStateChange();
+	
+				this.connection = false;
 			}
 		},
 		onPeerJoin: function onPeerJoin(fn) {
@@ -27151,8 +27156,6 @@ var RTChat =
 			var self = this;
 			Backbone.Subviews.add(this);
 			$(window).on('hashchange', function () {
-				self.removeSubviews(); // Re-initialize all subviews.
-				// NOTE: all views are re-created, because they might have added handers to RTCWrapper.
 				self.render();
 			});
 		},
@@ -27263,12 +27266,6 @@ var RTChat =
 		},
 		initialize: function initialize() {
 			Backbone.Subviews.add(this);
-			var self = this;
-			this.scope = {}; //NOTE: on re-init, this doesnt get reset automatically.
-			RTCWrapper.onStateChange(function (old, newState) {
-				console.log("StateUpdate", old, newState);
-				self.scope.roomSubject = newState.roomSubject;
-			});
 		},
 		subviewCreators: {
 			chat: function chat() {
@@ -27276,11 +27273,20 @@ var RTChat =
 			}
 		},
 		render: function render() {
+			var self = this;
+			this.scope = {}; //NOTE: on re-init, this doesnt get reset automatically.
+	
 			this.$el.html(this.template);
 			Rivets.bind(this.$el, { scope: this.scope });
 	
 			// Make the magic happen~~
 			RTCWrapper.joinRoom(window.location.hash, { xVideoContainer: this.$('.video-container') });
+	
+			//NOTE: handlers get reset on "joinRoom"
+			RTCWrapper.onStateChange(function (old, newState) {
+				console.log("StateUpdate", old, newState);
+				self.scope.roomSubject = newState.roomSubject;
+			});
 	
 			this.scope.roomName = window.location.hash;
 			this.scope.defaultSubject = "Welcome to " + this.scope.roomName;
@@ -27297,8 +27303,7 @@ var RTChat =
 			// Ensure we leave the room when navigating away.
 			RTCWrapper.leaveRoom();
 			Backbone.View.prototype.remove.apply(this, arguments); // "super"
-		},
-		scope: {}
+		}
 	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(2)))
 

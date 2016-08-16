@@ -28,9 +28,11 @@ module.exports = {
 	joinRoom: function(roomName, options, callback) {
 		var self = this;
 		this.users = [];
-		console.log("Joining", roomName, !this.connection)
+		console.log("Joining", roomName)
 
-		if (!this.connection) this.connection = new RTCMultiConnection();
+		if (this.connection) this.leaveRoom();
+
+		this.connection = new RTCMultiConnection();
 		this.connection.socketURL = RTChat.AppConfig.SocketHost;
 
 		// ===
@@ -124,7 +126,7 @@ module.exports = {
 		this.connection.openOrJoin(RTChat.AppConfig.AppName +'_'+ roomName, callback);
 	},
 	leaveRoom: function() {
-		if (this.connection) {
+		if (this.connection) { //TODO: necessary?
 			console.log("LLLEAVING", this.connection, this.connection && this.connection.peers)
 			// this.connection.leave();
 			this.connection.close();
@@ -142,6 +144,8 @@ module.exports = {
 			// Wipe out state
 			AppState = {}
 			triggerStateChange();
+
+			this.connection = false;
 		}
 	},
 	onPeerJoin: function(fn) { // Register handler to be triggered when someone joins.
