@@ -21,6 +21,7 @@ module.exports = {
 			if (!this.currentUser) { this.create(); }
 
 			window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id);
+			console.log("User:", this.currentUser)
 
 		} else {
 			console.log("Sorry! No Web Storage support..");
@@ -41,7 +42,19 @@ module.exports = {
 			fullId: this.currentUser.id,
 			name: this.currentUser.get('name')
 		};
+	},
+	getAppConf: function() {
+		return this.currentUser.get('app_'+appName()) || {};
+	},
+	setAppConf: function(conf) {
+		//TODO: merge?
+		this.currentUser.set('app_'+appName(), conf);
+		this.currentUser.save();
 	}
 };
 
 module.exports.init();
+
+function appName() {
+	return RTChat.AppConfig['AppName'];
+}

@@ -24161,6 +24161,8 @@ var RTChat =
 	
 	__webpack_require__(20);
 	
+	// var appName = require('app/config').AppName;
+	
 	module.exports = {
 		init: function init() {
 			// sets up the username, and stuff.
@@ -24182,6 +24184,7 @@ var RTChat =
 				}
 	
 				window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id);
+				console.log("User:", this.currentUser);
 			} else {
 				console.log("Sorry! No Web Storage support..");
 			}
@@ -24201,10 +24204,22 @@ var RTChat =
 				fullId: this.currentUser.id,
 				name: this.currentUser.get('name')
 			};
+		},
+		getAppConf: function getAppConf() {
+			return this.currentUser.get('app_' + appName()) || {};
+		},
+		setAppConf: function setAppConf(conf) {
+			//TODO: merge?
+			this.currentUser.set('app_' + appName(), conf);
+			this.currentUser.save();
 		}
 	};
 	
 	module.exports.init();
+	
+	function appName() {
+		return RTChat.AppConfig['AppName'];
+	}
 
 /***/ },
 /* 20 */
