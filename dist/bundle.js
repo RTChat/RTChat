@@ -24155,13 +24155,11 @@ var RTChat =
 /* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	/* WEBPACK VAR INJECTION */(function(_) {"use strict";
 	
 	// UserService
 	
 	__webpack_require__(20);
-	
-	// var appName = require('app/config').AppName;
 	
 	module.exports = {
 		init: function init() {
@@ -24184,7 +24182,6 @@ var RTChat =
 				}
 	
 				window.localStorage.setItem('RTChat_LatestUser', this.currentUser.id);
-				console.log("User:", this.currentUser);
 			} else {
 				console.log("Sorry! No Web Storage support..");
 			}
@@ -24209,8 +24206,8 @@ var RTChat =
 			return this.currentUser.get('app_' + appName()) || {};
 		},
 		setAppConf: function setAppConf(conf) {
-			//TODO: merge?
-			this.currentUser.set('app_' + appName(), conf);
+			var old_conf = this.getAppConf();
+			this.currentUser.set('app_' + appName(), _.extend(old_conf, conf));
 			this.currentUser.save();
 		}
 	};
@@ -24220,6 +24217,7 @@ var RTChat =
 	function appName() {
 		return RTChat.AppConfig['AppName'];
 	}
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
 /* 20 */
