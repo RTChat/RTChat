@@ -17,7 +17,7 @@ module.exports = Backbone.View.extend({
 	roomTemplate: '<div data-subview="room"></div>',
 	events: {
 		'click #Header .toggle-left-sidebar': function() {
-			this.subviews.sidebar.toggle()
+			this.subviews.sidebar.toggle();
 		},
 	},
 	subviewCreators: {

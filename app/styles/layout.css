@@ -9,12 +9,14 @@ body {
 		flex: 1 1 100%;
 		display: flex;
 		flex-flow: row;
+		position: relative;
 
 		> .main-panel {
 			flex: 1 1 100%;
 			background-color: lightgrey;
 			display: flex;
 			flex-direction: row;
+			position: relative;
 
 			> * {
 				flex: 1;

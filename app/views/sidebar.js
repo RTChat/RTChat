@@ -12,7 +12,6 @@ module.exports = Backbone.View.extend({
 		return this;
 	},
 	toggle: function(bool) {
-		this.$el.toggleClass("open", bool)
+		this.$el.toggleClass("open", bool);
 	}
-
 });

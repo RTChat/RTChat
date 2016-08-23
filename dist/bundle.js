@@ -63,7 +63,7 @@ var RTChat =
 	
 		// DemoApp - Extend these with your own app or game!
 		Views: views,
-		AppConfig: __webpack_require__(44),
+		AppConfig: __webpack_require__(45),
 	
 		// Core Services - don't extend.
 		RTCWrapper: __webpack_require__(17),
@@ -18172,12 +18172,13 @@ var RTChat =
 
 	var map = {
 		"./chat_panel.js": 12,
-		"./header.js": 25,
-		"./layout.js": 28,
-		"./room_panel.js": 31,
-		"./sidebar.js": 37,
-		"./user_menu.js": 40,
-		"./welcome_panel.js": 41
+		"./context_menu.js": 25,
+		"./header.js": 26,
+		"./layout.js": 29,
+		"./room_panel.js": 32,
+		"./sidebar.js": 38,
+		"./user_menu.js": 41,
+		"./welcome_panel.js": 42
 	};
 	function webpackContext(req) {
 		return __webpack_require__(webpackContextResolve(req));
@@ -24215,7 +24216,7 @@ var RTChat =
 	module.exports.init();
 	
 	function appName() {
-		return RTChat.AppConfig['AppName'];
+		return RTChat.AppConfig.AppName;
 	}
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
@@ -27062,9 +27063,153 @@ var RTChat =
 /* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* WEBPACK VAR INJECTION */(function($) {'use strict';
+	
+	module.exports = Backbone.View.extend({
+		id: 'ContextMenu',
+		template: '\n\t\t<ul>\n\t\t\t<li> Demo! </li>\n\t\t\t<li> Demo! </li>\n\t\t</ul>\n\t',
+		defaultDirection: 'right-down',
+		render: function render() {
+			this.$el.html(this.template);
+			this.hide();
+	
+			this.$el.css({
+				position: 'absolute',
+				top: 0,
+				left: 0,
+				'z-index': 1
+			});
+	
+			return this;
+		},
+		hide: function hide() {
+			this.$el.hide();
+		},
+		show: function show(target, defaultDir) {
+			// Target can be relative coords {x: 10, y:20}, or an element
+			// DefaultDir can be "right-down", "right-up", etc
+			//TODO: validate params
+	
+			// We need to see how big it is.
+			this.$el.show();
+			this.$el.css({
+				top: 0,
+				left: 0,
+				right: 'auto',
+				bottom: 'auto'
+			});
+			window.getComputedStyle(this.el);
+	
+			// Compute the size of the menu.
+			var menu_dim = {
+				width: this.$el.width(),
+				height: this.$el.height()
+			};
+	
+			// jQuery "wrap" target if element
+			if (target instanceof HTMLElement) target = $(target);
+			//TODO: which browsers support HTMLElement?
+	
+			if (!defaultDir) defaultDir = this.defaultDirection || 'right-down';
+	
+			var offsetParent = this.$el.offsetParent();
+			var parent_dim = {
+				width: offsetParent.width(),
+				height: offsetParent.height()
+			};
+	
+			// Compute size of target area.
+			var target_coords = {};
+			if (target instanceof $) {
+				var offset = target.position();
+				target_coords = {
+					top: offset.top,
+					left: offset.left,
+					right: offset.left + target.width(),
+					bottom: offset.top + target.height()
+				};
+			} else {
+				//TODO:?
+				target_coords = {
+					top: target.y,
+					left: target.x,
+					right: target.x,
+					bottom: target.y
+				};
+			}
+	
+			// Compute the extra space for all possible targetitions.
+			var extra_space = {
+				up: target_coords.bottom - menu_dim.height,
+				left: target_coords.right - menu_dim.width,
+				down: parent_dim.height - (target_coords.top + menu_dim.height),
+				right: parent_dim.width - (target_coords.left + menu_dim.width)
+			};
+			// console.log("Coords" , target_coords)
+			// console.log("menu_dim", menu_dim);
+			// console.log("parent_dim", parent_dim);
+			// console.log("EXTRA_SPOACE", extra_space);
+	
+			var self = this;
+			var position = function position(dir) {
+				var css = {
+					top: 'auto',
+					left: 'auto',
+					right: 'auto',
+					bottom: 'auto'
+				};
+	
+				if (dir.match(/right/)) css.left = target_coords.right;
+				if (dir.match(/left/)) css.left = target_coords.left;
+				if (dir.match(/up/)) css.bottom = parent_dim.height - target_coords.bottom;
+				if (dir.match(/down/)) css.top = target_coords.top;
+	
+				// console.log("positioning", dir, css);
+				self.$el.css(css);
+			};
+	
+			var opposite = {
+				up: 'down',
+				down: 'up',
+				right: 'left',
+				left: 'right'
+			};
+	
+			// Compute order of directions to try.
+			var dir;
+			var order = [defaultDir];
+			for (var i = 1; i <= 3; i++) {
+				dir = order[i - 1].split('-');
+				// Trade off toggling the first or second part.
+				if (i % 2) {
+					dir = dir[0] + '-' + opposite[dir[1]];
+				} else {
+					dir = opposite[dir[0]] + '-' + dir[1];
+				}
+				order.push(dir);
+			}
+			// console.log("ORDER", order)
+	
+			// Auto-direction - Find the first order to fit.
+			for (i = 0; i < order.length; i++) {
+				dir = order[i].split('-');
+				if (extra_space[dir[0]] >= 0 && extra_space[dir[1]] >= 0) return position(order[i]);
+			}
+	
+			// If nothing is going to fit.
+			console.warn("Unable to position context_menu nicely!");
+			position(defaultDir);
+		}
+	});
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
+/* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
-	__webpack_require__(26);
+	__webpack_require__(27);
 	
 	module.exports = Backbone.View.extend({
 		id: 'Header',
@@ -27091,13 +27236,13 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(27);
+	var content = __webpack_require__(28);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -27117,7 +27262,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -27131,14 +27276,14 @@ var RTChat =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {'use strict';
 	
 	// Layout - The parent view of the whole app, and also the router.
 	
-	__webpack_require__(29);
+	__webpack_require__(30);
 	var RTCWrapper = __webpack_require__(17);
 	
 	module.exports = Backbone.View.extend({
@@ -27192,13 +27337,13 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(30);
+	var content = __webpack_require__(31);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -27218,7 +27363,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -27226,24 +27371,24 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,eAAe;IACf,cAAc;IACd,eAAe,EAAE;IACjB;MACE,eAAe;MACf,4BAA4B;MAC5B,cAAc;MACd,oBAAoB,EAAE;MACtB;QACE,QAAQ,EAAE;EAChB;IACE,yBAAyB,EAAE;;AAE/B,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row;\n    position: relative; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row;\n      position: relative; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n", "", {"version":3,"sources":["/./app/styles/layout.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,aAAa;EACb,cAAc;EACd,uBAAuB,EAAE;EACzB;IACE,eAAe;IACf,cAAc;IACd,eAAe;IACf,mBAAmB,EAAE;IACrB;MACE,eAAe;MACf,4BAA4B;MAC5B,cAAc;MACd,oBAAoB;MACpB,mBAAmB,EAAE;MACrB;QACE,QAAQ,EAAE;EAChB;IACE,yBAAyB,EAAE;;AAE/B,uBAAuB;AACvB;EACE,gBAAgB,EAAE;;AAEpB;EACE,YAAY,EAAE","file":"layout.css","sourcesContent":["body {\n  margin: 0;\n  height: 100%;\n  display: flex;\n  flex-direction: column; }\n  body > .main-bar {\n    flex: 1 1 100%;\n    display: flex;\n    flex-flow: row;\n    position: relative; }\n    body > .main-bar > .main-panel {\n      flex: 1 1 100%;\n      background-color: lightgrey;\n      display: flex;\n      flex-direction: row;\n      position: relative; }\n      body > .main-bar > .main-panel > * {\n        flex: 1; }\n  body > .footer {\n    background-color: yellow; }\n\n/* === Utilities === */\n.dropdown-menu > li {\n  padding: 0 10px; }\n\n.disabled {\n  color: grey; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($, Rivets) {'use strict';
 	
 	// RoomPanel
 	
-	__webpack_require__(32);
+	__webpack_require__(33);
 	var RTCWrapper = __webpack_require__(17);
 	
-	var Slider = __webpack_require__(34);
-	__webpack_require__(35);
+	var Slider = __webpack_require__(35);
+	__webpack_require__(36);
 	
 	module.exports = Backbone.View.extend({
 		id: 'RoomPanel',
@@ -27321,13 +27466,13 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(2)))
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(33);
+	var content = __webpack_require__(34);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -27347,7 +27492,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -27361,7 +27506,7 @@ var RTChat =
 
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*! =======================================================
@@ -28982,13 +29127,13 @@ var RTChat =
 
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(36);
+	var content = __webpack_require__(37);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -29008,7 +29153,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -29022,14 +29167,14 @@ var RTChat =
 
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	// Sidebar
 	
-	__webpack_require__(38);
+	__webpack_require__(39);
 	
 	module.exports = Backbone.View.extend({
 		id: 'Sidebar',
@@ -29041,17 +29186,16 @@ var RTChat =
 		toggle: function toggle(bool) {
 			this.$el.toggleClass("open", bool);
 		}
-	
 	});
 
 /***/ },
-/* 38 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(39);
+	var content = __webpack_require__(40);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -29071,7 +29215,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -29085,7 +29229,7 @@ var RTChat =
 
 
 /***/ },
-/* 40 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
@@ -29128,12 +29272,12 @@ var RTChat =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
-/* 41 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	__webpack_require__(42);
+	__webpack_require__(43);
 	
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
@@ -29146,13 +29290,13 @@ var RTChat =
 	});
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(43);
+	var content = __webpack_require__(44);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(16)(content, {});
@@ -29172,7 +29316,7 @@ var RTChat =
 	}
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(15)();
@@ -29186,7 +29330,7 @@ var RTChat =
 
 
 /***/ },
-/* 44 */
+/* 45 */
 /***/ function(module, exports) {
 
 	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443"}

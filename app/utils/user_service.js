@@ -55,5 +55,5 @@ module.exports = {
 module.exports.init();
 
 function appName() {
-	return RTChat.AppConfig['AppName'];
+	return RTChat.AppConfig.AppName;
 }
