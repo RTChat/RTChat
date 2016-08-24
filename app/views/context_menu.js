@@ -41,8 +41,8 @@ module.exports = Backbone.View.extend({
 
 		// Compute the size of the menu.
 		var menu_dim = {
-			width: this.$el.width(),
-			height: this.$el.height()
+			width: this.$el.outerWidth(),
+			height: this.$el.outerHeight()
 		};
 
 		// jQuery "wrap" target if element
@@ -143,5 +143,16 @@ module.exports = Backbone.View.extend({
 		// If nothing is going to fit.
 		console.warn("Unable to position context_menu nicely!");
 		position(defaultDir);
+	},
+	// Like show, but will hide when called again with the same "target".
+	toggle: function(target) {
+		if (target && target == this._prevTarget && this.$el.is(':visible')) {
+			this.hide();
+			this._prevTarget = false;
+		}
+		else {
+			this.show.apply(this, arguments)
+			this._prevTarget = target;
+		}
 	},
 });
