@@ -69,6 +69,7 @@ module.exports = Backbone.View.extend({
 			};
 		} else {
 			//TODO:?
+			//TODO: event
 			target_coords = {
 				top: target.y,
 				left: target.x,

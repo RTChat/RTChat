@@ -34,30 +34,30 @@ var server = require(options.http ? 'http' : 'https');
 var watcher;
 
 if (!options.http) {
-  try {
-    server_opts = {
-      key: fs.readFileSync(path.resolve('keys/privatekey.pem')),
-      cert: fs.readFileSync(path.resolve('keys/certificate.pem'))
-    };
-  }
-  catch (err) {
-    console.warn("WARNING: failed to find valid SSL keys, falling back to fake-keys..");
-    server_opts = {
-      key: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
-      cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
-    };
-  }
+	try {
+		server_opts = {
+			key: fs.readFileSync(path.resolve('keys/privatekey.pem')),
+			cert: fs.readFileSync(path.resolve('keys/certificate.pem'))
+		};
+	}
+	catch (err) {
+		console.warn("WARNING: failed to find valid SSL keys, falling back to fake-keys..");
+		server_opts = {
+			key: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
+			cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
+		};
+	}
 		// HTTP Strict Transport Security. (keep using SSL for at least a year)
 		// if (!options.http)
 		// 	response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-  // Setup HTTP-redirect server.
-  require('http').createServer(function(req, res) {
-    res.writeHead(301, { "Location": "https://" + req.headers.host + req.url });
-    res.end();
-  }).on('error', function(err) {
-    console.warn("WARNING: unable to start http-redirect server. GOT:", err.toString());
-  }).listen(80);
+	// Setup HTTP-redirect server.
+	require('http').createServer(function(req, res) {
+		res.writeHead(301, { "Location": "https://" + req.headers.host + req.url });
+		res.end();
+	}).on('error', function(err) {
+		console.warn("WARNING: unable to start http-redirect server. GOT:", err.toString());
+	}).listen(80);
 
 }
 
@@ -117,7 +117,8 @@ for (var i in options.plugin) {
 		connect.use(require(path.join(__dirname, 'lib', options.plugin[i])));
 	} catch(err)	{
 		if (err.code !== 'MODULE_NOT_FOUND') throw err;
-	  connect.use(require(path.resolve(options.plugin[i])));
+		// load the module from './lib/'
+		connect.use(require(path.join(path.resolve('lib'), options.plugin[i])));
 	}
 }
 
