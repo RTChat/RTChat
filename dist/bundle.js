@@ -24204,7 +24204,7 @@ var RTChat =
 			};
 		},
 		getAppConf: function getAppConf() {
-			return this.currentUser.get('app_' + appName()) || {};
+			return _.clone(this.currentUser.get('app_' + appName()) || {});
 		},
 		setAppConf: function setAppConf(conf) {
 			var old_conf = this.getAppConf();
@@ -27130,6 +27130,7 @@ var RTChat =
 				};
 			} else {
 				//TODO:?
+				//TODO: event
 				target_coords = {
 					top: target.y,
 					left: target.x,

@@ -43,7 +43,7 @@ module.exports = {
 		};
 	},
 	getAppConf: function() {
-		return this.currentUser.get('app_'+appName()) || {};
+		return _.clone(this.currentUser.get('app_'+appName()) || {});
 	},
 	setAppConf: function(conf) {
 		var old_conf = this.getAppConf();
