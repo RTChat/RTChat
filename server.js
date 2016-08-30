@@ -7,17 +7,19 @@ var options = { // defaults
 	plugin: [],
 };
 
-var opt = require("node-getopt").create([
+var getopts = require("node-getopt").create([
 	['', 'http', 'Disable SSL'],
-	['', 'ip=ARG', 'Set IP'],
-	['', 'port=ARG', 'Set port'],
+	['', 'ip=', 'Set IP'],
+	['', 'port=', 'Set port'],
 	['', 'watch', 'Recompile assets on file modification'],
-	['', 'plugin=ARG+', 'Add "connect-style" plugin'],
+	['', 'plugin=ARG+', 'Add "connect-style" plugins from ./lib'],
 	['h', 'help', '']
-]).bindHelp().parseSystem();
+]).bindHelp();
+var opt = getopts.parseSystem();
 
 if (opt.argv.length > 0) {
 	console.error("ERROR: Unexpected argument(s): " + opt.argv.join(', '));
+	process.stdout.write(getopts.getHelp());
 	process.exit(1);
 }
 
