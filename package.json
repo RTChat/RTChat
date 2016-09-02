@@ -46,6 +46,7 @@
     "rivets": "^0.8.1",
     "rtcmulticonnection-v3": "^3.3.6",
     "sass-loader": "^3.2.0",
+    "shortid": "^2.2.6",
     "style-loader": "^0.13.0",
     "tmp": "0.0.28",
     "travis-multirunner": "^3.0.1",

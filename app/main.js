@@ -19,6 +19,7 @@ module.exports = {
 	// Core Services - don't extend.
 	RTCWrapper: require('utils/rtc_wrapper.js'),
 	UserService: require('utils/user_service.js'),
+	Random: require('utils/random.js'),
 
 	// Run this after extensions have been loaded.
 	init: function() {

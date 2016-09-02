@@ -68,6 +68,7 @@ var RTChat =
 		// Core Services - don't extend.
 		RTCWrapper: __webpack_require__(17),
 		UserService: __webpack_require__(19),
+		Random: __webpack_require__(46),
 	
 		// Run this after extensions have been loaded.
 		init: function init() {
@@ -24158,7 +24159,7 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function(_) {"use strict";
 	
-	// UserService
+	// UserService - stores multiple users information in the browser.
 	
 	__webpack_require__(20);
 	
@@ -24166,16 +24167,19 @@ var RTChat =
 		init: function init() {
 			// sets up the username, and stuff.
 			if (typeof Storage !== "undefined") {
-				var localUsers = new (Backbone.Collection.extend({
-					// idAttribute: 'name',
-					// modelId: function(attrs) {return attrs.name},
+				// Stores information of the user.
+				this.localUsers = new (Backbone.Collection.extend({
 					localStorage: new Backbone.LocalStorage("RTChat_Users")
 				}))();
-				this.localUsers = localUsers;
+				this.localUsers.fetch();
 	
-				localUsers.fetch();
+				// Stores arbitrary data for each user and app.
+				this.userAppData = new (Backbone.Collection.extend({
+					localStorage: new Backbone.LocalStorage("RTChat_UserAppData")
+				}))();
+				this.userAppData.fetch();
 	
-				this.currentUser = localUsers.get(window.localStorage.getItem('RTChat_LatestUser')) || localUsers.first();
+				this.currentUser = this.localUsers.get(window.localStorage.getItem('RTChat_LatestUser')) || this.localUsers.first();
 	
 				// console.log("found user:", this.currentUser)
 				if (!this.currentUser) {
@@ -24191,7 +24195,6 @@ var RTChat =
 			this.currentUser = this.localUsers.create({
 				name: name || "Guest_" + parseInt(Math.random() * 10000).toString()
 			});
-			console.log(this.currentUser);
 		},
 		updateName: function updateName(newName) {
 			this.currentUser.name = newName;
@@ -24203,21 +24206,30 @@ var RTChat =
 				name: this.currentUser.get('name')
 			};
 		},
-		getAppConf: function getAppConf() {
-			return _.clone(this.currentUser.get('app_' + appName()) || {});
+		_appDataId: function _appDataId() {
+			return RTChat.AppConfig.AppName + '_' + this.currentUser.id;
 		},
-		setAppConf: function setAppConf(conf) {
-			var old_conf = this.getAppConf();
-			this.currentUser.set('app_' + appName(), _.extend(old_conf, conf));
-			this.currentUser.save();
+		getAppData: function getAppData() {
+			var d = this.userAppData.get(this._appDataId());
+			if (!d) {
+				this.userAppData.create({
+					id: this._appDataId(),
+					data: {}
+				});
+				d = this.userAppData.get(this._appDataId());
+			}
+			return _.clone(d.get('data'));
+		},
+		// Merges object into userAppData
+		setAppData: function setAppData(data) {
+			var d = this.userAppData.get(this._appDataId());
+			var old_data = this.getAppData();
+			d.set('data', _.extend(old_data, data));
+			d.save();
 		}
 	};
 	
 	module.exports.init();
-	
-	function appName() {
-		return RTChat.AppConfig.AppName;
-	}
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
@@ -29286,19 +29298,33 @@ var RTChat =
 /* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
 	__webpack_require__(43);
 	
 	// WelcomePanel
 	module.exports = Backbone.View.extend({
 		id: 'WelcomePanel',
-		template: '<h2>Welcome To RTChat!</h2>\n\t\tA simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\n\t\t<br><br>\n\t\t<a class="btn btn-default" href="#global-chat">Go To global chat</a>\n\t',
+		template: '<h2>Welcome To RTChat!</h2>\n\t\tA simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\n\t\t<br><br>\n\t\t<a class="btn btn-default" href="#global-chat">Go To global chat</a>\n\t\t<div> Choose a Random room <span class="fa fa-refresh"></span></div>\n\t\t<ul class="random-rooms">\n\t\t\t<li rv-each-room="scope.random_rooms">\n\t\t\t\t<a rv-href="\'#\' |+ room">{room}</a>\n\t\t\t</li>\n\t\t</ul>\n\t',
+		events: {
+			'click .fa-refresh': function clickFaRefresh() {
+				this.generateRandomRooms();
+			}
+		},
+		generateRandomRooms: function generateRandomRooms() {
+			this.scope.random_rooms = [RTChat.Random.shortid()
+			// RTChat.Random.adjective()+'_'+RTChat.Random.animal()
+			];
+		},
 		render: function render() {
 			this.$el.html(this.template);
+			Rivets.bind(this.$el, { scope: this.scope });
+			this.generateRandomRooms();
 			return this;
-		}
+		},
+		scope: {}
 	});
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ },
 /* 43 */
@@ -29345,6 +29371,371 @@ var RTChat =
 /***/ function(module, exports) {
 
 	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443"}
+
+/***/ },
+/* 46 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var ShortId = __webpack_require__(47);
+	
+	module.exports = {
+		// adjective: function() {return _.sample(Adjectives);},
+		// animal: function() {return _.sample(Animals);},
+		shortid: ShortId.generate
+	};
+
+/***/ },
+/* 47 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	module.exports = __webpack_require__(48);
+
+
+/***/ },
+/* 48 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var alphabet = __webpack_require__(49);
+	var encode = __webpack_require__(51);
+	var decode = __webpack_require__(53);
+	var isValid = __webpack_require__(54);
+	
+	// Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
+	// This number should be updated every year or so to keep the generated id short.
+	// To regenerate `new Date() - 0` and bump the version. Always bump the version!
+	var REDUCE_TIME = 1459707606518;
+	
+	// don't change unless we change the algos or REDUCE_TIME
+	// must be an integer and less than 16
+	var version = 6;
+	
+	// if you are using cluster or multiple servers use this to make each instance
+	// has a unique value for worker
+	// Note: I don't know if this is automatically set when using third
+	// party cluster solutions such as pm2.
+	var clusterWorkerId = __webpack_require__(55) || 0;
+	
+	// Counter is used when shortid is called multiple times in one second.
+	var counter;
+	
+	// Remember the last time shortid was called in case counter is needed.
+	var previousSeconds;
+	
+	/**
+	 * Generate unique id
+	 * Returns string id
+	 */
+	function generate() {
+	
+	    var str = '';
+	
+	    var seconds = Math.floor((Date.now() - REDUCE_TIME) * 0.001);
+	
+	    if (seconds === previousSeconds) {
+	        counter++;
+	    } else {
+	        counter = 0;
+	        previousSeconds = seconds;
+	    }
+	
+	    str = str + encode(alphabet.lookup, version);
+	    str = str + encode(alphabet.lookup, clusterWorkerId);
+	    if (counter > 0) {
+	        str = str + encode(alphabet.lookup, counter);
+	    }
+	    str = str + encode(alphabet.lookup, seconds);
+	
+	    return str;
+	}
+	
+	
+	/**
+	 * Set the seed.
+	 * Highly recommended if you don't want people to try to figure out your id schema.
+	 * exposed as shortid.seed(int)
+	 * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
+	 */
+	function seed(seedValue) {
+	    alphabet.seed(seedValue);
+	    return module.exports;
+	}
+	
+	/**
+	 * Set the cluster worker or machine id
+	 * exposed as shortid.worker(int)
+	 * @param workerId worker must be positive integer.  Number less than 16 is recommended.
+	 * returns shortid module so it can be chained.
+	 */
+	function worker(workerId) {
+	    clusterWorkerId = workerId;
+	    return module.exports;
+	}
+	
+	/**
+	 *
+	 * sets new characters to use in the alphabet
+	 * returns the shuffled alphabet
+	 */
+	function characters(newCharacters) {
+	    if (newCharacters !== undefined) {
+	        alphabet.characters(newCharacters);
+	    }
+	
+	    return alphabet.shuffled();
+	}
+	
+	
+	// Export all other functions as properties of the generate function
+	module.exports = generate;
+	module.exports.generate = generate;
+	module.exports.seed = seed;
+	module.exports.worker = worker;
+	module.exports.characters = characters;
+	module.exports.decode = decode;
+	module.exports.isValid = isValid;
+
+
+/***/ },
+/* 49 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var randomFromSeed = __webpack_require__(50);
+	
+	var ORIGINAL = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
+	var alphabet;
+	var previousSeed;
+	
+	var shuffled;
+	
+	function reset() {
+	    shuffled = false;
+	}
+	
+	function setCharacters(_alphabet_) {
+	    if (!_alphabet_) {
+	        if (alphabet !== ORIGINAL) {
+	            alphabet = ORIGINAL;
+	            reset();
+	        }
+	        return;
+	    }
+	
+	    if (_alphabet_ === alphabet) {
+	        return;
+	    }
+	
+	    if (_alphabet_.length !== ORIGINAL.length) {
+	        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
+	    }
+	
+	    var unique = _alphabet_.split('').filter(function(item, ind, arr){
+	       return ind !== arr.lastIndexOf(item);
+	    });
+	
+	    if (unique.length) {
+	        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
+	    }
+	
+	    alphabet = _alphabet_;
+	    reset();
+	}
+	
+	function characters(_alphabet_) {
+	    setCharacters(_alphabet_);
+	    return alphabet;
+	}
+	
+	function setSeed(seed) {
+	    randomFromSeed.seed(seed);
+	    if (previousSeed !== seed) {
+	        reset();
+	        previousSeed = seed;
+	    }
+	}
+	
+	function shuffle() {
+	    if (!alphabet) {
+	        setCharacters(ORIGINAL);
+	    }
+	
+	    var sourceArray = alphabet.split('');
+	    var targetArray = [];
+	    var r = randomFromSeed.nextValue();
+	    var characterIndex;
+	
+	    while (sourceArray.length > 0) {
+	        r = randomFromSeed.nextValue();
+	        characterIndex = Math.floor(r * sourceArray.length);
+	        targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
+	    }
+	    return targetArray.join('');
+	}
+	
+	function getShuffled() {
+	    if (shuffled) {
+	        return shuffled;
+	    }
+	    shuffled = shuffle();
+	    return shuffled;
+	}
+	
+	/**
+	 * lookup shuffled letter
+	 * @param index
+	 * @returns {string}
+	 */
+	function lookup(index) {
+	    var alphabetShuffled = getShuffled();
+	    return alphabetShuffled[index];
+	}
+	
+	module.exports = {
+	    characters: characters,
+	    seed: setSeed,
+	    lookup: lookup,
+	    shuffled: getShuffled
+	};
+
+
+/***/ },
+/* 50 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	// Found this seed-based random generator somewhere
+	// Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
+	
+	var seed = 1;
+	
+	/**
+	 * return a random number based on a seed
+	 * @param seed
+	 * @returns {number}
+	 */
+	function getNextValue() {
+	    seed = (seed * 9301 + 49297) % 233280;
+	    return seed/(233280.0);
+	}
+	
+	function setSeed(_seed_) {
+	    seed = _seed_;
+	}
+	
+	module.exports = {
+	    nextValue: getNextValue,
+	    seed: setSeed
+	};
+
+
+/***/ },
+/* 51 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var randomByte = __webpack_require__(52);
+	
+	function encode(lookup, number) {
+	    var loopCounter = 0;
+	    var done;
+	
+	    var str = '';
+	
+	    while (!done) {
+	        str = str + lookup( ( (number >> (4 * loopCounter)) & 0x0f ) | randomByte() );
+	        done = number < (Math.pow(16, loopCounter + 1 ) );
+	        loopCounter++;
+	    }
+	    return str;
+	}
+	
+	module.exports = encode;
+
+
+/***/ },
+/* 52 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	var crypto = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
+	
+	function randomByte() {
+	    if (!crypto || !crypto.getRandomValues) {
+	        return Math.floor(Math.random() * 256) & 0x30;
+	    }
+	    var dest = new Uint8Array(1);
+	    crypto.getRandomValues(dest);
+	    return dest[0] & 0x30;
+	}
+	
+	module.exports = randomByte;
+
+
+/***/ },
+/* 53 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	var alphabet = __webpack_require__(49);
+	
+	/**
+	 * Decode the id to get the version and worker
+	 * Mainly for debugging and testing.
+	 * @param id - the shortid-generated id.
+	 */
+	function decode(id) {
+	    var characters = alphabet.shuffled();
+	    return {
+	        version: characters.indexOf(id.substr(0, 1)) & 0x0f,
+	        worker: characters.indexOf(id.substr(1, 1)) & 0x0f
+	    };
+	}
+	
+	module.exports = decode;
+
+
+/***/ },
+/* 54 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	var alphabet = __webpack_require__(49);
+	
+	function isShortId(id) {
+	    if (!id || typeof id !== 'string' || id.length < 6 ) {
+	        return false;
+	    }
+	
+	    var characters = alphabet.characters();
+	    var len = id.length;
+	    for(var i = 0; i < len;i++) {
+	        if (characters.indexOf(id[i]) === -1) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	
+	module.exports = isShortId;
+
+
+/***/ },
+/* 55 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	module.exports = 0;
+
 
 /***/ }
 /******/ ]);
