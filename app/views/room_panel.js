@@ -2,6 +2,7 @@
 
 require('styles/room_panel.css');
 var RTCWrapper = require('utils/rtc_wrapper.js');
+var UserService = require('utils/user_service.js');
 
 var Slider = require('bootstrap-slider');
 require('bootstrap-slider/dist/css/bootstrap-slider.css');
@@ -106,9 +107,16 @@ module.exports = Backbone.View.extend({
 			self.scope.roomSubject = newState.roomSubject;
 		});
 
-		this.scope.roomName = window.location.hash;
-		this.scope.defaultSubject = "Welcome to "+this.scope.roomName;
+		this.scope.roomName = window.location.hash.substring(1);
+		this.scope.defaultSubject = "Welcome to #"+this.scope.roomName;
 		this.scope.users = RTCWrapper.users;
+
+		// Update room_history
+		this.scope.appData = UserService.getAppData();
+		if (!this.scope.appData.room_history) this.scope.appData.room_history = [];
+		UserService.setAppData({
+			room_history: _.uniq([this.scope.roomName].concat(this.scope.appData.room_history)).splice(0, 10)
+		})
 
 		var slider = new Slider('.volume-slider', {
 			min: 0,

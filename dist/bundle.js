@@ -27403,12 +27403,13 @@ var RTChat =
 /* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function($, Rivets) {'use strict';
+	/* WEBPACK VAR INJECTION */(function($, Rivets, _) {'use strict';
 	
 	// RoomPanel
 	
 	__webpack_require__(33);
 	var RTCWrapper = __webpack_require__(17);
+	var UserService = __webpack_require__(19);
 	
 	var Slider = __webpack_require__(35);
 	__webpack_require__(36);
@@ -27469,9 +27470,16 @@ var RTChat =
 				self.scope.roomSubject = newState.roomSubject;
 			});
 	
-			this.scope.roomName = window.location.hash;
-			this.scope.defaultSubject = "Welcome to " + this.scope.roomName;
+			this.scope.roomName = window.location.hash.substring(1);
+			this.scope.defaultSubject = "Welcome to #" + this.scope.roomName;
 			this.scope.users = RTCWrapper.users;
+	
+			// Update room_history
+			this.scope.appData = UserService.getAppData();
+			if (!this.scope.appData.room_history) this.scope.appData.room_history = [];
+			UserService.setAppData({
+				room_history: _.uniq([this.scope.roomName].concat(this.scope.appData.room_history)).splice(0, 10)
+			});
 	
 			var slider = new Slider('.volume-slider', {
 				min: 0,
@@ -27486,7 +27494,7 @@ var RTChat =
 			Backbone.View.prototype.remove.apply(this, arguments); // "super"
 		}
 	});
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(2)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(2), __webpack_require__(5)))
 
 /***/ },
 /* 33 */
@@ -29300,12 +29308,15 @@ var RTChat =
 
 	/* WEBPACK VAR INJECTION */(function(Rivets) {'use strict';
 	
+	// WelcomePanel
+	
 	__webpack_require__(43);
 	
-	// WelcomePanel
+	var UserService = __webpack_require__(19);
+	
 	module.exports = Backbone.View.extend({
 		id: 'WelcomePanel',
-		template: '<h2>Welcome To RTChat!</h2>\n\t\tA simple web-game framework for making simple social games that can be played over the internet with text/voice/video chat built right in!\n\t\t<br><br>\n\t\t<a class="btn btn-default" href="#global-chat">Go To global chat</a>\n\t\t<div> Choose a Random room <span class="fa fa-refresh"></span></div>\n\t\t<ul class="random-rooms">\n\t\t\t<li rv-each-room="scope.random_rooms">\n\t\t\t\t<a rv-href="\'#\' |+ room">{room}</a>\n\t\t\t</li>\n\t\t</ul>\n\t',
+		template: '<h2>Welcome To RTChat!</h2>\n\t\t<h4> An <a href="https://github.com/rtchat/rtchat">open source</a> chat platform that respects your privacy and freedom of speech! </h4>\n\t\tIt\'s also a simple web-game framework for making apps and social games that can be played over the internet with text/voice/video chat built right in.\n\t\t<br>\n\t\tFor help and to chat with the community visit <a href="#global-chat">global chat</a>\n\t\t<br><br>\n\t\t<div class="fluid-container"> <div class="row">\n\t\t\t<div class="col-md-6">\n\t\t\t\t<h4> Get started in a Random room &nbsp;<span class="fa fa-refresh"></span></h4>\n\t\t\t\t<ul class="random-rooms">\n\t\t\t\t\t<li rv-each-room="scope.random_rooms">\n\t\t\t\t\t\t<a rv-href="\'#\' |+ room">{room}</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class="col-md-6" rv-show="scope.appData.room_history |length |gt 0">\n\t\t\t\t<h4> Recently visited rooms </h4>\n\t\t\t\t<ul class="random-rooms">\n\t\t\t\t\t<li rv-each-room="scope.appData.room_history">\n\t\t\t\t\t\t<a rv-href="\'#\' |+ room">{room}</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t</div> </div>\n\t',
 		events: {
 			'click .fa-refresh': function clickFaRefresh() {
 				this.generateRandomRooms();
@@ -29317,12 +29328,15 @@ var RTChat =
 			];
 		},
 		render: function render() {
+			this.scope = {};
 			this.$el.html(this.template);
 			Rivets.bind(this.$el, { scope: this.scope });
+	
+			this.scope.appData = UserService.getAppData();
 			this.generateRandomRooms();
+	
 			return this;
-		},
-		scope: {}
+		}
 	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
@@ -29361,7 +29375,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n", "", {"version":3,"sources":["/./app/styles/welcome_panel.css"],"names":[],"mappings":"AAAA;EACE,gBAAgB;EAChB,+BAA+B,EAAE;EACjC;IACE,gBAAgB,EAAE;EACpB;IACE,YAAY,EAAE","file":"welcome_panel.css","sourcesContent":["#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */\n  /* Title links */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n  #WelcomePanel h4 a {\n    color: inherit;\n    font-weight: bold; }\n", "", {"version":3,"sources":["/./app/styles/welcome_panel.css"],"names":[],"mappings":"AAAA;EACE,gBAAgB;EAChB,+BAA+B;EAC/B,iBAAiB,EAAE;EACnB;IACE,gBAAgB,EAAE;EACpB;IACE,YAAY,EAAE;EAChB;IACE,eAAe;IACf,kBAAkB,EAAE","file":"welcome_panel.css","sourcesContent":["#WelcomePanel {\n  padding: 0 25px;\n  /* override bootstrap styles */\n  /* Title links */ }\n  #WelcomePanel a {\n    color: darkblue; }\n  #WelcomePanel .btn {\n    color: #333; }\n  #WelcomePanel h4 a {\n    color: inherit;\n    font-weight: bold; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 
