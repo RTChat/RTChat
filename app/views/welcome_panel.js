@@ -7,7 +7,10 @@ var UserService = require('utils/user_service.js');
 module.exports = Backbone.View.extend({
 	id: 'WelcomePanel',
 	template: `<h2>Welcome To RTChat!</h2>
-		<h4> An <a href="https://github.com/rtchat/rtchat">open source</a> chat platform that respects your privacy and freedom of speech! </h4>
+		<h4>
+			An <a href="https://github.com/rtchat/rtchat" target="_blank" rel="nofollow">open source</a>
+			chat platform that respects your privacy and freedom of speech!
+		</h4>
 		It's also a simple web-game framework for making apps and social games that can be played over the internet with text/voice/video chat built right in.
 		<br>
 		For help and to chat with the community visit <a href="#global-chat">global chat</a>
