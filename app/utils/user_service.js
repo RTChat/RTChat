@@ -1,21 +1,24 @@
-// UserService
+// UserService - stores multiple users information in the browser.
 
 require('backbone.localstorage');
 
 module.exports = {
 	init: function() { // sets up the username, and stuff.
 		if(typeof(Storage) !== "undefined") {
-			var localUsers = new (Backbone.Collection.extend({
-				// idAttribute: 'name',
-				// modelId: function(attrs) {return attrs.name},
+			// Stores information of the user.
+			this.localUsers = new (Backbone.Collection.extend({
 				localStorage: new Backbone.LocalStorage("RTChat_Users"),
 			}))();
-			this.localUsers = localUsers;
+			this.localUsers.fetch();
 
-			localUsers.fetch();
+			// Stores arbitrary data for each user and app.
+			this.userAppData = new (Backbone.Collection.extend({
+				localStorage: new Backbone.LocalStorage("RTChat_UserAppData"),
+			}))();
+			this.userAppData.fetch();
 
-			this.currentUser = localUsers.get(window.localStorage.getItem('RTChat_LatestUser')) ||
-				localUsers.first();
+			this.currentUser = this.localUsers.get(window.localStorage.getItem('RTChat_LatestUser')) ||
+				this.localUsers.first();
 
 			// console.log("found user:", this.currentUser)
 			if (!this.currentUser) { this.create(); }
@@ -30,7 +33,6 @@ module.exports = {
 		this.currentUser = this.localUsers.create({
 			name: name || "Guest_"+parseInt(Math.random()*10000).toString()
 		});
-		console.log(this.currentUser);
 	},
 	updateName: function(newName) {
 		this.currentUser.name = newName;
@@ -42,18 +44,27 @@ module.exports = {
 			name: this.currentUser.get('name')
 		};
 	},
-	getAppConf: function() {
-		return _.clone(this.currentUser.get('app_'+appName()) || {});
+	_appDataId: function() {
+		return RTChat.AppConfig.AppName+'_'+this.currentUser.id;
 	},
-	setAppConf: function(conf) {
-		var old_conf = this.getAppConf();
-		this.currentUser.set('app_'+appName(), _.extend(old_conf, conf));
-		this.currentUser.save();
+	getAppData: function() {
+		var d = this.userAppData.get(this._appDataId());
+		if (!d) {
+			this.userAppData.create({
+				id: this._appDataId(),
+				data: {}
+			})
+			d = this.userAppData.get(this._appDataId());
+		}
+		return _.clone(d.get('data'));
+	},
+	// Merges object into userAppData
+	setAppData: function(data) {
+		var d = this.userAppData.get(this._appDataId());
+		var old_data = this.getAppData();
+		d.set('data', _.extend(old_data, data));
+		d.save();
 	}
 };
 
 module.exports.init();
-
-function appName() {
-	return RTChat.AppConfig.AppName;
-}
