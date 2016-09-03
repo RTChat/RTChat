@@ -27246,6 +27246,7 @@ var RTChat =
 			}
 		},
 		render: function render() {
+			this.scope = {};
 			this.scope.appName = RTChat.AppConfig.AppName;
 			this.scope.roomName = document.location.hash;
 	
@@ -27253,8 +27254,7 @@ var RTChat =
 			Rivets.bind(this.$el, { scope: this.scope });
 	
 			return this;
-		},
-		scope: {}
+		}
 	});
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
@@ -27293,7 +27293,7 @@ var RTChat =
 	
 	
 	// module
-	exports.push([module.id, "#Header {\n  position: relative;\n  width: 100%;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */\n  background-color: green; }\n  #Header > * {\n    margin-top: 5px;\n    margin-right: 10px; }\n  #Header > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  #Header > .pull-right {\n    margin-left: auto !important;\n    margin-right: 15px; }\n  #Header > div {\n    margin-top: 0; }\n    #Header > div span {\n      margin-top: 8px; }\n  #Header a {\n    color: #333; }\n", "", {"version":3,"sources":["/./app/styles/header.css"],"names":[],"mappings":"AAAA;EACE,mBAAmB;EACnB,YAAY;EACZ,gBAAgB;EAChB,cAAc;EACd,eAAe;EACf,WAAW;EACX,mDAAmD;EACnD,wBAAwB,EAAE;EAC1B;IACE,gBAAgB;IAChB,mBAAmB,EAAE;EACvB;IACE,gBAAgB;IAChB,kBAAkB,EAAE;EACtB;IACE,6BAA6B;IAC7B,mBAAmB,EAAE;EACvB;IACE,cAAc,EAAE;IAChB;MACE,gBAAgB,EAAE;EACtB;IACE,YAAY,EAAE","file":"header.css","sourcesContent":["#Header {\n  position: relative;\n  width: 100%;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */\n  background-color: green; }\n  #Header > * {\n    margin-top: 5px;\n    margin-right: 10px; }\n  #Header > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  #Header > .pull-right {\n    margin-left: auto !important;\n    margin-right: 15px; }\n  #Header > div {\n    margin-top: 0; }\n    #Header > div span {\n      margin-top: 8px; }\n  #Header a {\n    color: #333; }\n"],"sourceRoot":"webpack://"}]);
+	exports.push([module.id, "#Header {\n  position: relative;\n  width: 100%;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */\n  background-color: green;\n  padding-right: 10px; }\n  #Header > * {\n    margin-top: 5px;\n    margin-right: 10px; }\n  #Header > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  #Header > .pull-right {\n    margin-left: auto !important; }\n  #Header > div {\n    margin-top: 0; }\n    #Header > div span {\n      margin-top: 8px; }\n  #Header a {\n    color: #333; }\n", "", {"version":3,"sources":["/./app/styles/header.css"],"names":[],"mappings":"AAAA;EACE,mBAAmB;EACnB,YAAY;EACZ,gBAAgB;EAChB,cAAc;EACd,eAAe;EACf,WAAW;EACX,mDAAmD;EACnD,wBAAwB;EACxB,oBAAoB,EAAE;EACtB;IACE,gBAAgB;IAChB,mBAAmB,EAAE;EACvB;IACE,gBAAgB;IAChB,kBAAkB,EAAE;EACtB;IACE,6BAA6B,EAAE;EACjC;IACE,cAAc,EAAE;IAChB;MACE,gBAAgB,EAAE;EACtB;IACE,YAAY,EAAE","file":"header.css","sourcesContent":["#Header {\n  position: relative;\n  width: 100%;\n  font-size: 22px;\n  display: flex;\n  flex-flow: row;\n  z-index: 1;\n  /* Allows UserMenu to go overtop of the main-bar */\n  background-color: green;\n  padding-right: 10px; }\n  #Header > * {\n    margin-top: 5px;\n    margin-right: 10px; }\n  #Header > .fa {\n    margin: 3px 0px;\n    padding: 8px 10px; }\n  #Header > .pull-right {\n    margin-left: auto !important; }\n  #Header > div {\n    margin-top: 0; }\n    #Header > div span {\n      margin-top: 8px; }\n  #Header a {\n    color: #333; }\n"],"sourceRoot":"webpack://"}]);
 	
 	// exports
 

@@ -18,6 +18,7 @@ module.exports = Backbone.View.extend({
 		user_menu: function() { return new RTChat.Views.UserMenu(); },
 	},
 	render: function() {
+		this.scope = {};
 		this.scope.appName = RTChat.AppConfig.AppName;
 		this.scope.roomName = document.location.hash;
 
@@ -26,5 +27,4 @@ module.exports = Backbone.View.extend({
 
 		return this;
 	},
-	scope: {}
 });
