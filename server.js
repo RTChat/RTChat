@@ -106,6 +106,10 @@ require('rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
 if (!options.http) {
 	connect.use(function(req, res, next) {
 		res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+		// CORS
+		res.setHeader('Access-Control-Allow-Origin', 'https://rtchat.github.io');
+		res.setHeader('Access-Control-Allow-Method', 'POST GET OPTIONS');
+		res.setHeader('Vary', 'Origin');
 		next();
 	});
 }
