@@ -10,6 +10,7 @@ body {
 		display: flex;
 		flex-flow: row;
 		position: relative;
+		overflow-x: auto;
 
 		> .main-panel {
 			flex: 1 1 100%;
