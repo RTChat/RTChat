@@ -30,12 +30,12 @@ var fs = require('fs'),
 	// url = require('url'),
 	path = require('path');
 
-var server_opts = {};
+var app;
 var connect = require('connect')();
-var server = require(options.http ? 'http' : 'https');
 var watcher;
 
 if (!options.http) {
+	var server_opts;
 	try {
 		server_opts = {
 			key: fs.readFileSync(path.resolve('keys/privatekey.pem')),
@@ -49,9 +49,10 @@ if (!options.http) {
 			cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
 		};
 	}
-		// HTTP Strict Transport Security. (keep using SSL for at least a year)
-		// if (!options.http)
-		// 	response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+
+	// HTTP Strict Transport Security. (keep using SSL for at least a year)
+	// if (!options.http)
+	// 	response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
 	// Setup HTTP-redirect server.
 	require('http').createServer(function(req, res) {
@@ -61,10 +62,12 @@ if (!options.http) {
 		console.warn("WARNING: unable to start http-redirect server. GOT:", err.toString());
 	}).listen(80);
 
+	app = require('https').createServer(server_opts, connect);
+} else { //HTTP
+	app = require('http').createServer(connect);
 }
 
-var app = server.createServer(server_opts, connect).
-	listen(options.port, options.ip, function() {
+app.listen(options.port, options.ip, function() {
 		var addr = app.address();
 		console.log("Server listening at", (options.http ? "http://" : "https://" ) + addr.address + ":" + addr.port);
 });
