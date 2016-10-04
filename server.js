@@ -106,10 +106,12 @@ connect.use(function(req, res, next) {
 		// HTTP Strict Transport Security. (keep using SSL for at least a year)
 		res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 	}
-	// CORS - Allow all origins
-	res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-	res.setHeader('Access-Control-Allow-Method', 'POST GET OPTIONS');
-	res.setHeader('Vary', 'Origin');
+	if (req.headers.origin) {
+		// CORS - Allow all origins
+		res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+		res.setHeader('Access-Control-Allow-Method', 'POST GET OPTIONS');
+		res.setHeader('Vary', 'Origin');
+	}
 	next();
 });
 
