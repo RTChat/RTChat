@@ -50,10 +50,6 @@ if (!options.http) {
 		};
 	}
 
-	// HTTP Strict Transport Security. (keep using SSL for at least a year)
-	// if (!options.http)
-	// 	response.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-
 	// Setup HTTP-redirect server.
 	require('http').createServer(function(req, res) {
 		res.writeHead(301, { "Location": "https://" + req.headers.host + req.url });
@@ -105,17 +101,17 @@ require('rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
 	} catch (e) {}
 });
 
-// HTTP Strict Transport Security. (keep using SSL for at least a year)
-if (!options.http) {
-	connect.use(function(req, res, next) {
+connect.use(function(req, res, next) {
+	if (!options.http) {
+		// HTTP Strict Transport Security. (keep using SSL for at least a year)
 		res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-		// CORS
-		res.setHeader('Access-Control-Allow-Origin', 'https://rtchat.github.io');
-		res.setHeader('Access-Control-Allow-Method', 'POST GET OPTIONS');
-		res.setHeader('Vary', 'Origin');
-		next();
-	});
-}
+	}
+	// CORS - Allow all origins
+	res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+	res.setHeader('Access-Control-Allow-Method', 'POST GET OPTIONS');
+	res.setHeader('Vary', 'Origin');
+	next();
+});
 
 // Load file_server
 options.plugin.push('file_server');
