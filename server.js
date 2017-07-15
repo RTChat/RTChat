@@ -76,6 +76,11 @@ app.on('error', function(err) {
 
 
 
+//HACK: Socket.io has got to go.
+if (!process.EventEmitter) {
+	process.EventEmitter = require('events');
+}
+
 // Add signaling server - Copied from github.com/muaz-khan/RTCMultiConnection/server.js
 require('rtcmulticonnection-v3/Signaling-Server.js')(app, function(socket) {
 	try {
