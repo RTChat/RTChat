@@ -1,6 +1,6 @@
 // RTCWrapper
 
-require('rtcmulticonnection-v3/dist/rmc3.js');
+require('rtcmulticonnection-v3/dist/RTCMultiConnection.js');
 
 var UserService = require('utils/user_service.js');
 

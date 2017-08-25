@@ -5,7 +5,7 @@ var RTCWrapper = require('utils/rtc_wrapper.js');
 var UserService = require('utils/user_service.js');
 
 // EmojiOne picker.
-require('imports?jQuery=jquery!emojionearea/node_modules/jquery-textcomplete');
+require('imports?jQuery=jquery!jquery-textcomplete');
 require('imports?jQuery=jquery!emojionearea');
 require('emojionearea/dist/emojionearea.css');
 
