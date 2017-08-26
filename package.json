@@ -1,10 +1,20 @@
 {
-  "name": "RTChat",
+  "name": "rtchat",
   "description": "Framework for building games using WebRTC",
   "repository": "https://github.com/RTChat/RTChat",
   "version": "0.0.1",
   "scripts": {
     "test": "./node_modules/karma/bin/karma start test/unit/karma.conf.js --single-run && ./node_modules/protractor/bin/protractor test/e2e/protractor.conf.js"
+  },
+  "main": "dist/bundle.js",
+  "files": [
+    "lib",
+    "server.js",
+    "index.html",
+    "dist/bundle.js"
+  ],
+  "bin": {
+    "rtchat-server": "./server.js"
   },
   "engine": "^4.4.6",
   "license": "AGPL-3.0",

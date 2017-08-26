@@ -15,7 +15,7 @@ WORKDIR /usr/src/app
 COPY package.json /usr/src/app/
 RUN npm install --only=production
 
-# Bundle server source
+# Bundle app source
 COPY app /usr/src/app/app
 COPY lib /usr/src/app/lib
 COPY server.js /usr/src/app/

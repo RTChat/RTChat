@@ -1,3 +1,4 @@
+#!/bin/env node
 // Serves up index.html, dist/*, socket.io and plugins!
 
 var options = { // defaults
@@ -45,8 +46,8 @@ if (!options.http) {
 	catch (err) {
 		console.warn("WARNING: failed to find valid SSL keys, falling back to fake-keys..");
 		server_opts = {
-			key: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
-			cert: fs.readFileSync(path.join(__dirname, 'node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
+			key: fs.readFileSync(path.resolve('node_modules/rtcmulticonnection-v3/fake-keys/privatekey.pem')),
+			cert: fs.readFileSync(path.resolve('node_modules/rtcmulticonnection-v3/fake-keys/certificate.pem'))
 		};
 	}
 
