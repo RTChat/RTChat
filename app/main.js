@@ -26,7 +26,7 @@ module.exports = {
 		var self = this;
 		$(document).ready(function() {
 			// Init Socket.io
-			$.getScript((self.AppConfig.SocketHost||'')+'/socket.io/socket.io.js').
+			$.getScript((self.AppConfig.SocketHost||'/')+'socket.io/socket.io.js').
 				then(function(e) {
 					// Make initial render.
 					(new self.Views.Layout()).render();

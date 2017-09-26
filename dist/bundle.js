@@ -75,7 +75,7 @@ var RTChat =
 			var self = this;
 			$(document).ready(function () {
 				// Init Socket.io
-				$.getScript((self.AppConfig.SocketHost || '') + '/socket.io/socket.io.js').then(function (e) {
+				$.getScript((self.AppConfig.SocketHost || '/') + 'socket.io/socket.io.js').then(function (e) {
 					// Make initial render.
 					new self.Views.Layout().render();
 				});
@@ -30045,7 +30045,7 @@ var RTChat =
 /* 46 */
 /***/ function(module, exports) {
 
-	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443"}
+	module.exports = {"AppName":"RTChat","SocketHost":"https://thanntastic.com:443/"}
 
 /***/ },
 /* 47 */
